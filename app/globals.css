@@ -150,3 +150,24 @@ p { line-height: 1.65; }
 .breadcrumb-alveary { color: inherit; text-decoration: none; }
 .alveary-brand, .alveary-brand:hover, .alveary-brand:focus-visible, .alveary-brand .alveary-wordmark, .alveary-brand:hover .alveary-wordmark, .alveary-brand:focus-visible .alveary-wordmark { text-decoration: none; }
 .alveary-brand:focus-visible { outline: 2px solid #dce5cf; outline-offset: 4px; border-radius: 2px; }
+
+/* Compact same-tab return to Webflow, using the former dashboard house icon. */
+.topbar-return-icon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.topbar-return-icon img {
+  display: block;
+  width: 21px;
+  height: 21px;
+  object-fit: contain;
+}
+.topbar-return-icon:focus-visible {
+  outline: 2px solid #26382a;
+  outline-offset: 3px;
+}

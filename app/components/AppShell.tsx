@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeft, ChevronRight, Compass, ExternalLink, Menu,
+  ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
 } from "lucide-react";
 
@@ -16,7 +16,7 @@ type NavItem = {
 };
 
 const navigation: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: "dashboard" },
+  { href: "/", label: "Planning overview", icon: "planning" },
   { href: "/courses", label: "Courses", icon: "courses" },
   { href: "/scheduling", label: "Schedule", icon: "schedule" },
   { href: "/books", label: "Books", icon: "books" },
@@ -26,7 +26,6 @@ const navigation: NavItem[] = [
 ];
 
 const planningItems: NavItem[] = [
-  { href: "/planning", label: "Planning overview", icon: "planning" },
   { href: "/year-at-a-glance", label: "Year at a glance", icon: "year-at-a-glance" },
 ];
 
@@ -54,7 +53,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const currentPath = pathname.replace(/\/$/, "") || "/";
-  const current = [...navigation, ...planningItems].find((item) => item.href === currentPath);
+  // The old /planning URL is a compatibility alias for the new home page.
+  const activePath = currentPath === "/planning" ? "/" : currentPath;
+  const current = [...navigation, ...planningItems].find((item) => item.href === activePath);
   const currentName = current?.label ?? "Planning";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -67,7 +68,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     : [];
 
   function renderItem(item: NavItem) {
-    const active = currentPath === item.href;
+    const active = activePath === item.href;
     return (
       <Link
         href={item.href}
@@ -115,7 +116,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div className="sidebar-prep-wrap">
-          <Link className="sidebar-prep" href="/planning" title="Prepare your school year">
+          <Link className="sidebar-prep" href="/" title="Prepare your school year">
             <Compass size={17} strokeWidth={1.6} aria-hidden="true" />
             <span>Prepare your school year</span>
             {!collapsed && <ChevronRight size={15} aria-hidden="true" />}
@@ -201,9 +202,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 </div>
               )}
             </form>
-            <a className="topbar-return" href={alvearyReturnUrl}>
-              <span>{alvearyReturnLabel}</span>
-              <ExternalLink size={15} aria-hidden="true" />
+            <a
+              className="topbar-return topbar-return-icon"
+              href={alvearyReturnUrl}
+              title="Return to Alveary member dashboard"
+              aria-label="Return to Alveary member dashboard"
+            >
+              <img src={iconUrl("dashboard")} width={21} height={21} alt="" aria-hidden="true" />
             </a>
           </div>
         </header>
