@@ -34,7 +34,7 @@ const planningItems: NavItem[] = [
 // It can be replaced with the production URL when that dashboard is ready.
 const alvearyReturnUrl = process.env.NEXT_PUBLIC_ALVEARY_DASHBOARD_URL || "https://alveary.org/alveary-2027-2028/dashboard-test";
 const alvearyReturnLabel = "Member dashboard";
-const assetsBase = process.env.GITHUB_PAGES === "true" ? "/alveary-planning-app" : "";
+const assetsBase = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const iconUrl = (name: string) => `${assetsBase}/brand/navigation/${name}.svg`;
 
 function AlvearyMark() {
