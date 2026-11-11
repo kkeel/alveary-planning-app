@@ -5,38 +5,37 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeft, BookOpen, CalendarDays, CalendarRange, ChevronRight,
-  ClipboardList, Compass, ExternalLink, FileText, GraduationCap,
-  Home, LayoutDashboard, Menu, PanelLeftClose, PanelLeftOpen,
-  Search, ShoppingBasket, X,
+  ArrowLeft, ChevronRight, Compass, ExternalLink, Menu,
+  PanelLeftClose, PanelLeftOpen, Search, X,
 } from "lucide-react";
 
 type NavItem = {
   href: string;
   label: string;
-  icon: typeof Home;
+  icon: string;
 };
 
 const navigation: NavItem[] = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/courses", label: "Courses", icon: BookOpen },
-  { href: "/scheduling", label: "Schedule", icon: CalendarDays },
-  { href: "/books", label: "Books", icon: BookOpen },
-  { href: "/lesson-plans", label: "Lesson plans", icon: FileText },
-  { href: "/supplies", label: "Supplies", icon: ShoppingBasket },
-  { href: "/exams", label: "Exams", icon: GraduationCap },
+  { href: "/", label: "Dashboard", icon: "dashboard" },
+  { href: "/courses", label: "Courses", icon: "courses" },
+  { href: "/scheduling", label: "Schedule", icon: "schedule" },
+  { href: "/books", label: "Books", icon: "books" },
+  { href: "/lesson-plans", label: "Lesson plans", icon: "lesson-plans" },
+  { href: "/supplies", label: "Supplies", icon: "supplies" },
+  { href: "/exams", label: "Exams", icon: "exams" },
 ];
 
 const planningItems: NavItem[] = [
-  { href: "/planning", label: "Planning overview", icon: ClipboardList },
-  { href: "/year-at-a-glance", label: "Year at a glance", icon: CalendarRange },
+  { href: "/planning", label: "Planning overview", icon: "planning" },
+  { href: "/year-at-a-glance", label: "Year at a glance", icon: "year-at-a-glance" },
 ];
 
-// The Webflow testing-dashboard URL can be configured at build time.
-// Until it is supplied, link to Alveary's verified public homepage.
-const memberDashboardUrl = process.env.NEXT_PUBLIC_ALVEARY_DASHBOARD_URL;
-const alvearyReturnUrl = memberDashboardUrl || "https://www.alveary.org/";
-const alvearyReturnLabel = memberDashboardUrl ? "Member dashboard" : "Alveary website";
+// The development return link targets the provided Webflow testing dashboard.
+// It can be replaced with the production URL when that dashboard is ready.
+const alvearyReturnUrl = process.env.NEXT_PUBLIC_ALVEARY_DASHBOARD_URL || "https://alveary.org/alveary-2027-2028/dashboard-test";
+const alvearyReturnLabel = "Member dashboard";
+const assetsBase = process.env.GITHUB_PAGES === "true" ? "/alveary-planning-app" : "";
+const iconUrl = (name: string) => `${assetsBase}/brand/navigation/${name}.svg`;
 
 function AlvearyMark() {
   return (
@@ -68,7 +67,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
     : [];
 
   function renderItem(item: NavItem) {
-    const Icon = item.icon;
     const active = currentPath === item.href;
     return (
       <Link
@@ -79,7 +77,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         title={collapsed ? item.label : undefined}
         onClick={() => setMobileOpen(false)}
       >
-        <Icon size={17} strokeWidth={1.7} aria-hidden="true" />
+        <img className="side-icon" src={iconUrl(item.icon)} alt="" aria-hidden="true" width="19" height="19" />
         <span className="side-link-label">{item.label}</span>
         {!collapsed && <ChevronRight className="side-chevron" size={14} aria-hidden="true" />}
       </Link>
