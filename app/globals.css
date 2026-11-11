@@ -171,3 +171,55 @@ p { line-height: 1.65; }
   outline: 2px solid #26382a;
   outline-offset: 3px;
 }
+
+/* Public-first account status, replacing the generic development banner. */
+.auth-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px 20px;
+  min-height: 43px;
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--line);
+  color: #5b665e;
+  font-size: 12px;
+}
+.auth-bar-main { display: flex; align-items: center; gap: 12px; min-width: 0; flex-wrap: wrap; }
+.auth-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #e9eadf;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #454f46;
+  white-space: nowrap;
+}
+.auth-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6d786f; }
+.auth-status-dot.is-signed-in { background: #3e7150; }
+.auth-bar-note { color: #636e64; line-height: 1.45; }
+.auth-bar-actions { display: flex; align-items: center; gap: 8px; }
+.auth-bar-actions a, .auth-bar-actions button {
+  appearance: none;
+  background: transparent;
+  color: var(--sage);
+  border: 1px solid #9aaa99;
+  border-radius: 5px;
+  padding: 7px 13px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.auth-bar-actions a:hover, .auth-bar-actions button:hover:not(:disabled),
+.auth-bar-actions a:focus-visible, .auth-bar-actions button:focus-visible {
+  background: var(--sage);
+  color: #fff;
+}
+.auth-bar-actions button:disabled { opacity: .6; cursor: wait; }
+.auth-bar-error { flex-basis: 100%; margin: 0; font-size: 12px; color: #a33831; }
+@media (max-width: 1100px) { .auth-bar { padding: 8px 20px; } }
+@media (max-width: 760px) { .auth-bar { padding: 10px 18px; } }

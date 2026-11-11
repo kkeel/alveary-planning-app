@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import AuthStatusBar from "./AuthStatusBar";
 import {
   ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
@@ -213,10 +214,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="shell-announcement">
-          <span className="announcement-tag"><span aria-hidden="true">●</span> Development preview</span>
-          <span>Explore the new planning workspace. Live membership and curriculum data are not connected yet.</span>
-        </div>
+        <AuthStatusBar />
 
         <main className="shell-main" id="main-content">{children}</main>
         <footer className="shell-footer">
