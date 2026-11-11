@@ -39,14 +39,14 @@ const iconUrl = (name: string) => `${assetsBase}/brand/navigation/${name}.svg`;
 
 function AlvearyMark() {
   return (
-    <svg className="alveary-mark" width="30" height="30" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <circle cx="20" cy="20" r="3.8" fill="currentColor" />
-      {Array.from({ length: 8 }, (_, i) => (
-        <g key={i} transform={`rotate(${i * 45} 20 20)`}>
-          <path d="M17.4 16.7 14.2 5.4 20 8.3 25.8 5.4 22.6 16.7Z" fill="currentColor" />
-        </g>
-      ))}
-    </svg>
+    <img
+      className="alveary-mark"
+      src={`${assetsBase}/brand/logos/alveary-mark.png`}
+      width={34}
+      height={34}
+      alt=""
+      aria-hidden="true"
+    />
   );
 }
 
@@ -95,10 +95,15 @@ export default function AppShell({ children }: { children: ReactNode }) {
     <div className={`alveary-shell ${collapsed ? "is-collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <aside className="alveary-sidebar" aria-label="Alveary navigation">
         <div className="sidebar-brand-row">
-          <Link className="alveary-brand" href="/" onClick={() => setMobileOpen(false)}>
+          <a
+            className="alveary-brand"
+            href={alvearyReturnUrl}
+            aria-label="Alveary — return to the member dashboard"
+            title="Return to Alveary member dashboard"
+          >
             <AlvearyMark />
             <span className="alveary-wordmark">Alveary</span>
-          </Link>
+          </a>
           <button
             className="collapse-control"
             type="button"
@@ -149,7 +154,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             >
               {mobileOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
-            <span>Alveary</span>
+            <a href={alvearyReturnUrl} className="breadcrumb-alveary" title="Return to member dashboard">Alveary</a>
             <ChevronRight size={13} aria-hidden="true" />
             <Link href="/">Planning</Link>
             <ChevronRight size={13} aria-hidden="true" />

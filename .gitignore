@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Brand binaries prepared from approved source during build
+public/brand/fonts/*.woff2
+public/brand/logos/alveary-mark.png
