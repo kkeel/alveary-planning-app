@@ -99,7 +99,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
             className="alveary-brand"
             href={alvearyReturnUrl}
             aria-label="Alveary — return to the member dashboard"
-            title="Return to Alveary member dashboard"
           >
             <AlvearyMark />
             <span className="alveary-wordmark">Alveary</span>
