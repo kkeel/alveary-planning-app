@@ -96,7 +96,9 @@ export default function AuthStatusBar() {
             ? "Checking your planning account. You can continue browsing."
             : signedIn
               ? "Your planning account is connected. Membership features are not enabled yet."
-              : "Explore freely. Sign in to connect your Alveary planning account."}
+              : authClient
+                ? "Explore freely. Sign in to connect your Alveary planning account."
+                : "Explore freely. Alveary sign-in is available; the planner connection is not enabled yet."}
         </span>
       </div>
       <div className="auth-bar-actions">
