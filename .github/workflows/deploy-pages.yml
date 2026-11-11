@@ -30,6 +30,7 @@ jobs:
       - name: Build static Next.js export
         env:
           GITHUB_PAGES: "true"
+          NEXT_PUBLIC_BASE_PATH: "/alveary-planning-app"
         run: npm run build
       - name: Upload generated site
         if: github.event_name != 'pull_request'
