@@ -39,3 +39,12 @@ p { line-height: 1.65; margin: 0 0 17px; }
  .main-content { padding: 32px 22px; }
  .environment { display: none; }
 }
+
+/* Group routes clearly while keeping a lightweight navigation scaffold. */
+.nav-group { display: flex; flex-direction: column; gap: 4px; margin-top: 14px; }
+.nav-heading { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 2px 14px 5px; }
+.sidebar .overview-link { font-weight: 600; }
+@media(max-width: 700px) {
+  .nav-group { flex-direction: row; align-items: center; margin: 0; }
+  .nav-heading { display: none; }
+}
