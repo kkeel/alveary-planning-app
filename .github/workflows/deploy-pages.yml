@@ -31,6 +31,8 @@ jobs:
         env:
           GITHUB_PAGES: "true"
           NEXT_PUBLIC_BASE_PATH: "/alveary-planning-app"
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.ALVEARY_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.ALVEARY_SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
       - name: Upload generated site
         if: github.event_name != 'pull_request'
