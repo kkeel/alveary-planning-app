@@ -7,7 +7,7 @@ import Link from "next/link";
 export default function PlanningOverview() {
   return (
     <>
-      <p className="eyebrow">Planning workspace · Early development</p>
+
       <h1>Planning Overview</h1>
       <p className="lead">Start with what you already know and build your school-year plan from there.</p>
       <div className="grid">
