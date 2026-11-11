@@ -8,12 +8,31 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Navigation destinations are scaffolds, not decisions about free or paid permissions.
 const navigation = [
-  { href: "/", label: "Overview" },
-  { href: "/courses", label: "Courses" },
-  { href: "/books", label: "Books" },
-  { href: "/supplies", label: "Supplies" },
-  { href: "/planning", label: "Planning" },
+  {
+    heading: "Explore",
+    items: [
+      { href: "/courses", label: "Courses" },
+      { href: "/books", label: "Books" },
+      { href: "/supplies", label: "Supplies" },
+    ],
+  },
+  {
+    heading: "Plan",
+    items: [
+      { href: "/planning", label: "Planning Overview" },
+      { href: "/scheduling", label: "Scheduling" },
+      { href: "/year-at-a-glance", label: "Year at a Glance" },
+    ],
+  },
+  {
+    heading: "Curriculum resources",
+    items: [
+      { href: "/lesson-plans", label: "Lesson Plans" },
+      { href: "/exams", label: "Exams" },
+    ],
+  },
 ];
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -30,8 +49,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </header>
           <div className="app-layout">
             <nav className="sidebar" aria-label="Main navigation">
-              {navigation.map((item) => (
-                <Link key={item.href} href={item.href}>{item.label}</Link>
+              <Link href="/" className="overview-link">Dashboard</Link>
+              {navigation.map((group) => (
+                <div className="nav-group" key={group.heading}>
+                  <span className="nav-heading">{group.heading}</span>
+                  {group.items.map((item) => (
+                    <Link key={item.href} href={item.href}>{item.label}</Link>
+                  ))}
+                </div>
               ))}
             </nav>
             <main className="main-content">{children}</main>
