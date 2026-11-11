@@ -6,7 +6,8 @@ import "./globals.css";
 const plantin = localFont({
   src: "../public/brand/fonts/plantin-mt-pro.woff2",
   display: "swap",
-  weight: "400",
+  // The existing Alveary planner assigns this Plantin font file weight 200.
+  weight: "200",
   variable: "--font-plantin",
 });
 
