@@ -25,11 +25,11 @@ Existing planner app also contains:
 - Local `Circular Pro` font files at `assets/fonts/circular/`.
 - Google-hosted `DM Sans`, which is used for body text.
 
-The navigation icon files are available in this project. The brand image and licensed font binaries **have not been copied** into this repo. Confirm the official, current Webflow logo asset and the licensing/permission for redistribution of Plantin and Circular before adding them to a new public repository. Current serif titles use a safe local fallback until the actual approved font assets are supplied.
+The navigation icon files are available in this project. CMI confirmed permission to reuse these fonts. The site now prepares exact source versions of the Plantin MT Pro and Circular Pro WOFF2 files and the existing Alveary emblem at build time via `scripts/prepare-brand-assets.mjs` (verified using Git blob SHA-1 hashes). Binary files are excluded from source commits but included in the built public website. The logo image is reused from last year’s planner; confirm whether this is also the preferred Webflow dashboard mark. The build depends on the existing public `course-picker` repository remaining accessible until assets are migrated permanently.
 
 ## Dashboard links
 
-Development return URL: `https://alveary.org/alveary-2027-2028/dashboard-test`.
+Development return URL (same tab; wordmark, breadcrumb, top action, and sidebar return): `https://alveary.org/alveary-2027-2028/dashboard-test`.
 
 Override on deployment with the public variable `NEXT_PUBLIC_ALVEARY_DASHBOARD_URL` when the target changes. The actual Webflow entry link should open the planning app in a new tab so the original member dashboard remains available.
 
