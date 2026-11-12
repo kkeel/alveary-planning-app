@@ -39,7 +39,8 @@ The table names below are proposed implementation names, not existing tables. Ea
 | `catalog_editions` | Lesson Plan Editions | Edition ID/source ID; plan ID; edition display title/override; years; writing/review state; current/next publication role; country, focus terms, notes needed for member planning |
 | `catalog_edition_topics` | Connected Topic Editions | Specific parent **course edition** → specific **topic edition**, explicit sequence/term/order, shared-topic context; no cross-release foreign keys |
 | `catalog_resources` | MA Library | Canonical Resource ID, title, author, type, ISBN/ASIN, image, public rationale, availability, non-protected purchase metadata |
-| `catalog_resource_assignments` | Resource Assignments | Assignment ID, exact edition ID, resource ID, role, optional/choice grouping, display order, term applicability, assignment rationale and notes |
+| `catalog_resource_assignments` | Resource Assignments | One row per **source assignment ID** with exact edition ID, role, `Choose One` selection rule, optional flag, display order, term applicability, and rationale/notes; **do not assume a single resource ID** |
+| `catalog_resource_assignment_items` | Resource Assignments → Resource (linked records) | Ordered junction rows associating each source assignment with **all** linked resource IDs; one ordinary item or multiple choices under the same assignment ID |
 | `catalog_supplies` | MA Supply Library | Canonical Supply ID, name, quantity hints, location, rationale, public links, household flag |
 | `catalog_supply_assignments` | Supply Assignments | Assignment ID, exact edition ID, supply ID, quantity override, optional/group/household flags, choice grouping and term applicability |
 | `catalog_scheduling` | Scheduling | Scheduling ID, `WK`, `WK+`, `MIN`, `MIN+`, `*/_` recommendation, `TEACH`, optional grade band and note |
@@ -91,6 +92,20 @@ Identity, year access, and household RLS must be verified using distinct public,
 After approving this map, create the initial migration with the current Supabase CLI `migration new` command and commit it to this repository on its own branch. Start with release metadata + subjects/grades/plans/editions and closed-by-default RLS; add assignment/scheduling tables in reviewed follow-on migrations. **Do not enable GitHub integration's Deploy to production switch yet.**
 
 Prior to any member-data exposure, review Supabase's security advisor finding about the current `public.rls_auto_enable()` SECURITY DEFINER event-trigger function being executable by `anon` and `authenticated`; restrict execute grants with a reviewed change. Also check Auth leaked-password protection, considering plan availability.
+
+## Airtable cross-check — November 12, 2026
+
+Read-only review against the entire current Curriculum Planning table datasets, not only a few selected examples:
+
+- **Plan kinds:** 564 Topic plans, 179 Single-Topic Course plans, and 402 Combined Course plans. Of the **377** 2027–28 editions with `Next Publication Status = Primary`, **193** belong to Topics, **81** to Single-Topic Courses, and **103** to Combined Courses.
+- **Combined course links:** Every one of those 103 Primary combined-course editions has at least one linked topic edition; **101** have multiple and **two** have one. Keep the one-topic shape valid but review its editorial exception or warning. **One** of the 81 Single-Topic Course editions also has a linked child: a special case to retain and flag, not silently reinterpret.
+- **Cross-year anomaly to review before publishing:** `History: Grades 2-3 (U.S.) · R4 · Edition 2027-28` (`recDXCab1DPjjOkRe`) links through `Connected Topic Editions` to its own plan's **2023–24 retired edition** (`recFgAWlUbSILyzaV`). That child is **not** tagged 2027–28. Do not auto-publish the retired child, self-repair it, or discard the relationship. Record a blocking validation finding for editorial resolution.
+- **Resource assignment cardinality:** Across all **560** Resource Assignment rows, **543** link to exactly one Resource. **17** link to multiple Resources (**14** with two choices and **three** with five choices); **all 17** have `Choose One = true`. This is a single assignment containing multiple *alternatives*, not 17 standalone grouping identifiers. The resource-assignment-items junction above is essential. Do not silently expand an alternative into multiple required books.
+- **Supply assignment cardinality:** All **590** Supply Assignments currently link to exactly one supply, and none has `Choose One = true`. Preserve the existing assignment context; allow a future extension if supplies gain alternatives.
+- **Readiness distinction:** The **377** selected Primary editions are currently spread across writing statuses `Not Started` (13), `Create Tracker` (56), `Set Up` (114), `Waiting on Topic(s)` (84), `Needs lesson block header update` (108), and `Copy/Paste from Previous Year` (2). **None** is currently `Ready to Publish`. Thus `Primary` identifies intended edition selection, not an editorial sign-off. The publisher must require a separate approval gate for member visibility.
+- **Sample schedules:** All **12** current sample schedules are still Draft; never expose these as approved public/member examples solely because a publication year is selected.
+- **Ordering is not certified:** Linked `Connected Topic Editions` values identify composition but do not, on their own, provide an approved term-by-term **lesson interleaving** sequence. Keep explicit ordered composition fields in Supabase. Treat any Airtable linked-record order as *provisional presentation order* unless CMI confirms it as authoritative; packet ordering may require a later authoring junction or separate configuration.
+- **Review principle:** These findings are **data quality and editorial-publishing gates**, not a reason to delay creating foundational catalog/release tables. Implement fail-closed validators before importing/publishing the first approved release.
 
 ## Decisions and blockers to resolve before the first full publish
 
