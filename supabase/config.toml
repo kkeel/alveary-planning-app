@@ -1,0 +1,5 @@
+# Supabase CLI project configuration for the Alveary Planning App.
+# This is a local project label, NOT a remote database URL or password.
+# The existing hosted development project must be linked or selected explicitly.
+# Do not put service role keys, access tokens, or database passwords in Git.
+project_id = "alveary-planning-app"

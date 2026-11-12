@@ -151,3 +151,10 @@ vite.config.ts.timestamp-*
 # Brand binaries prepared from approved source during build
 public/brand/fonts/*.woff2
 public/brand/logos/alveary-mark.png
+
+# Supabase CLI temporary/link metadata and local secrets
+supabase/.temp/
+supabase/.branches/
+supabase/.profiles/
+supabase/.env*
+!supabase/.env.example
