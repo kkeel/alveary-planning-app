@@ -1,5 +1,17 @@
 # Public browsing and planner sign-in
 
+## Development connection checklist (November 11, 2026)
+
+The Webflow testing dashboard links into the publicly hosted Planning App at `https://kkeel.github.io/alveary-planning-app/`. Supabase URL Configuration has the same Site URL and `https://kkeel.github.io/alveary-planning-app/**` on the redirect allow list.
+
+CMI has entered both **repository variables** for the GitHub Actions build:
+- `ALVEARY_SUPABASE_URL`
+- `ALVEARY_SUPABASE_PUBLISHABLE_KEY` (the new `sb_publishable_` format, not the legacy anon key).
+
+The build reads these values through `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Because Next.js statically exports to GitHub Pages, updates to the variables require a new build/deployment. This documentation update triggers that build.
+
+**Global sign-out requirement (not implemented):** The user wants the app's Sign out action to end the Alveary Memberstack website session and as many connected-app sessions as the identity provider supports, not merely the local Supabase session. The current UI still calls `supabase.auth.signOut({scope: "local"})`; do not represent it as global sign-out. Design and test coordinated sign-out before accepting authentication as complete. Cross-app single logout is not guaranteed by OIDC SSO alone.
+
 ## Current deployment
 
 Every page in this starter application is publicly accessible. **No curriculum records, member-only lesson packets, or family records are currently loaded.**
