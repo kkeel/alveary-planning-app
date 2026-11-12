@@ -12,6 +12,25 @@ The build reads these values through `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC
 
 **Global sign-out requirement (not implemented):** The user wants the app's Sign out action to end the Alveary Memberstack website session and as many connected-app sessions as the identity provider supports, not merely the local Supabase session. The current UI still calls `supabase.auth.signOut({scope: "local"})`; do not represent it as global sign-out. Design and test coordinated sign-out before accepting authentication as complete. Cross-app single logout is not guaranteed by OIDC SSO alone.
 
+
+## Webflow → planner entry (SSO test)
+
+**Why the first test showed Public view:** Webflow and `kkeel.github.io` live on different browser origins. The planner cannot read the Webflow Memberstack session directly, and currently a plain link to the public planner intentionally does not launch OAuth.
+
+1. In Memberstack **Authentication → Custom SSO**, edit **Alveary Planning - Development**.
+2. Enable **Skip login for members already signed in on your site**. Memberstack's help center says this also enables **Skip the authorization screen**. Set the website URL to a page on `alveary.org` that loads Memberstack (the Webflow testing dashboard qualifies if it loads their script). Save.
+3. Update the **member-dashboard Planning App button only** (not public Course/Book/Supply links) to point to `https://kkeel.github.io/alveary-planning-app/?connect=1`. Keep **Open in new tab** off.
+4. The `connect=1` parameter is only an *instruction to start the normal OIDC authentication flow*; it is not proof of membership or a permission claim. The app removes the parameter immediately, starts Memberstack SSO in the same tab, and on success comes back to the normal Planning App URL.
+5. When entering from a public Webflow link or visiting a route directly, omit `connect=1`. Public pages appear without any login redirect.
+
+**Why the second test showed Public view again:** A Memberstack-hosted login screen can be expected while the skip-login switch is off. But a return to Public view *after completing the flow* means the application did not establish a Supabase session. The new client reports a sanitized OAuth error code (if supplied) or explains that no session was returned; it does not expose credentials, token fragments or authorization codes.
+
+For diagnosis, check **Supabase → Authentication → Users** after the failed attempt: a new user suggests the identity-provider handoff worked but the browser callback/session restoration failed. No new user suggests that the handoff failed before a Supabase identity was created. Authentication logs are then the authoritative place to inspect the error. Never paste a full OAuth callback URL containing code, state or tokens into chat.
+
+**Important:** Memberstack SSO reduces secondary prompts, but it may still briefly navigate through an external identity-provider domain. Since GitHub Pages is on a different root domain, it is not possible for the planner to directly inspect `alveary.org`'s signed-in cookie. We will eventually consider a dedicated Alveary subdomain for a more integrated production deployment.
+
+Global sign-out is not done. For clarity the preview temporarily labels its existing action **Sign out (planner only)** until we can coordinate Memberstack/other application sessions.
+
 ## Current deployment
 
 Every page in this starter application is publicly accessible. **No curriculum records, member-only lesson packets, or family records are currently loaded.**
