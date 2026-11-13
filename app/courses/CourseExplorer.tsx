@@ -213,8 +213,12 @@ export default function CourseExplorer() {
       add(groupSubject, { kind: "choice", sort: options[0].presentationSort, group, options });
     }
     const result = [...sectionMap.entries()]
-      .map(([name, rows]) => ({ name, rows: rows.sort((a, b) => compareText(a.sort, b.sort) ||
-        compareText(a.kind === "choice" ? a.group.id : a.course.id, b.kind === "choice" ? b.group.id : b.course.id)) }))
+      .map(([name, rows]) => ({ name, rows: rows.sort((a, b) =>
+        compareText(a.sort, b.sort) ||
+        compareText(a.kind === "choice" ? a.options[0].sort : a.course.sort,
+                    b.kind === "choice" ? b.options[0].sort : b.course.sort) ||
+        compareText(a.kind === "choice" ? a.group.id : a.course.id,
+                    b.kind === "choice" ? b.group.id : b.course.id)) }))
       .sort((a, b) => (subjects.indexOf(a.name) - subjects.indexOf(b.name)) || compareText(a.name, b.name));
     return result;
   // Use primitive render keys here; grades and query intentionally recompute results.
