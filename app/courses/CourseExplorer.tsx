@@ -18,6 +18,19 @@ type Plan = {
   subject: string;
   subjectSort: number | null;
   grades: number[];
+  gradeDisplay: string | null;
+  schedules: Array<{
+    id: string;
+    text: string;
+    weekly: number | null;
+    weeklyPlus: boolean;
+    minutes: number | null;
+    minutesPlus: boolean;
+    period: string | null;
+    teacher: string | null;
+    gradeBand: string | null;
+    note: string | null;
+  }>;
 };
 type TopicLink = { parentEditionId: string; childEditionId: string };
 type ChoiceGroup = {
@@ -146,7 +159,12 @@ export default function CourseExplorer() {
     for (const course of courses) {
       if (groupedIds.has(course.id)) continue;
       if (subject && course.subject !== subject) continue;
-      if (grades.length && !course.grades.some(g => grades.includes(g))) continue;
+      // Airtable's Display Grade can be "GRADES: 1+". Those courses apply
+      // to higher grades even when only the starting grade is linked.
+      const isGradePlus = course.gradeDisplay?.trim().endsWith("+") ?? false;
+      const minGrade = Math.min(...course.grades);
+      if (grades.length && !course.grades.some(g => grades.includes(g)) &&
+          !(isGradePlus && grades.some(g => g >= minGrade))) continue;
       if (!matchesText(course)) continue;
       add(course.subject, { kind: "course", sort: course.sort, course });
     }
@@ -177,8 +195,6 @@ export default function CourseExplorer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courses, groupedIds, subject, grades, normalizedQuery, plansById, childTopics, subjects]);
 
-  const visibleIds = useMemo(() => new Set(subjectRows.flatMap(s => s.rows.flatMap(r =>
-    r.kind === "course" ? [r.course.id] : r.options.map(c => c.id)))), [subjectRows]);
   const selectedComparisons = comparison.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
   const selectedPlans = planned.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
 
@@ -192,7 +208,8 @@ export default function CourseExplorer() {
 
   function CourseRow({ course, nested = false }: { course: Plan; nested?: boolean }) {
     const isExpanded = nested ? topicExpanded.includes(course.id) : expanded.includes(course.id);
-    const canExpand = Boolean(course.description || course.tips || childTopics.get(course.editionId)?.length || course.grades.length);
+    const isCombined = course.type === "Combined Course";
+    const canExpand = Boolean(course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
     const isPlanned = planned.includes(course.id);
     const isCompared = comparison.includes(course.id);
     const children = childTopics.get(course.editionId) ?? [];
@@ -200,11 +217,13 @@ export default function CourseExplorer() {
     return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")} key={course.id}>
       <div className="cx-course-head">
         <button type="button" className="cx-course-disclosure"
-          aria-expanded={isExpanded} aria-controls={"cx-detail-" + course.id}
+          aria-expanded={canExpand ? isExpanded : undefined}
+          aria-controls={canExpand ? "cx-detail-" + course.id : undefined}
+          disabled={!canExpand}
           onClick={() => toggleInList(course.id, nested ? setTopicExpanded : setExpanded)}>
           <span className="cx-course-name">{course.title}</span>
-          <span className="cx-view-label">{isExpanded ? "Hide details" : canExpand ? "View details" : "Details"}</span>
-          <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />
+          {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
+          {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
         </button>
         {!nested && mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
           type="button" aria-label={(isPlanned ? "Remove " : "Add ") + course.title + (isPlanned ? " from " : " to ") + "planning scratchpad"}
@@ -219,18 +238,21 @@ export default function CourseExplorer() {
           {isCompared ? <Check size={15} /> : <Columns3 size={15} />}
         </button>}
       </div>
-      {isExpanded && <div className="cx-course-details" id={"cx-detail-" + course.id}>
-        <p className="cx-course-meta">
-          {gradeLabel(course.grades)}
-          {course.country && course.country !== "Both" && <span> · {course.country}</span>}
-          {course.cycle && <span> · {course.cycle}</span>}
-        </p>
+      {canExpand && isExpanded && <div className="cx-course-details" id={"cx-detail-" + course.id}>
+        {!isCombined && <div className="cx-course-meta">
+          {course.schedules.length > 0 && <div className="cx-schedule-list">
+            {course.schedules.map(schedule =>
+              <span key={schedule.id} className="cx-schedule-item">
+                {schedule.text}
+              </span>)}
+          </div>}
+          <span className="cx-grade-detail">{course.gradeDisplay || gradeLabel(course.grades)}</span>
+        </div>}
         {course.description && <p className="cx-description">{course.description}</p>}
         {course.tips && <TipCallout>{course.tips}</TipCallout>}
-        {children.length > 0 && <div className="cx-topic-list">
-          <p className="cx-topic-heading">{children.length} {children.length === 1 ? "topic" : "topics"} in this course</p>
-          {children.map(child => <CourseRow key={child.id} course={child} nested />)}
-        </div>}
+      </div>}
+      {children.length > 0 && <div className="cx-topic-list">
+        {children.map(child => <CourseRow key={child.id} course={child} nested />)}
       </div>}
     </div>;
   }
@@ -239,9 +261,9 @@ export default function CourseExplorer() {
     <header className="cx-heading">
       <h1>Course List</h1>
       <p className="cx-lead">Discover courses, explore subjects, and compare possibilities for your school year.</p>
-      <p className="cx-edition-label">2027–28 curriculum preview · {catalog.sourceEditionCount} editions: {courses.length} courses and {catalog.courses.length - courses.length} connected topics</p>
     </header>
 
+    <div className="cx-toolbar-sticky">
     <div className="cx-toolbar" aria-label="Course List tools">
       <div className="cx-mode-switch" role="group" aria-label="Course browsing mode">
         <button type="button" className={mode === "browse" ? "is-current" : ""} onClick={() => setMode("browse")}>
@@ -291,6 +313,7 @@ export default function CourseExplorer() {
       </div>
       <p>Select more than one grade to see where courses can be shared or grouped differently.</p>
     </div>}
+    </div>
 
     {mode === "compare" && <section className="cx-compare-panel" aria-label="Compare selected courses">
       <div className="cx-panel-heading">
@@ -319,10 +342,8 @@ export default function CourseExplorer() {
               <CourseRow key={row.course.id} course={row.course} /> :
               <div className="cx-choice" key={row.group.id}>
                 <div className="cx-choice-header">
-                  <div className="cx-choice-label">Explore your options <span>· {gradeLabel(row.group.grades)}</span></div>
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
-                  {!row.group.guidance && <p>Explore these approaches and choose what fits your school.</p>}
                 </div>
                 <div>{row.options.map(option => <CourseRow key={option.id} course={option} />)}</div>
               </div>)}</div>
@@ -332,7 +353,6 @@ export default function CourseExplorer() {
           <p>Try another subject, grade, or search.</p>
           <button type="button" onClick={() => { setGrades([]); setSubject(""); setQuery(""); }}>Show all courses</button>
         </div>}
-        <p className="cx-footnote">Showing {visibleIds.size} unique courses{grades.length || subject || query ? " matching your filters" : ""}. Some courses appear in more than one grade-specific choice group; each is still one curriculum course.</p>
       </div>
       {mode === "plan" ? <aside className="cx-scratchpad" aria-label="Planning scratchpad">
         <div className="cx-scratchpad-heading">

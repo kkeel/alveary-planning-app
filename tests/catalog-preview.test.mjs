@@ -28,6 +28,34 @@ assert.ok(grouped.every(id => byPlan.has(id) && byPlan.get(id).type !== "Topic")
 assert.ok(data.choiceGroups.every(group => group.grades.length > 0));
 assert.ok(rows.every(row => !("edition_development_notes" in row) && !("pdf_url" in row) && !("member_id" in row)),
   "static public preview must not bundle internal lesson notes or private member data");
+// Edition-specific schedules are real Airtable recommendations; preserve every
+// option when an edition has multiple grade-band or lesson-time assignments.
+const recommendations = rows.flatMap(row => row.schedules || []);
+assert.equal(recommendations.length, 298, "full edition-specific schedule relationships imported");
+assert.equal(rows.filter(row => row.schedules?.length).length, 268, "scheduled Primary edition coverage");
+assert.equal(new Set(recommendations.map(row => row.id)).size, 98, "shared scheduling records are canonical");
+assert.ok(recommendations.every(row => row.text && row.id), "all schedule labels remain intact");
+assert.ok(rows.every(row => typeof row.gradeDisplay === "string" && row.gradeDisplay.length > 0),
+  "the exact Airtable grade label should be preserved, including grade +");
+assert.equal(rows.find(row => row.title === "Art: Level 1")?.gradeDisplay, "GRADES: 1+");
+
+const sort = (a, b) => a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0;
+const linked = new Map();
+for (const link of data.topicLinks) {
+  const children = linked.get(link.parentEditionId) || [];
+  children.push(byEdition.get(link.childEditionId));
+  linked.set(link.parentEditionId, children);
+}
+for (const children of linked.values()) {
+  const inPlanSortOrder = [...children].sort(sort);
+  for (let i = 1; i < inPlanSortOrder.length; i++) {
+    assert.ok(sort(inPlanSortOrder[i - 1], inPlanSortOrder[i]) <= 0,
+      "topic order must use source Plan Sort rather than titles or link order");
+  }
+}
+const groupedSourceIds = new Set(data.choiceGroups.flatMap(group => group.courseIds));
+assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced Nature Study")?.id));
+assert.equal(data.choiceGroups.some(group => group.guidance !== null && !group.guidance.trim()), false);
 const art = rows.find(row => row.title === "Art: Level 1");
 assert.ok(art?.description && art.tips, "real source descriptions and placement guidance must be present");
-console.log("PASS: all 377 editions and 308 links, 4 course choice groups / 8 options, complete source metadata.");
+console.log("PASS: 377 editions, 308 topic links, 298 schedules across 268 editions, explicit grades, 4 choice groups.");
