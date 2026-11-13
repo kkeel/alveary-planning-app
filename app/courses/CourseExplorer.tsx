@@ -374,7 +374,29 @@ export default function CourseExplorer() {
         <textarea id="cx-notes" value={notes} onChange={e => setNotes(e.target.value)}
           placeholder="Things to remember, questions to discuss, ideas for combining students…" rows={11} />
         <p className="cx-save-note">Preview scratchpad only · saved on this browser, not to a student or member account.</p>
-      </aside> : <aside className="cx-future-space" aria-hidden="true" />}
+      </aside> : <aside className="cx-future-space" aria-label="Design preview of choice group styles">
+        <div className="cx-design-tryout">
+          <p className="cx-design-eyebrow">Design preview</p>
+          <h2>Choice group appearance</h2>
+          <p>Try three ways to make alternatives clear without breaking up the course list.</p>
+          <div className="cx-style-switch" role="group" aria-label="Choice group display style">
+            {([
+              { id: "accent" as const, label: "Accent line" },
+              { id: "outline" as const, label: "Fine outline" },
+              { id: "dividers" as const, label: "Simple dividers" }
+            ]).map(style => <button type="button" key={style.id}
+              className={choiceStyle === style.id ? "is-selected" : ""}
+              aria-pressed={choiceStyle === style.id}
+              onClick={() => setChoiceStyle(style.id)}>{style.label}</button>)}
+          </div>
+          <div className="cx-design-try-links">
+            <span>Try with</span>
+            <button type="button" onClick={() => { setSubject("Science"); setGrades([]); }}>Science</button>
+            <button type="button" onClick={() => { setSubject("Latin"); setGrades([]); }}>Latin</button>
+          </div>
+          <p className="cx-design-note">For layout testing only. The group records and course choices do not change.</p>
+        </div>
+      </aside>}
     </div>
   </div>;
 }
