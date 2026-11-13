@@ -1,5 +1,8 @@
 # Course List iteration — nested outline, choice-group designs, and independent sort purposes
 
+> **Decision recorded November 13, 2026:** The **Accent line** group design was selected. The design comparison panel has been removed. The edition-based **App Presentation Sort** has now been created in the development Supabase catalog and applied to the Course Explorer. See [Course Explorer app presentation order](course-explorer-app-presentation-sort.md) for the implemented rules and tests. The alternatives below are retained as historical design notes, not current user settings.
+
+
 **Design state:** Iteration following November 13 user review. Existing 377-edition 2027–28 draft metadata remains unchanged.
 
 ## Changes being trialed
