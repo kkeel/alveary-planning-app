@@ -5,11 +5,12 @@
   "scripts": {
     "predev": "node scripts/prepare-brand-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/prepare-brand-assets.mjs",
+    "prebuild": "node scripts/prepare-brand-assets.mjs && node tests/catalog-preview.test.mjs",
     "build": "next build",
     "start": "next start",
     "pretypecheck": "node scripts/prepare-brand-assets.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:catalog": "node tests/catalog-preview.test.mjs"
   },
   "dependencies": {
     "next": "16.4.6",
