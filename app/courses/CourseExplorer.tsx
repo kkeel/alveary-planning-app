@@ -49,6 +49,7 @@ type Catalog = {
   choiceGroups: ChoiceGroup[];
 };
 type Mode = "browse" | "plan" | "compare";
+type ChoiceStyle = "accent" | "outline" | "dividers";
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
@@ -86,13 +87,12 @@ function TipCallout({ children }: { children: React.ReactNode }) {
 
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
+  const [choiceStyle, setChoiceStyle] = useState<ChoiceStyle>("accent");
   const [grades, setGrades] = useState<number[]>([]);
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string[]>(() =>
-    catalog.courses.filter(c => c.title === "Art: Level 1").map(c => c.id)
-  );
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [topicExpanded, setTopicExpanded] = useState<string[]>([]);
   const [planned, setPlanned] = useState<string[]>([]);
   const [comparison, setComparison] = useState<string[]>([]);
@@ -209,10 +209,11 @@ export default function CourseExplorer() {
   function CourseRow({ course, nested = false }: { course: Plan; nested?: boolean }) {
     const isExpanded = nested ? topicExpanded.includes(course.id) : expanded.includes(course.id);
     const isCombined = course.type === "Combined Course";
-    const canExpand = Boolean(course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
+    const children = childTopics.get(course.editionId) ?? [];
+    // Topic outlines are revealed only after the parent course is opened.
+    const canExpand = Boolean(children.length || course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
     const isPlanned = planned.includes(course.id);
     const isCompared = comparison.includes(course.id);
-    const children = childTopics.get(course.editionId) ?? [];
 
     return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")} key={course.id}>
       <div className="cx-course-head">
@@ -250,9 +251,9 @@ export default function CourseExplorer() {
         </div>}
         {course.description && <p className="cx-description">{course.description}</p>}
         {course.tips && <TipCallout>{course.tips}</TipCallout>}
-      </div>}
-      {children.length > 0 && <div className="cx-topic-list">
-        {children.map(child => <CourseRow key={child.id} course={child} nested />)}
+        {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
+          {children.map(child => <CourseRow key={child.id} course={child} nested />)}
+        </div>}
       </div>}
     </div>;
   }
@@ -340,7 +341,7 @@ export default function CourseExplorer() {
             <h2>{section.name}</h2>
             <div className="cx-rows">{section.rows.map(row => row.kind === "course" ?
               <CourseRow key={row.course.id} course={row.course} /> :
-              <div className="cx-choice" key={row.group.id}>
+              <div className={"cx-choice cx-choice--" + choiceStyle} key={row.group.id}>
                 <div className="cx-choice-header">
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
@@ -371,7 +372,29 @@ export default function CourseExplorer() {
         <textarea id="cx-notes" value={notes} onChange={e => setNotes(e.target.value)}
           placeholder="Things to remember, questions to discuss, ideas for combining students…" rows={11} />
         <p className="cx-save-note">Preview scratchpad only · saved on this browser, not to a student or member account.</p>
-      </aside> : <aside className="cx-future-space" aria-hidden="true" />}
+      </aside> : <aside className="cx-future-space" aria-label="Design preview of choice group styles">
+        <div className="cx-design-tryout">
+          <p className="cx-design-eyebrow">Design preview</p>
+          <h2>Choice group appearance</h2>
+          <p>Try three ways to make alternatives clear without breaking up the course list.</p>
+          <div className="cx-style-switch" role="group" aria-label="Choice group display style">
+            {([
+              { id: "accent" as const, label: "Accent line" },
+              { id: "outline" as const, label: "Fine outline" },
+              { id: "dividers" as const, label: "Simple dividers" }
+            ]).map(style => <button type="button" key={style.id}
+              className={choiceStyle === style.id ? "is-selected" : ""}
+              aria-pressed={choiceStyle === style.id}
+              onClick={() => setChoiceStyle(style.id)}>{style.label}</button>)}
+          </div>
+          <div className="cx-design-try-links">
+            <span>Try with</span>
+            <button type="button" onClick={() => { setSubject("Science"); setGrades([]); }}>Science</button>
+            <button type="button" onClick={() => { setSubject("Latin"); setGrades([]); }}>Latin</button>
+          </div>
+          <p className="cx-design-note">For layout testing only. The group records and course choices do not change.</p>
+        </div>
+      </aside>}
     </div>
   </div>;
 }
