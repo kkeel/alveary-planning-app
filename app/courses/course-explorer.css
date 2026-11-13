@@ -90,10 +90,9 @@
 .cx-page-columns { display: grid; grid-template-columns: minmax(0, 840px) minmax(0, 1fr); align-items: start; gap: 38px; }
 .cx-page-columns--planning { grid-template-columns: minmax(0, 840px) minmax(235px, 310px); }
 .cx-list-column { min-width: 0; }
-.cx-future-space { min-width: 0; }
+.cx-future-space { min-width: 0; position: sticky; top: 165px; align-self: start; }
 .cx-design-tryout {
-  position: sticky;
-  top: 170px;
+  position: static;
   max-width: 245px;
   margin-top: 36px;
   padding: 5px 0 0 17px;
