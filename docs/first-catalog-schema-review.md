@@ -1,6 +1,6 @@
 # First Supabase catalog schema — review checklist
 
-**State:** official [Supabase CLI-generated migration](../supabase/migrations/20261113114606_catalog_foundation.sql) committed to this PR and validated against a disposable PostgreSQL 17 database in GitHub Actions. The original [SQL review draft](sql/catalog-foundation-review.sql) is retained for comparison. **The migration has NOT been applied to hosted Supabase.**
+**State:** official [Supabase CLI-generated migration](../supabase/migrations/20261113121410_catalog_foundation.sql) committed to this PR and validated against a disposable PostgreSQL 17 database in GitHub Actions. The original [SQL review draft](sql/catalog-foundation-review.sql) is retained for comparison. **The migration has NOT been applied to hosted Supabase.**
 
 **Target:** Supabase **Alveary Planning - Development** (`fzitmrzuxxdmvrhftdkr`). Existing production app, Airtable records, and GitHub Actions pipelines remain unchanged.
 
@@ -28,7 +28,7 @@ The migration intentionally **does not** create household/student/member data, r
 
 ## Important implementation checks before any database apply
 
-- GitHub Actions ran pinned **Supabase CLI 3.1.0** and generated the official filename with `supabase migration new catalog_foundation`: `supabase/migrations/20261113114606_catalog_foundation.sql`. The file is now committed. **Do not generate a duplicate migration.**
+- GitHub Actions ran pinned **Supabase CLI 3.1.0** and generated the official filename with `supabase migration new catalog_foundation`: `supabase/migrations/20261113121410_catalog_foundation.sql`. The file is now committed. **Do not generate a duplicate migration.**
 - Use CLI `--help` and inspect the v3 breaking changes before deciding local/remote flags. Do **not** turn on automatic Supabase production deployment.
 - **Completed:** the committed migration ran successfully in an isolated PostgreSQL 17 GitHub Actions service. Checks verified 14 tables, RLS on all 14, no anon/authenticated table DML grants, cross-year foreign-key rejection, and Advanced Nature Study in two grade-specific groups. **Not yet tested** against a fully local Supabase stack or the hosted development project.
 - Confirm later publisher validation: choice group linked options are strictly `Combined Course` or `Single-Topic Course`, not `Topic`; course options resolve to a Primary edition for the correct year; Active groups have explicit display-grade coverage for their grouped courses; no duplicate standalone listings.
