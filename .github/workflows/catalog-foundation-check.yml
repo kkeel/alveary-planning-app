@@ -1,0 +1,92 @@
+name: Validate catalog foundation migration
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/catalog-foundation-check.yml"
+      - "docs/sql/catalog-foundation-review.sql"
+      - "supabase/migrations/*_catalog_foundation.sql"
+      - "tests/sql/catalog-foundation-smoke.sql"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-postgres-validation:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 8
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - name: Check out the review branch
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+
+      - name: Create Supabase-like API roles in disposable PostgreSQL
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "create role anon nologin;"
+          psql -v ON_ERROR_STOP=1 -c "create role authenticated nologin;"
+
+      - name: Execute official committed migration in isolated database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113114606_catalog_foundation.sql
+
+      - name: Check RLS, release isolation, and shared course choices
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/catalog-foundation-smoke.sql
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 3.1.0
+
+      - name: Confirm the official migration command
+        run: |
+          supabase --version
+          supabase migration --help
+          supabase migration new --help
+
+      - name: Verify CLI-created migration is committed and matches review SQL
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          migration = Path("supabase/migrations/20261113114606_catalog_foundation.sql")
+          draft = Path("docs/sql/catalog-foundation-review.sql").read_text()
+          marker = "\nbegin;\n"
+          if marker not in draft:
+              raise SystemExit("Missing reviewed SQL transaction marker")
+          actual = migration.read_text()
+          expected = "begin;\n" + draft.split(marker, 1)[1]
+          if not actual.endswith(expected):
+              raise SystemExit("Committed migration differs from reviewed SQL")
+          print(f"Verified official CLI migration and SQL contents: {migration}")
+          PY
+
+      - name: Upload CLI-created migration for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-foundation-cli-migration
+          path: supabase/migrations/*_catalog_foundation.sql
+          if-no-files-found: error
