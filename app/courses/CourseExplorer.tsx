@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bookmark, Check, ChevronDown, Columns3, List, NotebookPen, Printer, Search, SlidersHorizontal, X } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 
@@ -11,6 +11,7 @@ type Plan = {
   title: string;
   editionTitle: string;
   sort: string;
+  presentationSort: string;
   description: string | null;
   tips: string | null;
   country: string | null;
@@ -49,7 +50,6 @@ type Catalog = {
   choiceGroups: ChoiceGroup[];
 };
 type Mode = "browse" | "plan" | "compare";
-type ChoiceStyle = "accent" | "outline" | "dividers";
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
@@ -58,6 +58,10 @@ const catalog = sourceCatalog as Catalog;
 const storageKey = "alveary:course-explorer-preview:2027-28";
 const compareLimit = 3;
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+const comparePlan = (a: Plan, b: Plan) =>
+  compareText(a.presentationSort, b.presentationSort) ||
+  compareText(a.sort, b.sort) ||
+  compareText(a.id, b.id);
 const allGrades = Array.from({ length: 12 }, (_, i) => i + 1);
 
 function gradeLabel(grades: number[]): string {
@@ -87,17 +91,39 @@ function TipCallout({ children }: { children: React.ReactNode }) {
 
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
-  const [choiceStyle, setChoiceStyle] = useState<ChoiceStyle>("accent");
   const [grades, setGrades] = useState<number[]>([]);
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
+  const gradeButtonRef = useRef<HTMLButtonElement>(null);
+  const gradePanelRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<string[]>([]);
   const [topicExpanded, setTopicExpanded] = useState<string[]>([]);
   const [planned, setPlanned] = useState<string[]>([]);
   const [comparison, setComparison] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [readyToPersist, setReadyToPersist] = useState(false);
+
+  useEffect(() => {
+    if (!gradesOpen) return;
+    function closeIfOutside(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (gradeButtonRef.current?.contains(target) || gradePanelRef.current?.contains(target)) return;
+      setGradesOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setGradesOpen(false);
+      gradeButtonRef.current?.focus();
+    }
+    document.addEventListener("pointerdown", closeIfOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeIfOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [gradesOpen]);
 
   const plansById = useMemo(() => new Map(catalog.courses.map(c => [c.id, c])), []);
   const plansByEditionId = useMemo(() => new Map(catalog.courses.map(c => [c.editionId, c])), []);
@@ -107,7 +133,7 @@ export default function CourseExplorer() {
       const topic = plansByEditionId.get(link.childEditionId);
       if (topic) map.set(link.parentEditionId, [...(map.get(link.parentEditionId) ?? []), topic]);
     }
-    for (const list of map.values()) list.sort((a, b) => compareText(a.sort, b.sort));
+    for (const list of map.values()) list.sort(comparePlan);
     return map;
   }, [plansByEditionId]);
 
@@ -166,7 +192,7 @@ export default function CourseExplorer() {
       if (grades.length && !course.grades.some(g => grades.includes(g)) &&
           !(isGradePlus && grades.some(g => g >= minGrade))) continue;
       if (!matchesText(course)) continue;
-      add(course.subject, { kind: "course", sort: course.sort, course });
+      add(course.subject, { kind: "course", sort: course.presentationSort, course });
     }
 
     for (const group of catalog.choiceGroups) {
@@ -183,8 +209,8 @@ export default function CourseExplorer() {
         .some(text => text?.toLocaleLowerCase().includes(normalizedQuery));
       const options = groupMatchesSearch ? allOptions : allOptions.filter(matchesText);
       if (!options.length) continue;
-      options.sort((a, b) => compareText(a.sort, b.sort));
-      add(groupSubject, { kind: "choice", sort: options[0].sort, group, options });
+      options.sort(comparePlan);
+      add(groupSubject, { kind: "choice", sort: options[0].presentationSort, group, options });
     }
     const result = [...sectionMap.entries()]
       .map(([name, rows]) => ({ name, rows: rows.sort((a, b) => compareText(a.sort, b.sort) ||
@@ -279,7 +305,7 @@ export default function CourseExplorer() {
       </div>
       <div className="cx-toolbar-tools">
         <button type="button" className={"cx-filter-control" + (grades.length ? " has-value" : "")}
-          onClick={() => setGradesOpen(v => !v)} aria-expanded={gradesOpen} aria-controls="cx-grade-options">
+          ref={gradeButtonRef} onClick={() => setGradesOpen(v => !v)} aria-expanded={gradesOpen} aria-controls="cx-grade-options">
           <SlidersHorizontal size={14} /> {grades.length ? gradeLabel(grades) : "All grades"}
           <ChevronDown size={13} />
         </button>
@@ -300,7 +326,7 @@ export default function CourseExplorer() {
       </div>
     </div>
 
-    {gradesOpen && <div className="cx-grade-panel" id="cx-grade-options">
+    {gradesOpen && <div ref={gradePanelRef} className="cx-grade-panel" id="cx-grade-options">
       <div className="cx-grade-panel-heading">
         <span>Show courses for</span>
         <button type="button" onClick={() => { setGrades([]); setGradesOpen(false); }}>All grades</button>
@@ -341,7 +367,7 @@ export default function CourseExplorer() {
             <h2>{section.name}</h2>
             <div className="cx-rows">{section.rows.map(row => row.kind === "course" ?
               <CourseRow key={row.course.id} course={row.course} /> :
-              <div className={"cx-choice cx-choice--" + choiceStyle} key={row.group.id}>
+              <div className="cx-choice cx-choice--accent" key={row.group.id}>
                 <div className="cx-choice-header">
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
@@ -372,29 +398,7 @@ export default function CourseExplorer() {
         <textarea id="cx-notes" value={notes} onChange={e => setNotes(e.target.value)}
           placeholder="Things to remember, questions to discuss, ideas for combining students…" rows={11} />
         <p className="cx-save-note">Preview scratchpad only · saved on this browser, not to a student or member account.</p>
-      </aside> : <aside className="cx-future-space" aria-label="Design preview of choice group styles">
-        <div className="cx-design-tryout">
-          <p className="cx-design-eyebrow">Design preview</p>
-          <h2>Choice group appearance</h2>
-          <p>Try three ways to make alternatives clear without breaking up the course list.</p>
-          <div className="cx-style-switch" role="group" aria-label="Choice group display style">
-            {([
-              { id: "accent" as const, label: "Accent line" },
-              { id: "outline" as const, label: "Fine outline" },
-              { id: "dividers" as const, label: "Simple dividers" }
-            ]).map(style => <button type="button" key={style.id}
-              className={choiceStyle === style.id ? "is-selected" : ""}
-              aria-pressed={choiceStyle === style.id}
-              onClick={() => setChoiceStyle(style.id)}>{style.label}</button>)}
-          </div>
-          <div className="cx-design-try-links">
-            <span>Try with</span>
-            <button type="button" onClick={() => { setSubject("Science"); setGrades([]); }}>Science</button>
-            <button type="button" onClick={() => { setSubject("Latin"); setGrades([]); }}>Latin</button>
-          </div>
-          <p className="cx-design-note">For layout testing only. The group records and course choices do not change.</p>
-        </div>
-      </aside>}
+      </aside> : <aside className="cx-future-space" aria-hidden="true" />}
     </div>
   </div>;
 }
