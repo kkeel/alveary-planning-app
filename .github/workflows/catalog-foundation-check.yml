@@ -52,7 +52,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "create role authenticated nologin;"
 
       - name: Execute official committed migration in isolated database
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113114606_catalog_foundation.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261113121410_catalog_foundation.sql
 
       - name: Check RLS, release isolation, and shared course choices
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/catalog-foundation-smoke.sql
@@ -72,7 +72,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          migration = Path("supabase/migrations/20261113114606_catalog_foundation.sql")
+          migration = Path("supabase/migrations/20261113121410_catalog_foundation.sql")
           draft = Path("docs/sql/catalog-foundation-review.sql").read_text()
           marker = "\nbegin;\n"
           if marker not in draft:
