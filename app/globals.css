@@ -223,3 +223,41 @@ p { line-height: 1.65; }
 .auth-bar-error { flex-basis: 100%; margin: 0; font-size: 12px; color: #a33831; }
 @media (max-width: 1100px) { .auth-bar { padding: 8px 20px; } }
 @media (max-width: 760px) { .auth-bar { padding: 10px 18px; } }
+
+/* Keep cross-page navigation available while members scan longer course lists.
+   The compact rail and top breadcrumb remain visible; the authentication
+   status strip can scroll away to preserve reading space. */
+@media (min-width: 761px) {
+  .alveary-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 39;
+  }
+}
+.shell-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  box-shadow: 0 1px 0 var(--line);
+}
+@media (max-width: 760px) {
+  .alveary-shell.mobile-open .alveary-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 70;
+    width: min(310px, 88vw);
+    max-height: 100vh;
+    overflow-y: auto;
+    box-shadow: 5px 0 22px #1f251f40;
+  }
+}
+@media print {
+  .shell-topbar, .alveary-sidebar { display: none !important; }
+}
