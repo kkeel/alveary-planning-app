@@ -92,9 +92,7 @@ export default function CourseExplorer() {
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
-  const [expanded, setExpanded] = useState<string[]>(() =>
-    catalog.courses.filter(c => c.title === "Art: Level 1").map(c => c.id)
-  );
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [topicExpanded, setTopicExpanded] = useState<string[]>([]);
   const [planned, setPlanned] = useState<string[]>([]);
   const [comparison, setComparison] = useState<string[]>([]);
