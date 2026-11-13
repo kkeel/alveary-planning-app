@@ -159,7 +159,12 @@ export default function CourseExplorer() {
     for (const course of courses) {
       if (groupedIds.has(course.id)) continue;
       if (subject && course.subject !== subject) continue;
-      if (grades.length && !course.grades.some(g => grades.includes(g))) continue;
+      // Airtable's Display Grade can be "GRADES: 1+". Those courses apply
+      // to higher grades even when only the starting grade is linked.
+      const isGradePlus = course.gradeDisplay?.trim().endsWith("+") ?? false;
+      const minGrade = Math.min(...course.grades);
+      if (grades.length && !course.grades.some(g => grades.includes(g)) &&
+          !(isGradePlus && grades.some(g => g >= minGrade))) continue;
       if (!matchesText(course)) continue;
       add(course.subject, { kind: "course", sort: course.sort, course });
     }
