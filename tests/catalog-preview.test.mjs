@@ -53,9 +53,33 @@ for (const children of linked.values()) {
       "topic order must use source Plan Sort rather than titles or link order");
   }
 }
+// Display order is deliberately distinct from Airtable authoring Plan Sort.
+// Combined courses inherit the earliest linked topic in the SAME subject.
+// A Citizenship course must not be anchored to a Literature read-aloud.
+let derivedCombined = 0;
+let crossSubjectCourses = 0;
+for (const course of rows) {
+  assert.ok(course.presentationSort && typeof course.presentationSort === "string",
+    "every edition needs an explicit app presentation sort");
+  if (course.type !== "Combined Course") {
+    assert.equal(course.presentationSort, course.sort, "individual topics and courses retain source Plan Sort");
+    continue;
+  }
+  const children = linked.get(course.editionId) || [];
+  const sameSubject = children.filter(child => child.subject === course.subject);
+  if (sameSubject.length !== children.length) crossSubjectCourses++;
+  const expected = sameSubject.length
+    ? [...sameSubject].map(child => child.sort).sort()[0]
+    : course.sort;
+  assert.equal(course.presentationSort, expected, "combined course sort follows first same-subject topic");
+  if (course.presentationSort !== course.sort) derivedCombined++;
+}
+assert.equal(derivedCombined, 103, "all 103 combined courses have a topic-anchored app sort");
+assert.equal(crossSubjectCourses, 14, "14 Citizenship combined courses include a cross-subject Literature topic");
+
 const groupedSourceIds = new Set(data.choiceGroups.flatMap(group => group.courseIds));
 assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced Nature Study")?.id));
 assert.equal(data.choiceGroups.some(group => group.guidance !== null && !group.guidance.trim()), false);
 const art = rows.find(row => row.title === "Art: Level 1");
 assert.ok(art?.description && art.tips, "real source descriptions and placement guidance must be present");
-console.log("PASS: 377 editions, 308 topic links, 298 schedules across 268 editions, explicit grades, 4 choice groups.");
+console.log("PASS: 377 editions, 308 links, 298 schedules, and 103 topic-anchored presentation sorts; 14 cross-subject cases handled.");
