@@ -58,7 +58,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const activePath = currentPath === "/planning" ? "/" : currentPath;
   const current = [...navigation, ...planningItems].find((item) => item.href === activePath);
   const currentName = current?.label ?? "Planning";
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // Start with the slim icon rail; members can expand it any time.
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
