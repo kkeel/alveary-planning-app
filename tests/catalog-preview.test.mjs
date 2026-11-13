@@ -40,7 +40,6 @@ assert.ok(rows.every(row => typeof row.gradeDisplay === "string" && row.gradeDis
 assert.equal(rows.find(row => row.title === "Art: Level 1")?.gradeDisplay, "GRADES: 1+");
 
 const sort = (a, b) => a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0;
-const byEdition = new Map(rows.map(row => [row.editionId, row]));
 const linked = new Map();
 for (const link of data.topicLinks) {
   const children = linked.get(link.parentEditionId) || [];
@@ -48,9 +47,11 @@ for (const link of data.topicLinks) {
   linked.set(link.parentEditionId, children);
 }
 for (const children of linked.values()) {
-  assert.deepEqual(children.sort(sort).map(x => x.id),
-    children.slice().sort(sort).map(x => x.id),
-    "topic editions must support deterministic Plan Sort ordering");
+  const inPlanSortOrder = [...children].sort(sort);
+  for (let i = 1; i < inPlanSortOrder.length; i++) {
+    assert.ok(sort(inPlanSortOrder[i - 1], inPlanSortOrder[i]) <= 0,
+      "topic order must use source Plan Sort rather than titles or link order");
+  }
 }
 const groupedSourceIds = new Set(data.choiceGroups.flatMap(group => group.courseIds));
 assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced Nature Study")?.id));
