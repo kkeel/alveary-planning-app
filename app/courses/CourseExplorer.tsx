@@ -209,11 +209,11 @@ export default function CourseExplorer() {
   function CourseRow({ course, nested = false }: { course: Plan; nested?: boolean }) {
     const isExpanded = nested ? topicExpanded.includes(course.id) : expanded.includes(course.id);
     const isCombined = course.type === "Combined Course";
+    const children = childTopics.get(course.editionId) ?? [];
     // Topic outlines are revealed only after the parent course is opened.
     const canExpand = Boolean(children.length || course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
     const isPlanned = planned.includes(course.id);
     const isCompared = comparison.includes(course.id);
-    const children = childTopics.get(course.editionId) ?? [];
 
     return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")} key={course.id}>
       <div className="cx-course-head">
