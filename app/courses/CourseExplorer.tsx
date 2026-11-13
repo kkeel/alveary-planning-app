@@ -49,6 +49,7 @@ type Catalog = {
   choiceGroups: ChoiceGroup[];
 };
 type Mode = "browse" | "plan" | "compare";
+type ChoiceStyle = "accent" | "outline" | "dividers";
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
@@ -86,6 +87,7 @@ function TipCallout({ children }: { children: React.ReactNode }) {
 
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
+  const [choiceStyle, setChoiceStyle] = useState<ChoiceStyle>("accent");
   const [grades, setGrades] = useState<number[]>([]);
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
@@ -209,7 +211,8 @@ export default function CourseExplorer() {
   function CourseRow({ course, nested = false }: { course: Plan; nested?: boolean }) {
     const isExpanded = nested ? topicExpanded.includes(course.id) : expanded.includes(course.id);
     const isCombined = course.type === "Combined Course";
-    const canExpand = Boolean(course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
+    // Topic outlines are revealed only after the parent course is opened.
+    const canExpand = Boolean(children.length || course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
     const isPlanned = planned.includes(course.id);
     const isCompared = comparison.includes(course.id);
     const children = childTopics.get(course.editionId) ?? [];
@@ -250,9 +253,9 @@ export default function CourseExplorer() {
         </div>}
         {course.description && <p className="cx-description">{course.description}</p>}
         {course.tips && <TipCallout>{course.tips}</TipCallout>}
-      </div>}
-      {children.length > 0 && <div className="cx-topic-list">
-        {children.map(child => <CourseRow key={child.id} course={child} nested />)}
+        {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
+          {children.map(child => <CourseRow key={child.id} course={child} nested />)}
+        </div>}
       </div>}
     </div>;
   }
@@ -340,7 +343,7 @@ export default function CourseExplorer() {
             <h2>{section.name}</h2>
             <div className="cx-rows">{section.rows.map(row => row.kind === "course" ?
               <CourseRow key={row.course.id} course={row.course} /> :
-              <div className="cx-choice" key={row.group.id}>
+              <div className={"cx-choice cx-choice--" + choiceStyle} key={row.group.id}>
                 <div className="cx-choice-header">
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
