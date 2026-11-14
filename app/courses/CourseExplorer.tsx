@@ -4,6 +4,8 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "re
 import { Bookmark, Check, ChevronDown, Columns3, List, NotebookPen, Printer, Search, SlidersHorizontal, X } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
+import { matchesCountry } from "./country-filter.mjs";
+import type { CountryFilter } from "./country-filter.mjs";
 
 type Plan = {
   id: string;
@@ -198,6 +200,7 @@ function CourseRow({
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
   const [grades, setGrades] = useState<number[]>([]);
+  const [country, setCountry] = useState<CountryFilter>("all");
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
@@ -288,6 +291,7 @@ export default function CourseExplorer() {
     for (const course of courses) {
       if (groupedIds.has(course.id)) continue;
       if (subject && course.subject !== subject) continue;
+      if (!matchesCountry(course.country, country)) continue;
       // Airtable's Display Grade can be "GRADES: 1+". Those courses apply
       // to higher grades even when only the starting grade is linked.
       const isGradePlus = course.gradeDisplay?.trim().endsWith("+") ?? false;
@@ -302,7 +306,7 @@ export default function CourseExplorer() {
       if (grades.length && !group.grades.some(g => grades.includes(g))) continue;
       const allOptions = group.courseIds
         .map(id => plansById.get(id))
-        .filter((item): item is Plan => !!item && item.type !== "Topic");
+        .filter((item): item is Plan => !!item && item.type !== "Topic" && matchesCountry(item.country, country));
       if (!allOptions.length) continue;
       // Keep the author's grade-specific options together. Never infer display
       // grades from linked course eligibility (science differs by grade).
@@ -326,7 +330,7 @@ export default function CourseExplorer() {
     return result;
   // Use primitive render keys here; grades and query intentionally recompute results.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courses, groupedIds, subject, grades, normalizedQuery, plansById, childTopics, subjects]);
+  }, [courses, groupedIds, subject, grades, country, normalizedQuery, plansById, childTopics, subjects]);
 
   const selectedComparisons = comparison.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
   const selectedPlans = planned.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
@@ -370,7 +374,7 @@ export default function CourseExplorer() {
       <div className="cx-toolbar-tools">
         <button type="button" className={"cx-filter-control" + (grades.length ? " has-value" : "")}
           ref={gradeButtonRef} onClick={() => setGradesOpen(v => !v)} aria-expanded={gradesOpen} aria-controls="cx-grade-options">
-          <SlidersHorizontal size={14} /> {grades.length ? gradeLabel(grades) : "All grades"}
+          <SlidersHorizontal size={14} /> {grades.length ? gradeLabel(grades) : "All grades"}{country !== "all" ? " · " + (country === "us" ? "U.S." : "Canada") : ""}
           <ChevronDown size={13} />
         </button>
         <label className="sr-only" htmlFor="cx-subject-filter">Filter by subject</label>
@@ -403,6 +407,20 @@ export default function CourseExplorer() {
         </label>)}
       </div>
       <p>Select more than one grade to see where courses can be shared or grouped differently.</p>
+      <div className="cx-country-filter" role="group" aria-label="Filter courses by country">
+        <span className="cx-country-label">Country</span>
+        <div className="cx-country-options">
+          {([
+            { id: "all" as const, label: "All" },
+            { id: "us" as const, label: "U.S." },
+            { id: "canada" as const, label: "Canada" },
+          ]).map(option => <button type="button" key={option.id}
+            className={country === option.id ? "is-selected" : ""}
+            aria-pressed={country === option.id}
+            onClick={() => setCountry(option.id)}>{option.label}</button>)}
+        </div>
+        <span className="cx-country-hint">Shared courses stay visible in both.</span>
+      </div>
     </div>}
     </div>
 
@@ -442,7 +460,7 @@ export default function CourseExplorer() {
         ) : <div className="cx-empty">
           <h2>No courses match these filters.</h2>
           <p>Try another subject, grade, or search.</p>
-          <button type="button" onClick={() => { setGrades([]); setSubject(""); setQuery(""); }}>Show all courses</button>
+          <button type="button" onClick={() => { setGrades([]); setCountry("all"); setSubject(""); setQuery(""); }}>Show all courses</button>
         </div>}
       </div>
       {mode === "plan" ? <aside className="cx-scratchpad" aria-label="Planning scratchpad">
