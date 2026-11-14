@@ -35,5 +35,11 @@ My Plan has no real student assignments yet; its displayed count remains 0 and i
 2. Open a course with multiple topics (Citizenship Grade 7 is a useful example), inspect nested topic descriptions, click View Books and return through both the page's **Back** link and the sidebar. Planning mode must be preserved.
 3. Verify saved items **never show course/type classification headings**; no absent-description disclaimer remains.
 4. Check the combining icon and sage box, plus ellipsis actions for up/down/remove and subject reset. Selected rows keep their ordering; no visible wall of icons.
-5. At <=1280 px, confirm a **floating Think Tank/My Plan summary** is visible while scrolling. It should open a drawer and close by X, scrim or Escape without pushing the desk below the Course List.
+5. At <=1280 px, confirm a **floating Think Tank/My Plan summary** is visible while scrolling. It should open a drawer and close by the single panel-close icon, scrim or Escape without pushing the desk below the Course List.
 6. List mode remains uncluttered and there is no Compare button.
+
+## November 14 follow-up — drawer close and filter preferences
+
+- The drawer uses the same **panel-close** icon on wide and narrow screens; the redundant mobile-only X has been removed.
+- Grade and U.S./Canada filter choices live in the shared browser-local preview state (with the saved Course List mode), not in the remounting Course List component. Previously saved Think Tank entries are preserved, and missing/invalid older filter values fall back to **All grades / All countries**.
+- Verify grade 3 + grade 6 with Canada selected, switch to Books and back to Courses via both links and sidebar, and reload. The grade and country settings should remain. Test changing to U.S. and clearing grades, including List-to-Planning mode changes. Subject and search remain temporary in-page filters.

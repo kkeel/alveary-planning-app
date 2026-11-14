@@ -5,7 +5,6 @@ import { Bookmark, Check, ChevronDown, List, NotebookPen, Printer, Search, Slide
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
-import type { CountryFilter } from "./country-filter.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 
@@ -183,8 +182,10 @@ export default function CourseExplorer() {
   const desk = usePlanningDesk();
   const mode: Mode = desk.courseMode;
   const setMode = desk.setCourseMode;
-  const [grades, setGrades] = useState<number[]>([]);
-  const [country, setCountry] = useState<CountryFilter>("all");
+  const grades = desk.grades;
+  const setGrades = desk.setGrades;
+  const country = desk.country;
+  const setCountry = desk.setCountry;
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
