@@ -71,12 +71,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const { courseMode, setCourseMode } = usePlanningDesk();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
-  const checking = status === "checking";
-  // Reset the default mode when a browser session becomes signed in or public.
-  // An authenticated member can still manually select List mode afterward.
+  const [modeReadyForStatus, setModeReadyForStatus] = useState<"public" | "signed-in" | null>(null);
+  // Set the initial mode *before* revealing the page, not after the first
+  // list-view paint. Later manual List/Planning changes remain available.
   useEffect(() => {
-    if (!checking) setCourseMode(signedIn ? "plan" : "browse");
-  }, [checking, signedIn, setCourseMode]);
+    if (status === "checking") {
+      setModeReadyForStatus(null);
+      return;
+    }
+    setCourseMode(signedIn ? "plan" : "browse");
+    setModeReadyForStatus(status);
+  }, [status, signedIn, setCourseMode]);
+  const checking = status === "checking" || modeReadyForStatus !== status;
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "plan"));
 
