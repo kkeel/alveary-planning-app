@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { sortTopicsForCourse } from "../app/courses/topic-order.mjs";
+import { matchesCountry } from "../app/courses/country-filter.mjs";
 
 const data = JSON.parse(readFileSync(new URL("../app/courses/catalog-preview.json", import.meta.url), "utf8"));
 const rows = data.courses;
@@ -23,6 +24,38 @@ assert.ok(rows.every(row => row.title && row.sort && row.subject && Array.isArra
 assert.ok(data.topicLinks.every(link => byEdition.has(link.parentEditionId) && byEdition.has(link.childEditionId)));
 assert.equal(data.choiceGroups.length, 4);
 assert.equal(data.choiceGroups.reduce((sum, group) => sum + group.courseIds.length, 0), 8);
+// Country filtering is inclusive: "Both" offerings must remain visible in
+// either regional view. Country never modifies the underlying course records.
+const countryCounts = courseRows.reduce((acc, row) => {
+  acc[row.country] = (acc[row.country] || 0) + 1;
+  return acc;
+}, {});
+assert.deepEqual(countryCounts, {Both:151,"U.S.":16,Canada:17});
+const usCourses = courseRows.filter(row => matchesCountry(row.country, "us"));
+const canadaCourses = courseRows.filter(row => matchesCountry(row.country, "canada"));
+assert.equal(usCourses.length, 167);
+assert.equal(canadaCourses.length, 168);
+assert.equal(courseRows.filter(row => matchesCountry(row.country, "all")).length, 184);
+assert.ok(usCourses.every(row => row.country === "Both" || row.country === "U.S."));
+assert.ok(canadaCourses.every(row => row.country === "Both" || row.country === "Canada"));
+for (const subject of ["History", "Geography", "Citizenship"]) {
+  const subset = courseRows.filter(row => row.subject === subject);
+  assert.ok(subset.some(row => row.country === "U.S."));
+  assert.ok(subset.some(row => row.country === "Canada"));
+  assert.ok(subset.filter(row => matchesCountry(row.country, "us")).every(row => row.country !== "Canada"));
+  assert.ok(subset.filter(row => matchesCountry(row.country, "canada")).every(row => row.country !== "U.S."));
+}
+assert.equal(matchesCountry(null, "us"), false, "country-unknown courses should not be assumed eligible");
+assert.equal(matchesCountry("Both", "canada"), true);
+assert.equal(matchesCountry("Both", "us"), true);
+assert.equal(matchesCountry("Canada", "all"), true);
+// Current Active Choice Group options are all valid for either country; if
+// country-specific options are added later the same predicate still applies.
+for (const group of data.choiceGroups) {
+  assert.ok(group.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "us")));
+  assert.ok(group.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "canada")));
+}
+
 const grouped = data.choiceGroups.flatMap(group => group.courseIds);
 assert.equal(new Set(grouped).size, 7, "Advanced Nature Study appears in both grade-specific groups");
 assert.ok(grouped.every(id => byPlan.has(id) && byPlan.get(id).type !== "Topic"), "choice options are courses, never topics");
@@ -205,4 +238,4 @@ assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced
 assert.equal(data.choiceGroups.some(group => group.guidance !== null && !group.guidance.trim()), false);
 const art = rows.find(row => row.title === "Art: Level 1");
 assert.ok(art?.description && art.tips, "real source descriptions and placement guidance must be present");
-console.log("PASS: 377 editions, presentation sort, 14 Citizenship topic outlines, source sorts and future-topic rules.");
+console.log("PASS: 377 editions, topic ordering and inclusive U.S./Canada course filters (184 course choices).");
