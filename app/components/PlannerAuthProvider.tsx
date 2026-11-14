@@ -15,6 +15,7 @@ type PlannerAuthValue = {
   error: string | null;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  getAccessToken: () => Promise<string | null>;
 };
 
 // A Supabase session establishes Memberstack OIDC identity only. Planning mode
@@ -233,6 +234,14 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // The token is for authenticated API calls, not a membership grant.
+  // Each private Edge Function independently verifies current Demo eligibility.
+  const getAccessToken = useCallback(async (): Promise<string | null> => {
+    if (!client) return null;
+    const { data, error: sessionError } = await client.auth.getSession();
+    return sessionError ? null : data.session?.access_token ?? null;
+  }, []);
+
   const authenticated = Boolean(session?.user && !session.user.is_anonymous);
   // There is deliberately no intermediate "signed-in = member" UI. A member
   // must pass BOTH a validated OIDC login and current-year plan verification.
@@ -241,7 +250,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
 
   return <AuthContext.Provider value={{
     status, userId: session?.user.id ?? null, authenticated, planAccess,
-    configured: Boolean(client), busy, error, signIn, signOut,
+    configured: Boolean(client), busy, error, signIn, signOut, getAccessToken,
   }}>{children}</AuthContext.Provider>;
 }
 
