@@ -136,58 +136,6 @@ Deno.serve(async (req: Request) => {
     const memberId = match[1];
     const workspaceId = await familyWorkspaceId(memberId);
 
-    // One Memberstack member must not silently link to two different Auth
-    // users. A conflicting identity fails closed and requires manual review.
-    const { error: linkError } = await admin.from("member_identity_links").upsert({
-      auth_user_id: caller.user.id,
-      memberstack_member_id: memberId,
-      verified_at: new Date().toISOString(),
-      verified_source: "memberstack_oidc",
-    }, { onConflict: "auth_user_id", ignoreDuplicates: true });
-    assertDatabase(linkError, "identity_link_failed");
-    const { data: link, error: checkLinkError } = await admin.from("member_identity_links")
-      .select("memberstack_member_id").eq("auth_user_id", caller.user.id).single();
-    assertDatabase(checkLinkError, "identity_link_unavailable");
-    if (link?.memberstack_member_id !== memberId) {
-      return response(req, 403, { error: "identity_mismatch" });
-    }
-
-    const { error: workspaceError } = await admin.from("workspaces").upsert({
-      id: workspaceId, workspace_type: "family", display_name: "My Family",
-    }, { onConflict: "id", ignoreDuplicates: true });
-    assertDatabase(workspaceError, "workspace_create_failed");
-    const { data: workspace, error: workspaceReadError } = await admin.from("workspaces")
-      .select("workspace_type").eq("id", workspaceId).single();
-    assertDatabase(workspaceReadError, "workspace_lookup_failed");
-    if (workspace?.workspace_type !== "family") return response(req, 403, { error: "workspace_mismatch" });
-
-    const { error: membershipError } = await admin.from("workspace_memberships").upsert({
-      workspace_id: workspaceId, auth_user_id: caller.user.id,
-      role: "family_owner", status: "active",
-    }, { onConflict: "workspace_id,auth_user_id", ignoreDuplicates: true });
-    assertDatabase(membershipError, "workspace_membership_failed");
-    const { data: membership, error: memberReadError } = await admin.from("workspace_memberships")
-      .select("role,status").eq("workspace_id", workspaceId)
-      .eq("auth_user_id", caller.user.id).single();
-    assertDatabase(memberReadError, "workspace_membership_unavailable");
-    if (membership?.role !== "family_owner" || membership?.status !== "active") {
-      return response(req, 403, { error: "workspace_access_denied" });
-    }
-
-    const { data: release, error: releaseError } = await admin.from("catalog_releases")
-      .select("id").eq("school_year", year).order("revision", { ascending: false })
-      .limit(1).single();
-    assertDatabase(releaseError, "catalog_release_missing");
-    const { error: yearInsertError } = await admin.from("workspace_year_plans").upsert({
-      workspace_id: workspaceId, school_year: year, catalog_release_id: release!.id,
-      plan_kind: "demo", state: "draft",
-    }, { onConflict: "workspace_id,school_year,plan_kind", ignoreDuplicates: true });
-    assertDatabase(yearInsertError, "year_plan_create_failed");
-    const { data: yearPlan, error: yearReadError } = await admin.from("workspace_year_plans")
-      .select("id").eq("workspace_id", workspaceId)
-      .eq("school_year", year).eq("plan_kind", "demo").single();
-    assertDatabase(yearReadError, "year_plan_missing");
-
     let input: unknown;
     try { input = await req.json(); }
     catch { return response(req, 400, { error: "invalid_request" }); }
@@ -199,78 +147,41 @@ Deno.serve(async (req: Request) => {
     if (action !== "list" && action !== "add" && action !== "update" && action !== "archive") {
       return response(req, 400, { error: "unknown_action" });
     }
-
-    if (action === "add") {
-      const name = cleanName(payload.displayName);
-      const grade = cleanGrade(payload.gradeLevel);
-      if (name === null || grade === undefined) return response(req, 400, { error: "invalid_student" });
-      const { count, error: countError } = await admin.from("students")
-        .select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId)
-        .is("archived_at", null);
-      assertDatabase(countError, "student_count_failed");
-      if ((count ?? 0) >= 30) return response(req, 400, { error: "student_limit" });
-      const { data: inserted, error: addError } = await admin.from("students")
-        .insert({ workspace_id: workspaceId, display_name: name })
-        .select("id").single();
-      assertDatabase(addError, "student_add_failed");
-      const { error: placementError } = await admin.from("student_year_placements").insert({
-        workspace_id: workspaceId, year_plan_id: yearPlan!.id,
-        student_id: inserted!.id, grade_level: grade, grade_label: gradeLabel(grade),
-        enrollment_status: "active",
-      });
-      assertDatabase(placementError, "student_grade_save_failed");
-    } else if (action === "update" || action === "archive") {
-      const id = studentId(payload.studentId);
-      if (!id) return response(req, 400, { error: "invalid_student" });
-      const { data: existing, error: existingError } = await admin.from("students")
-        .select("id").eq("id", id).eq("workspace_id", workspaceId)
-        .is("archived_at", null).maybeSingle();
-      assertDatabase(existingError, "student_lookup_failed");
-      if (!existing) return response(req, 404, { error: "student_not_found" });
-
-      if (action === "archive") {
-        const { error: archiveError } = await admin.from("students")
-          .update({ archived_at: new Date().toISOString() })
-          .eq("id", id).eq("workspace_id", workspaceId).is("archived_at", null);
-        assertDatabase(archiveError, "student_archive_failed");
-        const { error: inactiveError } = await admin.from("student_year_placements")
-          .update({ enrollment_status: "inactive" })
-          .eq("year_plan_id", yearPlan!.id).eq("student_id", id)
-          .eq("workspace_id", workspaceId);
-        assertDatabase(inactiveError, "student_archive_placement_failed");
-      } else {
-        const name = cleanName(payload.displayName);
-        const grade = cleanGrade(payload.gradeLevel);
-        if (name === null || grade === undefined) return response(req, 400, { error: "invalid_student" });
-        const { error: nameError } = await admin.from("students")
-          .update({ display_name: name }).eq("id", id).eq("workspace_id", workspaceId);
-        assertDatabase(nameError, "student_update_failed");
-        const { error: placementError } = await admin.from("student_year_placements")
-          .upsert({
-            workspace_id: workspaceId, year_plan_id: yearPlan!.id,
-            student_id: id, grade_level: grade, grade_label: gradeLabel(grade),
-            enrollment_status: "active",
-          }, { onConflict: "year_plan_id,student_id" });
-        assertDatabase(placementError, "student_grade_update_failed");
-      }
+    const displayName = action === "add" || action === "update"
+      ? cleanName(payload.displayName) : null;
+    const gradeLevel = action === "add" || action === "update"
+      ? cleanGrade(payload.gradeLevel) : null;
+    const id = action === "update" || action === "archive"
+      ? studentId(payload.studentId) : null;
+    if (((action === "add" || action === "update") &&
+      (displayName === null || gradeLevel === undefined)) ||
+      ((action === "update" || action === "archive") && !id)) {
+      return response(req, 400, { error: "invalid_student" });
     }
 
-    const { data: students, error: studentsError } = await admin.from("students")
-      .select("id,display_name,created_at").eq("workspace_id", workspaceId)
-      .is("archived_at", null).order("created_at", { ascending: true });
-    assertDatabase(studentsError, "students_list_failed");
-    const { data: placements, error: gradesError } = await admin.from("student_year_placements")
-      .select("student_id,grade_level,enrollment_status")
-      .eq("workspace_id", workspaceId).eq("year_plan_id", yearPlan!.id);
-    assertDatabase(gradesError, "student_grades_list_failed");
-    const byStudent = new Map((placements ?? []).map(p => [p.student_id, p]));
-    return response(req, 200, {
-      schoolYear: year, planKind: "demo",
-      students: (students ?? []).map(student => ({
-        id: student.id, displayName: student.display_name,
-        gradeLevel: byStudent.get(student.id)?.grade_level ?? null,
-      })),
-    });
+    // One roundtrip / one DB transaction: provision or reuse the trusted
+    // workspace, apply any student edit, and return the current list.
+    // Function is SECURITY INVOKER and EXECUTE is granted only to service_role.
+    const { data: result, error: operationError } = await admin.rpc(
+      "demo_students_apply", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: action,
+        p_student_id: id,
+        p_display_name: displayName,
+        p_grade_level: gradeLevel,
+      }
+    );
+    assertDatabase(operationError, "student_operation_failed");
+    if (!result || typeof result !== "object" || Array.isArray(result) ||
+      (result as { schoolYear?: unknown }).schoolYear !== year ||
+      (result as { planKind?: unknown }).planKind !== "demo" ||
+      !Array.isArray((result as { students?: unknown }).students)) {
+      throw new Error("student_response_unrecognized");
+    }
+    return response(req, 200, result as object);
   } catch (error) {
     const stage = error instanceof Error ? error.message : "unexpected_error";
     logFailure(/^[a-z_]{4,70}$/.test(stage) ? stage : "unexpected_error");
