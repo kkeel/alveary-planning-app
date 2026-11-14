@@ -44,7 +44,7 @@ function fromAlvearyTestDashboard(): boolean {
     return referrer.protocol === "https:" &&
       (referrer.hostname === "alveary.org" ||
         referrer.hostname === "www.alveary.org") &&
-      /^\\/alveary-2027-2028\\/dashboard-test\\/?$/.test(referrer.pathname);
+      /^\/alveary-2027-2028\/dashboard-test\/?$/.test(referrer.pathname);
   } catch {
     return false;
   }
