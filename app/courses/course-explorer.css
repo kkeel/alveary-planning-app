@@ -270,3 +270,17 @@
   .cx-choice-header { background: #f5f5f5 !important; }
   .cx-tip { background: #eee !important; color: #333; }
 }
+
+/* Mobile controls focus on curriculum first: expand filters only on demand. */
+.cx-mobile-filter-toggle, .cx-mobile-filter-summary { display: none; }
+@media (max-width: 600px) {
+  .cx-toolbar { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 7px; padding-bottom: 8px; }
+  .cx-toolbar-tools { display: none; flex: 0 0 100%; width: 100%; }
+  .cx-toolbar-tools.is-mobile-expanded { display: flex; }
+  .cx-mobile-filter-toggle { display: inline-flex; margin-left: auto; min-height: 37px; align-items: center; gap: 6px; padding: 7px 10px; background: #fff; border: 1px solid #d8ddd1; border-radius: 3px; font-family: "DM Sans", sans-serif; font-size: 12px; color: #4d5a50; }
+  .cx-mobile-filter-toggle[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+  .cx-mobile-filter-summary { display: flex; flex: 0 0 100%; gap: 5px; flex-wrap: wrap; color: #647366; }
+  .cx-mobile-filter-summary span { padding: 3px 7px; background: #edf1e9; border: 1px solid #e1e8dc; border-radius: 3px; font-size: 10px; }
+  .cx-grade-panel { margin-top: 4px; }
+  .cx-mobile-filter-toggle:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
+}
