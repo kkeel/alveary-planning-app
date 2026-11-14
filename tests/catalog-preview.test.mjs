@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { sortTopicsForCourse } from "../app/courses/topic-order.mjs";
 
 const data = JSON.parse(readFileSync(new URL("../app/courses/catalog-preview.json", import.meta.url), "utf8"));
 const rows = data.courses;
@@ -53,6 +54,50 @@ for (const children of linked.values()) {
       "topic order must use source Plan Sort rather than titles or link order");
   }
 }
+// Topic order is contextual to a particular combined course, not a global
+// mutation of the shared topic's Plan Sort or presentation sort.
+let citizenshipOutlines = 0;
+let otherOutlines = 0;
+for (const course of rows.filter(row => row.type === "Combined Course")) {
+  const originals = linked.get(course.editionId) || [];
+  const ordered = sortTopicsForCourse(course, originals);
+  assert.equal(ordered.length, originals.length, "no connected topic may be dropped");
+  assert.deepEqual(new Set(ordered.map(row => row.id)), new Set(originals.map(row => row.id)));
+  if (course.subject === "Citizenship") {
+    citizenshipOutlines++;
+    const community = ordered.findIndex(row => row.title.startsWith("Community Read Alouds"));
+    const events = ordered.findIndex(row => row.title.startsWith("Current Events"));
+    if (community !== -1) assert.equal(community, ordered.length - 1, "Community Read Alouds last in Citizenship");
+    if (events !== -1) assert.equal(events, ordered.length - (community === -1 ? 1 : 2),
+      "Current Events second-last in Citizenship when Community Read Alouds is present");
+    assert.ok(ordered.slice(0,Math.max(0,ordered.length-2)).every(row =>
+      !row.title.startsWith("Current Events") && !row.title.startsWith("Community Read Alouds")),
+      "regular Citizenship topics appear before the two special endings");
+  } else {
+    otherOutlines++;
+    const expected = [...originals].sort(sort);
+    assert.deepEqual(ordered.map(row => row.editionId), expected.map(row => row.editionId),
+      "other subjects stay ordered by their source Plan Sort");
+  }
+}
+assert.equal(citizenshipOutlines,14);
+assert.equal(otherOutlines,89);
+
+// Guard future curriculum topics: no hard-coded edition IDs or year-specific
+// links. New topic editions with these title families obey the same rule.
+const synthetic = [
+  {id:"a",title:"Community Read Alouds: New Edition",sort:"10105019-500"},
+  {id:"b",title:"Ethics: New Topic",sort:"4104049-500"},
+  {id:"c",title:"Current Events: New Grades",sort:"4105049-500"},
+  {id:"d",title:"Plutarch: New Topic",sort:"4101049-500"},
+];
+const asCitizenship = sortTopicsForCourse({subject:"Citizenship"}, synthetic);
+assert.deepEqual(asCitizenship.map(row=>row.id),["d","b","c","a"]);
+const asLiterature = sortTopicsForCourse({subject:"Literature"}, synthetic);
+assert.deepEqual(asLiterature.map(row=>row.id),["a","d","b","c"],
+  "Community Read Alouds keeps original sort when used in Literature");
+assert.deepEqual(synthetic.map(row=>row.id),["a","b","c","d"], "sorting must never mutate shared source records");
+
 // Source Plan Sort remains untouched; member-facing sort is edition/year-specific.
 const firstGrade = plan => Math.min(...plan.grades);
 const paddedGrade = plan => String(firstGrade(plan)).padStart(2, "0");
@@ -160,4 +205,4 @@ assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced
 assert.equal(data.choiceGroups.some(group => group.guidance !== null && !group.guidance.trim()), false);
 const art = rows.find(row => row.title === "Art: Level 1");
 assert.ok(art?.description && art.tips, "real source descriptions and placement guidance must be present");
-console.log("PASS: 377 editions, 103 topic anchors, 66 subject overrides; History, Citizenship, Math, Modern Language and Shakespeare ordering.");
+console.log("PASS: 377 editions, presentation sort, 14 Citizenship topic outlines, source sorts and future-topic rules.");
