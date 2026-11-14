@@ -12,6 +12,9 @@ const allowOrigins = new Set([
 ]);
 const targetYear = "2027-28";
 const targetPlanKind = "demo";
+// Conservative until signed Memberstack plan-change webhooks are connected:
+// Max 2 minutes of entitlement staleness, even during source outages.
+const positiveCacheTtlMs = 120_000;
 
 function headers(req: Request): Headers {
   const h = new Headers({ "Content-Type": "application/json", "Cache-Control": "no-store", "Vary": "Origin" });
@@ -78,6 +81,24 @@ Deno.serve(async (req: Request) => {
     const internalId = match[1];
     const expectedMemberId = "mem_" + internalId;
 
+    // Cache entries are created only by this server after a successful,
+    // verified Memberstack lookup. The database function checks BOTH a live
+    // timestamp and current enabled plan rules on every cache hit.
+    const cacheScope = {
+      p_auth_user_id: auth.user.id,
+      p_memberstack_member_id: internalId,
+      p_school_year: targetYear,
+      p_plan_kind: targetPlanKind,
+      p_workspace_type: "family",
+      p_capability: "planning",
+    };
+    const { data: cached, error: cacheError } = await admin.rpc(
+      "memberstack_cached_demo_access", cacheScope
+    );
+    if (cacheError) return reply(req, 503, "unavailable", "cache_lookup_failed");
+    if (cached === true) return reply(req, 200, "demo");
+
+    // Cache missed or expired: verify directly with Memberstack again.
     // Determine grants from server-held mapping, not from the browser.
     const { data: rules, error: ruleError } = await admin
       .from("memberstack_plan_access_rules")
@@ -136,13 +157,43 @@ Deno.serve(async (req: Request) => {
     if (member === "missing") member = await verifiedLookup(expectedMemberId);
     if (member === "missing") return reply(req, 503, "unavailable", "member_profile_missing");
     const planIds = new Set(rules.map(rule => rule.memberstack_plan_id));
-    const eligible = member.planConnections.some((connection: unknown) => {
+    const activePlan = member.planConnections.find((connection: unknown) => {
       if (!connection || typeof connection !== "object") return false;
       const plan = connection as { planId?: unknown; status?: unknown };
       return plan.status === "ACTIVE" && typeof plan.planId === "string" &&
         planIds.has(plan.planId);
-    });
-    return reply(req, 200, eligible ? "demo" : "none");
+    }) as { planId: string } | undefined;
+
+    if (activePlan) {
+      const verified = new Date();
+      const { error: writeError } = await admin
+        .from("memberstack_entitlement_cache")
+        .upsert({
+          auth_user_id: auth.user.id,
+          memberstack_member_id: internalId,
+          memberstack_plan_id: activePlan.planId,
+          school_year: targetYear,
+          plan_kind: targetPlanKind,
+          workspace_type: "family",
+          capability: "planning",
+          verified_at: verified.toISOString(),
+          expires_at: new Date(verified.getTime() + positiveCacheTtlMs).toISOString(),
+          invalidated_at: null,
+        }, { onConflict: "auth_user_id,school_year,plan_kind,workspace_type,capability" });
+      if (writeError) return reply(req, 503, "unavailable", "cache_write_failed");
+      return reply(req, 200, "demo");
+    }
+
+    // A fresh source-of-truth denial invalidates any previous positive cache.
+    const { error: invalidateError } = await admin.from("memberstack_entitlement_cache")
+      .update({ invalidated_at: new Date().toISOString() })
+      .eq("auth_user_id", auth.user.id)
+      .eq("school_year", targetYear)
+      .eq("plan_kind", targetPlanKind)
+      .eq("workspace_type", "family")
+      .eq("capability", "planning");
+    if (invalidateError) return reply(req, 503, "unavailable", "cache_invalidate_failed");
+    return reply(req, 200, "none");
   } catch (error) {
     const stage = error instanceof Error && /^member_(api_http_[0-9]{3}|response_unrecognized|identity_mismatch|plans_missing)$/.test(error.message)
       ? error.message : "verification_unavailable";
