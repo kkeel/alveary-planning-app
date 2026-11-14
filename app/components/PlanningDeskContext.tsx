@@ -36,8 +36,7 @@ type PlanningDeskContextValue = PlanningDeskState & {
   resetIdeaOrder: (subject: string) => void;
 };
 
-const key = "alveary:shared-planning-desk-preview:2027-28";
-const legacyKey = "alveary:course-explorer-preview:2027-28";
+const keyPrefix = "alveary:shared-planning-desk-preview:2027-28:";
 const defaults: PlanningDeskState = {
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
@@ -68,12 +67,13 @@ const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null)
 
 /** The preview stores personal ideas only on this browser. Do not treat this
  * as a household plan or allow it to unlock member-only data or actions. */
-export function PlanningDeskProvider({ children }: { children: ReactNode }) {
+export function PlanningDeskProvider({ children, storageScope }: { children: ReactNode; storageScope: string }) {
+  const storageKey = keyPrefix + storageScope;
   const [value, setValue] = useState<PlanningDeskState>(defaults);
   const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(key);
+      const raw = storageScope === "public" ? null : window.localStorage.getItem(storageKey);
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PlanningDeskState>;
         setValue({
@@ -88,27 +88,18 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
           notes: typeof saved.notes === "string" ? saved.notes : "",
         });
-      } else {
-        // Preserve earlier prototype bookmarks; no student assignments existed.
-        const legacy = JSON.parse(window.localStorage.getItem(legacyKey) || "{}") as {planned?: unknown;notes?:unknown};
-        setValue(prev => ({
-          ...prev,
-          thinkTankIds: Array.isArray(legacy.planned) ? legacy.planned.filter((x): x is string => typeof x === "string") : [],
-          notes: typeof legacy.notes === "string" ? legacy.notes : "",
-          courseMode: Array.isArray(legacy.planned) && legacy.planned.length > 0 ? "plan" : "browse",
-        }));
       }
     } catch {
       // A corrupt local preview must not block publicly browsable pages.
     }
     setReady(true);
-  }, []);
+  }, [storageKey, storageScope]);
 
   useEffect(() => {
-    if (!ready) return;
-    try { window.localStorage.setItem(key, JSON.stringify(value)); }
+    if (!ready || storageScope === "public") return;
+    try { window.localStorage.setItem(storageKey, JSON.stringify(value)); }
     catch { /* storage is optional for a public-safe UI preview */ }
-  }, [value, ready]);
+  }, [value, ready, storageKey, storageScope]);
 
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,

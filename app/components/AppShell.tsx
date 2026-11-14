@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AuthStatusBar from "./AuthStatusBar";
+import { PlannerAuthProvider, usePlannerAuth } from "./PlannerAuthProvider";
 import PlanningDesk from "./PlanningDesk";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
 import {
@@ -28,6 +29,8 @@ const navigation: NavItem[] = [
   { href: "/supplies", label: "Supplies", icon: "supplies" },
   { href: "/exams", label: "Exams", icon: "exams" },
 ];
+
+const memberOnlyPaths = new Set(["/students", "/scheduling", "/lesson-plans", "/exams", "/year-at-a-glance"]);
 
 const planningItems: NavItem[] = [
   { href: "/year-at-a-glance", label: "Year at a glance", icon: "year-at-a-glance" },
@@ -65,10 +68,20 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
-  const { courseMode } = usePlanningDesk();
-  const showDesk = activePath === "/books" || (activePath === "/courses" && courseMode === "plan");
+  const { courseMode, setCourseMode } = usePlanningDesk();
+  const { status } = usePlannerAuth();
+  const signedIn = status === "signed-in";
+  const checking = status === "checking";
+  // Reset the default mode when a browser session becomes signed in or public.
+  // An authenticated member can still manually select List mode afterward.
+  useEffect(() => {
+    if (!checking) setCourseMode(signedIn ? "plan" : "browse");
+  }, [checking, signedIn, setCourseMode]);
+  const showDesk = signedIn && (activePath === "/books" ||
+    (activePath === "/courses" && courseMode === "plan"));
 
-  const allRoutes = [...navigation, ...planningItems];
+  const allRoutes = [...navigation, ...planningItems]
+    .filter(item => signedIn || !memberOnlyPaths.has(item.href));
   const matches = search.trim()
     ? allRoutes.filter((item) => item.label.toLowerCase().includes(search.trim().toLowerCase()))
     : [];
@@ -130,10 +143,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="side-nav" aria-label="Planning pages">
-          {navigation.map(renderItem)}
-          <div className="side-divider" />
-          <p className="side-group-heading">Your planning workspace</p>
-          {planningItems.map(renderItem)}
+          {navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href)).map(renderItem)}
+          {signedIn && <>
+            <div className="side-divider" />
+            <p className="side-group-heading">Your planning workspace</p>
+            {planningItems.map(renderItem)}
+          </>}
         </nav>
 
         <div className="sidebar-bottom">
@@ -222,7 +237,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <AuthStatusBar />
 
         <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "")}>
-          <main className="shell-main" id="main-content">{children}</main>
+          <main className="shell-main" id="main-content">
+            {memberOnlyPaths.has(activePath) && !signedIn ? <div className="notice" role="status">
+              {checking ? "Checking your Alveary sign-in…" :
+                "This planning page is for signed-in Alveary members. Sign in to see the development preview. Public Courses, Books and Supplies remain available."}
+            </div> : children}
+          </main>
           {showDesk && <PlanningDesk />}
         </div>
         <footer className="shell-footer">
@@ -233,6 +253,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
   );
 }
 
+function SessionPlanningShell({ children }: { children: ReactNode }) {
+  const { userId } = usePlannerAuth();
+  // Drafts are still browser-local and are intentionally *not* copied between
+  // different account identities on the same device.
+  return <PlanningDeskProvider key={userId ?? "public"} storageScope={userId ?? "public"}>
+    <AppShellInner>{children}</AppShellInner>
+  </PlanningDeskProvider>;
+}
+
 export default function AppShell({ children }: { children: ReactNode }) {
-  return <PlanningDeskProvider><AppShellInner>{children}</AppShellInner></PlanningDeskProvider>;
+  return <PlannerAuthProvider><SessionPlanningShell>{children}</SessionPlanningShell></PlannerAuthProvider>;
 }

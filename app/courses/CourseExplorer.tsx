@@ -7,6 +7,7 @@ import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
+import { usePlannerAuth } from "../components/PlannerAuthProvider";
 
 type Plan = {
   id: string;
@@ -180,7 +181,9 @@ function CourseRow({
 
 export default function CourseExplorer() {
   const desk = usePlanningDesk();
-  const mode: Mode = desk.courseMode;
+  const { status } = usePlannerAuth();
+  const signedIn = status === "signed-in";
+  const mode: Mode = signedIn ? desk.courseMode : "browse";
   const setMode = desk.setCourseMode;
   const grades = desk.grades;
   const setGrades = desk.setGrades;
@@ -314,9 +317,9 @@ export default function CourseExplorer() {
         <button type="button" className={mode === "browse" ? "is-current" : ""} onClick={() => setMode("browse")}>
           <List size={14} /> List
         </button>
-        <button type="button" className={mode === "plan" ? "is-current" : ""} onClick={() => setMode("plan")}>
+        {signedIn && <button type="button" className={mode === "plan" ? "is-current" : ""} onClick={() => setMode("plan")}>
           <NotebookPen size={14} /> Planning
-        </button>
+        </button>}
       </div>
       <button type="button" className="cx-mobile-filter-toggle"
         aria-controls="cx-toolbar-filter-tools" aria-expanded={mobileFiltersOpen}
