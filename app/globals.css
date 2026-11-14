@@ -97,6 +97,8 @@ a { color: inherit; }
 @media print {
   .shell-page-layout.has-planning-desk { display: block !important; padding: 0 !important; }
 }
+.books-back-to-planning { display: inline-flex; align-items: center; gap: 7px; color: #5c785f; font-size: 13px; margin-bottom: 20px; text-decoration: underline; text-underline-offset: 3px; }
+.books-back-to-planning:hover { color: #385740; }
 .shell-footer { border-top: 1px solid var(--line); color: #81877d; font-size: 11px; padding: 13px 36px; }
 h1, h2, h3 { font-family: var(--font-plantin), Georgia, "Times New Roman", serif; font-weight: 200; letter-spacing: -.014em; }
 h1 { font-size: clamp(32px, 2.4vw, 39px); line-height: 1.24; margin: 0 0 16px; }
