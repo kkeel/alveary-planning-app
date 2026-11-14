@@ -150,3 +150,92 @@
 .myplan-idea-row { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 10px 0; border-top: 1px solid #e0e6dd; }
 .myplan-idea-row span { font-size: 12px; line-height: 1.3; }
 .myplan-idea-row button { flex-shrink: 0; }
+
+
+/* Calm subject-list My Plan, in-place assignment, and non-jumping save status. */
+.pd-sync-status { display: inline-flex; justify-content: flex-end; align-items: center;
+  min-width: 62px; height: 28px; color: #67816c; font-size: 10px; line-height: 1; white-space: nowrap; }
+.pd-sync-status.is-error { color: #a34c3a; font-weight: 600; }
+.pd-save-error-inline { position: sticky; top: 0; z-index: 4; background: #fff3ef; color: #8f432f;
+  padding: 8px; border: 1px solid #e9d4cd; border-radius: 3px; font-size: 11px; }
+.pd-review-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 15px;
+  margin: 13px 0 6px; }
+.pd-review-actions .pd-books-link { margin: 0; padding: 5px 0; }
+.pd-plan-action { border: 1px solid #a9bba7; background: #f6f8f3; color: #46634c;
+  border-radius: 3px; padding: 7px 11px; font-size: 11px; font-weight: 600; line-height: 1.3; }
+.pd-plan-action:hover:not(:disabled) { background: #eaf2e7; }
+.pd-plan-action:disabled { opacity: .5; cursor: default; }
+.myplan-panel { padding: 3px 0 16px; }
+.myplan-intro { margin: 5px 1px 14px; }
+.myplan-panel .pd-subject-list { gap: 8px; }
+.myplan-row .pd-idea-review { width: 100%; align-items: flex-start; }
+.myplan-row .pd-idea-review > svg { margin-top: 3px; }
+.myplan-summary { display: block; margin-top: 3px; font-size: 10px;
+  color: #6e856e; line-height: 1.45; font-weight: 400; }
+.myplan-review { padding: 10px 11px 13px; margin: 0 0 8px; background: #fafbf7; }
+.myplan-footer-note { color: #8a9687; font-size: 10px; line-height: 1.5; margin: 14px 3px; }
+.myplan-return { border: 0; background: transparent; color: #6c816e;
+  text-decoration: underline; text-underline-offset: 2px; font-size: 10px; margin-top: 11px; padding: 3px 0; }
+.plan-editor { border-top: 1px solid #e1e8df; margin-top: 11px; padding-top: 10px; }
+.plan-editor .pd-review-description { margin: 0 0 9px; }
+.plan-guidance { padding: 8px 9px; border-left: 2px solid #a9bda7; background: #f1f5ee;
+  color: #5b725c; font-size: 11px; line-height: 1.5; }
+.plan-guidance strong { display: block; margin-bottom: 4px; }
+.plan-guidance p { margin: 0; white-space: pre-line; }
+.plan-assign-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin: 10px 0 7px; }
+.plan-assign-head strong { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #415b45; }
+.plan-assign-head a, .plan-book-link { font-size: 11px; color: #4c6a50; text-decoration: underline; text-underline-offset: 3px; }
+.plan-group-shortcuts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.plan-group-shortcuts button { min-height: 29px; border: 1px solid #d1decc; border-radius: 3px; padding: 5px 8px;
+  background: #eef4ed; color: #45654a; font-size: 11px; line-height: 1.3; }
+.plan-group-shortcuts button:hover:not(:disabled) { background: #e4eee3; }
+.plan-group-shortcuts button:disabled { opacity: .45; cursor: default; }
+.plan-group-shortcuts small { font-size: 10px; color: #7d927c; }
+.plan-group-pill { display: inline-flex; align-items: stretch; }
+.plan-group-pill button:first-child { border-radius: 3px 0 0 3px; }
+.plan-group-pill .plan-group-edit { border-radius: 0 3px 3px 0; border-left: 0;
+  font-size: 9px; padding: 5px 6px; background: #f8faf6; }
+.plan-group-shortcuts .plan-group-create { background: #fffefa; border-style: dashed; }
+.plan-individuals { display: flex; flex-wrap: wrap; gap: 6px; }
+.plan-individuals label { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px;
+  font-size: 11px; color: #435b45; border: 1px solid #e0e8dc; border-radius: 3px;
+  background: #fff; cursor: pointer; }
+.plan-individuals label:has(input:checked) { background: #eff4ec; border-color: #bacfba; }
+.plan-individuals input, .plan-topic-heading input { accent-color: #5e7961; width: 14px; height: 14px; }
+.plan-microcopy { color: #879383; font-size: 10px; line-height: 1.4; margin: 7px 0; }
+.plan-microcopy a { color: #58735d; text-decoration: underline; }
+.plan-group-form { margin: 10px 0; padding: 10px; border: 1px solid #d6e1d3;
+  background: #f7f9f5; border-radius: 3px; }
+.plan-group-form > label { display: block; font-weight: 600; font-size: 11px; margin: 0 0 5px; }
+.plan-group-form > input { display: block; width: 100%; box-sizing: border-box; margin-bottom: 8px;
+  border: 1px solid #bbcbb9; padding: 8px; background: white; border-radius: 3px; font-size: 12px; }
+.plan-group-form-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.plan-group-form-actions button { background: #f1f5ef; border: 1px solid #d3dfd0;
+  color: #42624a; padding: 7px 9px; font-size: 11px; border-radius: 3px; }
+.plan-group-form-actions .plan-group-delete { color: #9a6558; }
+.plan-text-disclosure { display: inline-flex; align-items: center; gap: 5px; text-align: left; color: #536d56;
+  background: transparent; border: 0; padding: 6px 0; font-size: 11px; font-weight: 600; }
+.plan-text-disclosure small { font-size: 10px; font-weight: 400; color: #849582; }
+.plan-preferences { border-left: 2px solid #dbe5d8; padding: 8px 0 4px 9px; }
+.plan-preference-row { padding: 5px 0; border-bottom: 1px solid #e9eee6; display: grid;
+  grid-template-columns: minmax(0,1fr); gap: 5px; }
+.plan-preference-row > strong { font-size: 11px; color: #526d56; }
+.plan-preference-row label { font-size: 10px; color: #667b69; display: flex; flex-direction: column; gap: 4px; }
+.plan-preference-row select { background: #fff; border: 1px solid #d5dfd1; border-radius: 3px;
+  min-width: 0; color: #4b6250; padding: 7px; font-size: 11px; }
+@media(min-width: 375px) {
+  .plan-preference-row { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .plan-preference-row > strong { grid-column: 1/-1; }
+}
+.plan-topics-disclosure { margin-top: 4px; }
+.plan-topic-rows { margin-top: 3px; border-top: 1px solid #e2e9df; }
+.plan-topic-row { padding: 9px 0; border-bottom: 1px solid #e7ede4; }
+.plan-topic-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.plan-topic-heading > button { display: inline-flex; align-items: center; gap: 5px;
+  min-width: 0; text-align: left; background: transparent; border: 0;
+  padding: 6px 0; color: #49624d; font-size: 11px; }
+.plan-topic-heading > label { flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; font-size: 10px; }
+.plan-topic-details { padding: 4px 0 9px 14px; border-left: 2px solid #ebf0e7; }
+.plan-topic-details > p { color: #5f7260; font-size: 11px; line-height: 1.5; white-space: pre-line; }
+.plan-topic-details .plan-individuals { margin-top: 8px; }
+.plan-book-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px; font-weight: 600; }
