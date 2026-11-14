@@ -18,7 +18,7 @@ This is retained **as exact text** on `catalog_plans.plan_sort`. Do **not** cast
 
 The development Supabase migration `20261113233818_edition_app_presentation_sort.sql` adds **`catalog_editions.app_presentation_sort`**, deliberately edition/release-scoped rather than stored on the underlying Curriculum Plan.
 
-For each published edition:
+For each staged edition (before the subject-specific overlay):
 
 - **Topic** or **Single-Topic Course:** `app_presentation_sort = linked Curriculum Plan.plan_sort`.
 - **Combined Course:** use the **smallest `Plan Sort` belonging to a directly linked topic/course edition in the same subject** as the parent. If no in-scope linked topics exist, fall back to the parent's original `Plan Sort`.
@@ -32,8 +32,8 @@ For each published edition:
 ## Validation of the 2027–28 staged data
 
 - All **377** editions have a new key.
-- **103** Combined Courses have new topic-derived sort positions.
-- All **274** Topic and Single-Topic Course records retain their original `Plan Sort`.
+- **103** Combined Courses first receive topic-derived positions.
+- A **subject-specific presentation overlay** now adjusts 66 course-level records (History 15, Citizenship 15, Math 26, Modern Language 10), including Single-Topic Courses. Topic records still retain their original `Plan Sort`.
 - **14** Citizenship combined courses reference Literature's `Community Read Alouds`, among their topics. Their app keys intentionally use their **Citizenship** topic sort instead, avoiding misplaced courses.
 - Source `Plan Sort` in Airtable and Supabase remains unchanged.
 
@@ -47,11 +47,30 @@ Examples:
 | Citizenship: Grade 4 | `4199049-400` | `4101049-000` |
 | Art: Level 1 (Single-Topic) | `2101019-000` | `2101019-000` |
 
-The Course List's `catalog-preview.json` now includes `presentationSort` for all 377 editions and uses it for top-level and group placement; the original `sort` is preserved for auditing, nested topic order, and tie-breaking.
+The Course List's `catalog-preview.json` includes the final `presentationSort` for all 377 editions and uses it for top-level and group placement; the original `sort` is preserved for auditing, nested topic order, and tie-breaking.
+
+## Subject-specific ordering rules (approved November 13, 2026)
+
+Migration: `20261114004309_subject_specific_app_presentation_order.sql` (applied to the 2027–28 **development Draft** release and versioned in GitHub). This migration recomputes the *same-subject* topic anchor from the source Plan Sort first, then adds these stable keys; it is idempotent when rerun on the same data.
+
+| Subject | Course presentation grouping and precedence |
+| --- | --- |
+| **Citizenship** | Grade order, within grade **U.S. before Canada**; `Plutarch: Beginner Track` **at the very end** of Citizenship offerings |
+| **History** | Grade order, within grade **U.S. before Canada**, like the existing Geography ordering; multi-grade titles use lowest linked grade |
+| **Math** | Grade order, **RightStart → Beast Academy → other standard Mathematics → Denison** for offerings at the same grade (the standard Mathematics and Denison choices are currently grades 9–11). Every **Story of Arithmetic / Story of Geometry** option comes **after all traditional math courses** |
+| **Modern Language** | Every **Spanish** level first (Lower Spanish then Upper Spanish 1–4), followed by every **French** level (Lower French then Upper French 1–4) |
+| **Literature** | Unchanged: `Shakespeare: Beginner Track` already precedes `Shakespeare: Grades 5-8` by source Plan Sort, and this is checked explicitly |
+| **All other subjects** | Retain existing topic-anchored presentation order and authoring sort as a tie breaker |
+
+All **377** editions retain their original Airtable `Plan Sort` in `catalog_plans.plan_sort`. The 193 Topic editions retain their original app sort. The user-facing Grade and subject filters, year-specific course choice group suppression, and grade-specific group placement remain unchanged. **A choice group remains one uninterrupted visual block** sorted by its member course presentation keys; it may anchor earlier than an ungrouped course whose original sort is between its members.
+
+**Implementation detail:** For the four adjusted subjects, all top-level course keys receive a subject-stable prefix plus a zero-padded grade, country, math-provider, or language-precedence code, followed by their topic-anchored original value for tie breaking. This is a sortable **text** field, not a numeric rank. Future publication-year import scripts should reproduce this logic or run the reviewed SQL adapted to the new Draft release. Do not point the import at a live/approved snapshot or rewrite Plan Sort in Airtable.
+
+**Data-boundary note:** The last import still has the known 2027–28 History Grade 2–3 U.S. reference to a retired 2023–24 child edition, which remains excluded from within-year composition and flagged for editorial validation before the release goes live.
 
 ## Publishing pipeline requirement
 
-This migration backfilled the current **private development** catalog, but the stored key is not automatically recalculated whenever an editor changes Airtable or edits relationships in Supabase. **Every future draft snapshot import must regenerate `app_presentation_sort` after the edition-topic links have been refreshed, before validation and approval.** A proper publisher will own that sequence. Do not infer membership or make user-facing publication decisions from the sort value.
+Two tracked migrations backfilled the current **private development** catalog: first the topic anchor and then the subject-specific order. The stored key is not automatically recalculated whenever an editor changes Airtable or edits relationships in Supabase. **Every future draft snapshot import must regenerate `app_presentation_sort` after the edition-topic links have been refreshed, before validation and approval.** A proper publisher will own that sequence. Do not infer membership or make user-facing publication decisions from the sort value.
 
 ## UI refinements confirmed
 
