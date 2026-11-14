@@ -139,7 +139,7 @@ function CourseRow({
   }
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
-    childTopics, mode, planned, comparison, onPlannedToggle, onComparisonToggle,
+    childTopics, mode, planned, onPlannedToggle,
   };
 
   return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")}>
