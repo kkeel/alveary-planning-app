@@ -71,8 +71,8 @@ Deno.serve(async (req: Request) => {
     const subject = identities[0].identity_data?.sub;
     if (typeof subject !== "string") return reply(req, 403, "none");
     // Verified Supabase OIDC subject is "<24-lowercase-hex-id>-<app-id>".
-    // The Memberstack Admin API uses "mem_..." public member IDs.
-    // Require this exact app binding; do not accept a browser-supplied ID.
+    // The OIDC sub is bound to this Memberstack app. Require the exact
+    // app ID; never accept a browser-supplied member ID.
     const match = new RegExp("^([0-9a-f]{24})-" + memberstackAppId + "$").exec(subject);
     if (!match) return reply(req, 503, "unavailable", "identity_format_unrecognized");
     const internalId = match[1];
@@ -106,7 +106,7 @@ Deno.serve(async (req: Request) => {
       });
     }
     async function verifiedLookup(candidate: string): Promise<"missing" | {
-      id: string; planConnections: unknown;
+      id: string; planConnections: unknown[];
     }> {
       const response = await lookup(candidate);
       // Never retry 401, 403 or 5xx with an alternative identity.
@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
     });
     return reply(req, 200, eligible ? "demo" : "none");
   } catch (error) {
-    const stage = error instanceof Error && /^member_(api_http_\\d{3}|response_unrecognized|identity_mismatch|plans_missing)$/.test(error.message)
+    const stage = error instanceof Error && /^member_(api_http_[0-9]{3}|response_unrecognized|identity_mismatch|plans_missing)$/.test(error.message)
       ? error.message : "verification_unavailable";
     return reply(req, 503, "unavailable", stage);
   }
