@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type AuthStatus = "checking" | "public" | "signed-in";
@@ -73,9 +73,11 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const signInStarted = useRef(false);
 
   const signIn = useCallback(async () => {
-    if (!client || typeof window === "undefined") return;
+    if (!client || typeof window === "undefined" || signInStarted.current) return;
+    signInStarted.current = true;
     setBusy(true);
     setError(null);
     clearEntryIntent();
@@ -92,7 +94,9 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       window.sessionStorage.setItem(PENDING_KEY, String(Date.now()));
       window.location.assign(data.url);
     } catch {
+      signInStarted.current = false;
       window.sessionStorage.removeItem(PENDING_KEY);
+      setStatus("public");
       setError("We couldn't start Alveary sign-in. Public browsing is still available.");
       setBusy(false);
     }
@@ -138,8 +142,8 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         setUserId(null);
-        setStatus("public");
         if (pending) {
+          setStatus("public");
           window.sessionStorage.removeItem(PENDING_KEY);
           setError("The sign-in returned without a planner session. Please check the Memberstack SSO configuration.");
           clearEntryIntent();
@@ -152,6 +156,8 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           clearEntryIntent();
           setStatus("checking");
           await signIn();
+        } else {
+          setStatus("public");
         }
       } catch {
         if (!active) return;
