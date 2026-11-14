@@ -1,37 +1,37 @@
 "use client";
 
 import { usePlannerAuth } from "./PlannerAuthProvider";
-import MemberstackConnectionCheck from "./MemberstackConnectionCheck";
 
 const ALVEARY_LOGIN_URL = "https://alveary.org/login";
 
 export default function AuthStatusBar() {
-  const { status, configured, busy, error, signIn, signOut } = usePlannerAuth();
-  const signedIn = status === "signed-in";
+  const { status, authenticated, planAccess, configured, busy, error, signIn, signOut } = usePlannerAuth();
+  const demo = status === "signed-in";
   return <div className="auth-bar">
     <div className="auth-bar-main" role="status" aria-live="polite">
       <span className="auth-status-tag">
-        <span className={`auth-status-dot ${signedIn ? "is-signed-in" : ""}`} aria-hidden="true" />
-        {status === "checking" ? "Checking sign-in" : signedIn ? "Signed in" : "Public view"}
+        <span className={`auth-status-dot ${demo ? "is-signed-in" : ""}`} aria-hidden="true" />
+        {demo ? "Demo planning" : authenticated ? "Signed in · Public access" : "Public view"}
       </span>
       <span className="auth-bar-note">
-        {status === "checking"
-          ? "Checking your planning account."
-          : signedIn
-            ? "Planning preview connected. Membership permissions are still being built."
-            : configured
-              ? "Public browsing is available. To test sign-in without shared cookies, use Alveary SSO."
-              : "Explore freely. Sign in on the Alveary website."}
+        {demo
+          ? "Your active Alveary Testing Plan has been verified for the Demo planning area."
+          : authenticated && planAccess === "unavailable"
+            ? "We couldn't verify your active school-year plan. Public browsing remains available."
+            : authenticated
+              ? "You're signed into Alveary, but no eligible Demo planning plan was confirmed."
+              : configured
+                ? "Explore Courses, Books and Supplies, or sign in with Alveary."
+                : "Explore public lists. Sign in through the Alveary website."}
       </span>
     </div>
     <div className="auth-bar-actions">
-      {signedIn ? <button type="button" onClick={() => void signOut()} disabled={busy}>
+      {authenticated ? <button type="button" onClick={() => void signOut()} disabled={busy}>
         {busy ? "Signing out…" : "Sign out (planner only)"}
-      </button> : configured ? <button type="button" onClick={() => void signIn()} disabled={busy || status === "checking"}>
-        {busy ? "Connecting…" : "Try Alveary SSO"}
-      </button> : <a href={ALVEARY_LOGIN_URL} title="Sign in on the Alveary website">Sign in</a>}
+      </button> : configured ? <button type="button" onClick={() => void signIn()} disabled={busy}>
+        {busy ? "Connecting…" : "Sign in with Alveary"}
+      </button> : <a href={ALVEARY_LOGIN_URL}>Sign in</a>}
     </div>
     {error && <p className="auth-bar-error" role="alert">{error}</p>}
-    <MemberstackConnectionCheck />
   </div>;
 }
