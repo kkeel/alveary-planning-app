@@ -144,13 +144,17 @@ Deno.serve(async (req: Request) => {
       return response(req, 400, { error: "invalid_request" });
     }
     const p = input as Record<string, unknown>;
+    const manageActions = new Set([
+      "batch_assign", "set_preference", "upsert_group", "delete_group",
+    ]);
     const actions = new Set([
       "load", "import", "set_choice", "remove_choice", "set_stage",
-      "set_topic", "set_course_student", "set_topic_student",
+      "set_topic", "set_course_student", "set_topic_student", ...manageActions,
     ]);
     if (typeof p.action !== "string" || !actions.has(p.action)) {
       return response(req, 400, { error: "invalid_action" });
     }
+    const manage = manageActions.has(p.action);
     const courseId = typeof p.courseId === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(p.courseId)
       ? p.courseId : null;
     const topicId = typeof p.topicId === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(p.topicId)
@@ -159,31 +163,69 @@ Deno.serve(async (req: Request) => {
     const stage = p.stage === "idea" || p.stage === "planned" ? p.stage : null;
     const include = typeof p.include === "boolean" ? p.include : null;
     const assign = typeof p.assign === "boolean" ? p.assign : null;
+    const studentIds = Array.isArray(p.studentIds) && p.studentIds.length <= 30 &&
+      p.studentIds.every(x => studentId(x))
+      ? [...new Set(p.studentIds)] : null;
+    const groupId = studentId(p.groupId);
+    const groupName = typeof p.groupName === "string" && p.groupName.trim().length > 0 &&
+      p.groupName.trim().length <= 50 && !/[\\u0000-\\u001f\\u007f]/.test(p.groupName)
+      ? p.groupName.trim() : null;
+    const priority = p.priority === null || p.priority === "" || p.priority === undefined
+      ? null : typeof p.priority === "string" &&
+        ["Core", "High Interest", "Additional"].includes(p.priority) ? p.priority : undefined;
+    const arrangement = typeof p.arrangement === "string" &&
+      ["Combined", "Separate", "Both", "Later"].includes(p.arrangement)
+      ? p.arrangement : null;
     if (
-      (p.action !== "load" && p.action !== "import" && !courseId) ||
+      (p.action !== "load" && p.action !== "import" &&
+        p.action !== "upsert_group" && p.action !== "delete_group" && !courseId) ||
       ((p.action === "set_topic" || p.action === "set_topic_student") && !topicId) ||
-      ((p.action === "set_course_student" || p.action === "set_topic_student") && !student) ||
+      ((p.action === "set_course_student" || p.action === "set_topic_student" ||
+         p.action === "set_preference") && !student) ||
       ((p.action === "set_choice" || p.action === "set_stage") && !stage) ||
-      ((p.action === "set_topic") && include === null) ||
-      ((p.action === "set_course_student" || p.action === "set_topic_student") && assign === null) ||
-      (p.action === "import" && (!Array.isArray(p.ideas) || p.ideas.length > 250))
-    ) {
-      return response(req, 400, { error: "invalid_request" });
-    }
-    const { data: plan, error: planError } = await admin.rpc("demo_plan_apply", {
-      p_auth_user_id: caller.user.id,
-      p_member_id: memberId,
-      p_workspace_id: workspaceId,
-      p_school_year: year,
-      p_action: p.action,
-      p_course_id: courseId,
-      p_stage: stage,
-      p_topic_id: topicId,
-      p_student_id: student,
-      p_include: include,
-      p_assign: assign,
-      p_import: p.action === "import" ? p.ideas : null,
-    });
+      (p.action === "set_topic" && include === null) ||
+      ((p.action === "set_course_student" || p.action === "set_topic_student" ||
+         p.action === "batch_assign") && assign === null) ||
+      (p.action === "import" && (!Array.isArray(p.ideas) || p.ideas.length > 250)) ||
+      (p.action === "batch_assign" && (!studentIds || studentIds.length === 0)) ||
+      (p.action === "upsert_group" && (!groupName || !studentIds ||
+         (p.groupId != null && !groupId))) ||
+      (p.action === "delete_group" && !groupId) ||
+      (p.action === "set_preference" && (priority === undefined || !arrangement))
+    ) return response(req, 400, { error: "invalid_request" });
+
+    // The trusted service_role client is used ONLY after JWT, Memberstack
+    // identity and current membership entitlements were verified above.
+    const { data: plan, error: planError } = manage
+      ? await admin.rpc("demo_plan_manage", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: p.action,
+        p_course_id: courseId,
+        p_student_ids: studentIds,
+        p_student_id: student,
+        p_assign: assign,
+        p_priority: priority ?? null,
+        p_arrangement: arrangement,
+        p_group_id: groupId,
+        p_group_name: groupName,
+      })
+      : await admin.rpc("demo_plan_apply", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: p.action,
+        p_course_id: courseId,
+        p_stage: stage,
+        p_topic_id: topicId,
+        p_student_id: student,
+        p_include: include,
+        p_assign: assign,
+        p_import: p.action === "import" ? p.ideas : null,
+      });
     assertDatabase(planError, "plan_apply_failed");
     if (!plan || typeof plan !== "object" || Array.isArray(plan) ||
         (plan as { schoolYear?: unknown }).schoolYear !== year ||
