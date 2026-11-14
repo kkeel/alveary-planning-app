@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Bookmark, Check, ChevronDown, Columns3, List, NotebookPen, Printer, Search, SlidersHorizontal, X } from "lucide-react";
+import { Bookmark, Check, ChevronDown, List, NotebookPen, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
 import type { CountryFilter } from "./country-filter.mjs";
+import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 
 type Plan = {
@@ -53,14 +54,12 @@ type Catalog = {
   topicLinks: TopicLink[];
   choiceGroups: ChoiceGroup[];
 };
-type Mode = "browse" | "plan" | "compare";
+type Mode = "browse" | "plan";
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
 
 const catalog = sourceCatalog as Catalog;
-const storageKey = "alveary:course-explorer-preview:2027-28"; // legacy compare-only storage; think tank migrates to shared desk
-const compareLimit = 3;
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const comparePlan = (a: Plan, b: Plan) =>
   compareText(a.presentationSort, b.presentationSort) ||
@@ -78,14 +77,6 @@ function gradeLabel(grades: number[]): string {
   return "Grades " + values.join(", ");
 }
 
-function PlacementSymbol() {
-  // Exact two-overlapping-circles visual from the 2026–27 Course List.
-  return <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-    <circle cx="9" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.7" />
-    <circle cx="15" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1.7" />
-  </svg>;
-}
-
 function TipCallout({ children }: { children: React.ReactNode }) {
   return <div className="cx-tip">
     <span className="cx-tip-icon"><PlacementSymbol /></span>
@@ -99,9 +90,7 @@ type CourseRowProps = {
   childTopics: Map<string, Plan[]>;
   mode: Mode;
   planned: readonly string[];
-  comparison: readonly string[];
   onPlannedToggle: (id: string) => void;
-  onComparisonToggle: (id: string) => void;
 };
 
 /**
@@ -119,9 +108,7 @@ function CourseRow({
   childTopics,
   mode,
   planned,
-  comparison,
   onPlannedToggle,
-  onComparisonToggle,
 }: CourseRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const disclosureRef = useRef<HTMLButtonElement>(null);
@@ -134,7 +121,6 @@ function CourseRow({
     (!isCombined && (course.grades.length || course.schedules.length))
   );
   const isPlanned = planned.includes(course.id);
-  const isCompared = comparison.includes(course.id);
 
   // Keep the clicked row in the same visible place when content above/below
   // shrinks or expands. Browsers can otherwise reanchor the long Course List.
@@ -173,12 +159,7 @@ function CourseRow({
         aria-pressed={isPlanned} onClick={() => onPlannedToggle(course.id)}>
         {isPlanned ? <Check size={15} /> : <Bookmark size={15} />}
       </button>}
-      {!nested && mode === "compare" && <button className={"cx-row-action" + (isCompared ? " is-selected" : "")}
-        type="button" aria-label={(isCompared ? "Remove " : "Compare ") + course.title}
-        aria-pressed={isCompared} disabled={!isCompared && comparison.length >= compareLimit}
-        onClick={() => onComparisonToggle(course.id)}>
-        {isCompared ? <Check size={15} /> : <Columns3 size={15} />}
-      </button>}
+
     </div>
     {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
       {!isCombined && <div className="cx-course-meta">
@@ -199,9 +180,9 @@ function CourseRow({
 }
 
 export default function CourseExplorer() {
-  const [mode, setMode] = useState<Mode>("browse");
   const desk = usePlanningDesk();
-  useEffect(() => { desk.setCoursePlanningActive(mode === "plan"); return () => desk.setCoursePlanningActive(false); }, [mode, desk.setCoursePlanningActive]);
+  const mode: Mode = desk.courseMode;
+  const setMode = desk.setCourseMode;
   const [grades, setGrades] = useState<number[]>([]);
   const [country, setCountry] = useState<CountryFilter>("all");
   const [subject, setSubject] = useState("");
@@ -210,9 +191,6 @@ export default function CourseExplorer() {
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
   const planned = desk.thinkTankIds;
-  const [comparison, setComparison] = useState<string[]>([]);
-
-  const [readyToPersist, setReadyToPersist] = useState(false);
 
   useEffect(() => {
     if (!gradesOpen) return;
@@ -245,26 +223,6 @@ export default function CourseExplorer() {
     }
     return map;
   }, [plansByEditionId]);
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey) || "{}") as {
-        planned?: string[]; comparison?: string[]; notes?: string;
-      };
-      // Legacy bookmarks are migrated by PlanningDeskProvider, not the Course List.
-      if (Array.isArray(saved.comparison)) setComparison(saved.comparison.filter(id => plansById.has(id)).slice(0, compareLimit));
-      // Legacy notes also migrate to the shared Planning Desk.
-    } catch {
-      // Local scratchpad data is optional; corrupted browser data must not block course browsing.
-    }
-    setReadyToPersist(true);
-  }, [plansById]);
-
-  useEffect(() => {
-    if (!readyToPersist) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ comparison })); }
-    catch { /* Browsing still works if browser storage is unavailable. */ }
-  }, [comparison, readyToPersist]);
 
   const groupedIds = useMemo(() => new Set(catalog.choiceGroups.flatMap(g => g.courseIds)), []);
   const courses = useMemo(() => catalog.courses.filter(c => c.type !== "Topic"), []);
@@ -335,27 +293,17 @@ export default function CourseExplorer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courses, groupedIds, subject, grades, country, normalizedQuery, plansById, childTopics, subjects]);
 
-  const selectedComparisons = comparison.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
-
-
-  function toggleComparison(id: string) {
-    setComparison(ids => ids.includes(id) ? ids.filter(x => x !== id) :
-      ids.length < compareLimit ? [...ids, id] : ids);
-  }
-
   const courseRowProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics,
     mode,
     planned,
-    comparison,
     onPlannedToggle: desk.toggleIdea,
-    onComparisonToggle: toggleComparison,
   };
 
   return <div className="cx-page">
     <header className="cx-heading">
       <h1>Course List</h1>
-      <p className="cx-lead">Discover courses, explore subjects, and compare possibilities for your school year.</p>
+      <p className="cx-lead">Discover courses, explore subjects, and consider possibilities for your school year.</p>
     </header>
 
     <div className="cx-toolbar-sticky">
@@ -366,9 +314,6 @@ export default function CourseExplorer() {
         </button>
         <button type="button" className={mode === "plan" ? "is-current" : ""} onClick={() => setMode("plan")}>
           <NotebookPen size={14} /> Planning
-        </button>
-        <button type="button" className={mode === "compare" ? "is-current" : ""} onClick={() => setMode("compare")}>
-          <Columns3 size={14} /> Compare
         </button>
       </div>
       <div className="cx-toolbar-tools">
@@ -424,23 +369,6 @@ export default function CourseExplorer() {
     </div>}
     </div>
 
-    {mode === "compare" && <section className="cx-compare-panel" aria-label="Compare selected courses">
-      <div className="cx-panel-heading">
-        <div><strong>Compare courses</strong><span> Choose up to three courses from the list.</span></div>
-        {comparison.length > 0 && <button type="button" onClick={() => setComparison([])}>Clear</button>}
-      </div>
-      {selectedComparisons.length === 0 ? <p className="cx-hint">Select the comparison symbol beside any course to see your choices together.</p> :
-        <div className="cx-compare-columns">{selectedComparisons.map(c => <article className="cx-compare-column" key={c.id}>
-          <div className="cx-compare-column-title">
-            <strong>{c.title}</strong>
-            <button type="button" onClick={() => toggleComparison(c.id)} aria-label={"Remove " + c.title}><X size={14} /></button>
-          </div>
-          <p className="cx-course-meta">{gradeLabel(c.grades)}</p>
-          <p className="cx-compare-description">{c.description || "No course description supplied yet."}</p>
-          {c.tips && <TipCallout>{c.tips}</TipCallout>}
-          {(childTopics.get(c.editionId)?.length ?? 0) > 0 && <p className="cx-course-meta">{childTopics.get(c.editionId)?.length} connected topics</p>}
-        </article>)}</div>}
-    </section>}
 
     <div className="cx-page-columns">
       <div className="cx-list-column">
@@ -463,7 +391,6 @@ export default function CourseExplorer() {
           <button type="button" onClick={() => { setGrades([]); setCountry("all"); setSubject(""); setQuery(""); }}>Show all courses</button>
         </div>}
       </div>
-      <aside className="cx-future-space" aria-hidden="true" />
     </div>
   </div>;
 }
