@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import AppShell from "./components/AppShell";
 import "./globals.css";
 
@@ -27,6 +28,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <Script id="memberstack-cross-subdomain-config" strategy="beforeInteractive">
+          {`window.memberstackConfig = { useCookies: true, setCookieOnRootDomain: true };`}
+        </Script>
+      </head>
       <body className={`${plantin.variable} ${circular.variable}`}>
         <AppShell>{children}</AppShell>
       </body>
