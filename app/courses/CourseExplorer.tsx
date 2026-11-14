@@ -6,6 +6,7 @@ import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
 import type { CountryFilter } from "./country-filter.mjs";
+import { usePlanningDesk } from "../components/PlanningDeskContext";
 
 type Plan = {
   id: string;
@@ -58,7 +59,7 @@ type DisplayRow =
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
 
 const catalog = sourceCatalog as Catalog;
-const storageKey = "alveary:course-explorer-preview:2027-28";
+const storageKey = "alveary:course-explorer-preview:2027-28"; // legacy compare-only storage; think tank migrates to shared desk
 const compareLimit = 3;
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const comparePlan = (a: Plan, b: Plan) =>
@@ -166,9 +167,9 @@ function CourseRow({
         {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
         {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
       </button>
-      {!nested && mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
+      {mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
         type="button"
-        aria-label={(isPlanned ? "Remove " : "Add ") + course.title + (isPlanned ? " from " : " to ") + "planning scratchpad"}
+        aria-label={(isPlanned ? "Remove " : "Save ") + course.title + (isPlanned ? " from " : " to ") + "Think Tank"}
         aria-pressed={isPlanned} onClick={() => onPlannedToggle(course.id)}>
         {isPlanned ? <Check size={15} /> : <Bookmark size={15} />}
       </button>}
@@ -199,6 +200,8 @@ function CourseRow({
 
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
+  const desk = usePlanningDesk();
+  useEffect(() => { desk.setCoursePlanningActive(mode === "plan"); return () => desk.setCoursePlanningActive(false); }, [mode, desk.setCoursePlanningActive]);
   const [grades, setGrades] = useState<number[]>([]);
   const [country, setCountry] = useState<CountryFilter>("all");
   const [subject, setSubject] = useState("");
@@ -206,9 +209,9 @@ export default function CourseExplorer() {
   const [gradesOpen, setGradesOpen] = useState(false);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
-  const [planned, setPlanned] = useState<string[]>([]);
+  const planned = desk.thinkTankIds;
   const [comparison, setComparison] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
+
   const [readyToPersist, setReadyToPersist] = useState(false);
 
   useEffect(() => {
@@ -248,9 +251,9 @@ export default function CourseExplorer() {
       const saved = JSON.parse(window.localStorage.getItem(storageKey) || "{}") as {
         planned?: string[]; comparison?: string[]; notes?: string;
       };
-      if (Array.isArray(saved.planned)) setPlanned(saved.planned.filter(id => plansById.has(id)));
+      // Legacy bookmarks are migrated by PlanningDeskProvider, not the Course List.
       if (Array.isArray(saved.comparison)) setComparison(saved.comparison.filter(id => plansById.has(id)).slice(0, compareLimit));
-      if (typeof saved.notes === "string") setNotes(saved.notes);
+      // Legacy notes also migrate to the shared Planning Desk.
     } catch {
       // Local scratchpad data is optional; corrupted browser data must not block course browsing.
     }
@@ -259,9 +262,9 @@ export default function CourseExplorer() {
 
   useEffect(() => {
     if (!readyToPersist) return;
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ planned, comparison, notes })); }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ comparison })); }
     catch { /* Browsing still works if browser storage is unavailable. */ }
-  }, [planned, comparison, notes, readyToPersist]);
+  }, [comparison, readyToPersist]);
 
   const groupedIds = useMemo(() => new Set(catalog.choiceGroups.flatMap(g => g.courseIds)), []);
   const courses = useMemo(() => catalog.courses.filter(c => c.type !== "Topic"), []);
@@ -333,11 +336,8 @@ export default function CourseExplorer() {
   }, [courses, groupedIds, subject, grades, country, normalizedQuery, plansById, childTopics, subjects]);
 
   const selectedComparisons = comparison.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
-  const selectedPlans = planned.map(id => plansById.get(id)).filter((p): p is Plan => !!p);
 
-  function toggleInList(id: string, setter: React.Dispatch<React.SetStateAction<string[]>>) {
-    setter(ids => ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]);
-  }
+
   function toggleComparison(id: string) {
     setComparison(ids => ids.includes(id) ? ids.filter(x => x !== id) :
       ids.length < compareLimit ? [...ids, id] : ids);
@@ -348,7 +348,7 @@ export default function CourseExplorer() {
     mode,
     planned,
     comparison,
-    onPlannedToggle: (id) => toggleInList(id, setPlanned),
+    onPlannedToggle: desk.toggleIdea,
     onComparisonToggle: toggleComparison,
   };
 
@@ -442,7 +442,7 @@ export default function CourseExplorer() {
         </article>)}</div>}
     </section>}
 
-    <div className={"cx-page-columns" + (mode === "plan" ? " cx-page-columns--planning" : "")}>
+    <div className="cx-page-columns">
       <div className="cx-list-column">
         {subjectRows.length > 0 ? subjectRows.map(section =>
           <section className="cx-subject" key={section.name} aria-label={section.name}>
@@ -463,24 +463,7 @@ export default function CourseExplorer() {
           <button type="button" onClick={() => { setGrades([]); setCountry("all"); setSubject(""); setQuery(""); }}>Show all courses</button>
         </div>}
       </div>
-      {mode === "plan" ? <aside className="cx-scratchpad" aria-label="Planning scratchpad">
-        <div className="cx-scratchpad-heading">
-          <NotebookPen size={19} strokeWidth={1.5} />
-          <h2>Your planning paper</h2>
-        </div>
-        <p>Keep a few ideas beside the course list while you browse.</p>
-        <div className="cx-scratchpad-selected">
-          <strong>{selectedPlans.length} saved {selectedPlans.length === 1 ? "course" : "courses"}</strong>
-          {selectedPlans.length ? <ul>{selectedPlans.map(c => <li key={c.id}>
-            <span>{c.title}</span>
-            <button type="button" onClick={() => toggleInList(c.id, setPlanned)} aria-label={"Remove " + c.title}><X size={13} /></button>
-          </li>)}</ul> : <p>Use the bookmark symbol beside a course to add it here.</p>}
-        </div>
-        <label htmlFor="cx-notes">Notes and ideas</label>
-        <textarea id="cx-notes" value={notes} onChange={e => setNotes(e.target.value)}
-          placeholder="Things to remember, questions to discuss, ideas for combining students…" rows={11} />
-        <p className="cx-save-note">Preview scratchpad only · saved on this browser, not to a student or member account.</p>
-      </aside> : <aside className="cx-future-space" aria-hidden="true" />}
+      <aside className="cx-future-space" aria-hidden="true" />
     </div>
   </div>;
 }
