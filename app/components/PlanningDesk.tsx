@@ -233,9 +233,6 @@ export default function PlanningDesk() {
                         }}><X size={13}/> Remove</button>
                       </div>}
                       {selectedReview?.id === idea.id && <div className="pd-review">
-                        <span className="pd-review-type">
-                          {idea.type === "Topic" ? "Topic" : idea.type === "Combined Course" ? "Combined Course" : "Course"}
-                        </span>
                         {idea.description && <p className="pd-review-description">{idea.description}</p>}
                         {idea.tips && <PlacementNote text={idea.tips}/>}
                         {selectedTopics.length > 0 && <div className="pd-topic-review">
