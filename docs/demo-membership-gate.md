@@ -51,3 +51,7 @@ References:
 - https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend
 - https://supabase.com/docs/guides/functions/auth-headers
 - https://supabase.com/docs/guides/functions/secrets
+
+## Deployment status
+
+As of November 14, 2026, the function was deployed to **Alveary Planning – Development** with JWT verification enabled. The matching Testing Plan rule is now marked **enabled** in the database; that switches on the *rule*, not any user's access. It cannot grant Demo access until the Edge Function receives `MEMBERSTACK_LIVE_SECRET_KEY` and successfully verifies an active Memberstack plan connection. The Next.js build passed. Browser verification with a real Testing Plan member is pending the secret setup.
