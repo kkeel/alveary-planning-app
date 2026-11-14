@@ -8,6 +8,7 @@ import AuthStatusBar from "./AuthStatusBar";
 import { PlannerAuthProvider, usePlannerAuth } from "./PlannerAuthProvider";
 import PlanningDesk from "./PlanningDesk";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
+import { DemoPlanProvider } from "./DemoPlanContext";
 import {
   ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
@@ -277,9 +278,11 @@ function SessionPlanningShell({ children }: { children: ReactNode }) {
   const { userId } = usePlannerAuth();
   // Drafts are still browser-local and are intentionally *not* copied between
   // different account identities on the same device.
-  return <PlanningDeskProvider key={userId ?? "public"} storageScope={userId ?? "public"}>
-    <AppShellInner>{children}</AppShellInner>
-  </PlanningDeskProvider>;
+  return <DemoPlanProvider key={userId ?? "public"}>
+    <PlanningDeskProvider key={userId ?? "public"} storageScope={userId ?? "public"}>
+      <AppShellInner>{children}</AppShellInner>
+    </PlanningDeskProvider>
+  </DemoPlanProvider>;
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
