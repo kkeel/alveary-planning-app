@@ -202,11 +202,18 @@ export default function PlanningDesk() {
                 {!isCollapsed && <div className="pd-subject-items">
                   {list.map((idea, i) => {
                     const itemMenu = "idea:" + idea.id;
+                    const courseTopics = topicConnections.get(idea.editionId) ?? [];
+                    const excludedTopicIds = desk.excludedTopicIdsByCourse[idea.id] ?? [];
+                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
+                    const isCustomized = excludedCount > 0;
+                    const includedCount = courseTopics.length - excludedCount;
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
                           onClick={() => {setReviewId(reviewId === idea.id ? null : idea.id); setOpenTopicId(null);}}>
-                          <BookmarkCheck size={14}/><span>{idea.title}</span>
+                          <BookmarkCheck size={14}/><span>{idea.title}
+                            {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
+                          </span>
                           {reviewId === idea.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                         </button>
                         <button type="button" className="pd-more" aria-label={"Organize " + idea.title}
@@ -233,21 +240,43 @@ export default function PlanningDesk() {
                       {selectedReview?.id === idea.id && <div className="pd-review">
                         {idea.description && <p className="pd-review-description">{idea.description}</p>}
                         {idea.tips && <PlacementNote text={idea.tips}/>}
-                        {selectedTopics.length > 0 && <div className="pd-topic-review" aria-label="Included topics">
+                        {selectedTopics.length > 0 && <div className="pd-topic-review" aria-label="Course topic choices">
+                          <div className="pd-topic-review-heading">
+                            <strong>Topics in this course · {includedCount} of {selectedTopics.length} included</strong>
+                            {isCustomized && <button type="button" className="pd-restore-topics"
+                              onClick={() => desk.restoreCourseTopics(idea.id)}>
+                              <RotateCcw size={12}/> Restore all
+                            </button>}
+                          </div>
+                          <p className="pd-topic-help">All topics are included initially. Remove any you won't use; this changes only your planning ideas, not Alveary's published lesson packets.</p>
                           {selectedTopics.map(topic => {
                             const isOpen = openTopicId === topic.id;
-                            return <div className="pd-topic-item" key={topic.id}>
-                              <button type="button" className="pd-topic-toggle" aria-expanded={isOpen}
-                                onClick={() => setOpenTopicId(isOpen ? null : topic.id)}>
-                                {isOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-                                <span>{topic.title}</span>
-                              </button>
+                            const isIncluded = !excludedTopicIds.includes(topic.id);
+                            const separatelySaved = desk.thinkTankIds.includes(topic.id);
+                            return <div className={"pd-topic-item" + (isIncluded ? "" : " is-excluded")} key={topic.id}>
+                              <div className="pd-topic-row">
+                                <button type="button" className="pd-topic-toggle" aria-expanded={isOpen}
+                                  onClick={() => setOpenTopicId(isOpen ? null : topic.id)}>
+                                  {isOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+                                  <span>{topic.title}
+                                    {separatelySaved && <small className="pd-topic-saved-note">Also saved separately</small>}
+                                  </span>
+                                </button>
+                                <button type="button" className="pd-topic-choice"
+                                  aria-label={(isIncluded ? "Remove " : "Restore ") + topic.title + " from " + idea.title}
+                                  aria-pressed={isIncluded}
+                                  onClick={() => desk.toggleCourseTopic(idea.id, topic.id, selectedTopics.map(t => t.id))}>
+                                  {isIncluded ? "Remove" : "Restore"}
+                                </button>
+                              </div>
                               {isOpen && (topic.description || topic.tips) && <div className="pd-topic-info">
                                 {topic.description && <p>{topic.description}</p>}
                                 {topic.tips && <PlacementNote text={topic.tips}/>}
                               </div>}
                             </div>;
                           })}
+                          {includedCount === 0 && <p className="pd-topic-zero">No topics selected in this course. Restore a topic above, or remove the course from your Think Tank.</p>}
+                          {isCustomized && <p className="pd-topic-help">Customized course · {includedCount} selected. Your original combined-course PDF still includes every published topic.</p>}
                         </div>}
                         <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
                           <BookOpen size={15}/> View Books
