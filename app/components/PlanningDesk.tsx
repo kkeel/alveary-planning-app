@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowUp, BookOpen, BookmarkCheck, ChevronDown, ChevronRight,
-  ClipboardList, Lightbulb, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X,
+  Lightbulb, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
+import { useDemoPlan } from "./DemoPlanContext";
+import MyPlanPanel from "./MyPlanPanel";
 import PlacementSymbol from "./PlacementSymbol";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import catalog from "../courses/catalog-preview.json";
@@ -36,6 +38,7 @@ function PlacementNote({ text }: { text: string }) {
 
 export default function PlanningDesk() {
   const desk = usePlanningDesk();
+  const cloud = useDemoPlan();
   const pathname = usePathname();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   const [reviewId, setReviewId] = useState<string | null>(null);
@@ -59,9 +62,22 @@ export default function PlanningDesk() {
     };
   }, [drawerOpen]);
 
+  const plannedIds = useMemo(() => new Set(
+    cloud.courses.filter(c => c.stage === "planned").map(c => c.courseId)), [cloud.courses]);
   const ideas = useMemo(() => desk.thinkTankIds
+    .filter(id => !plannedIds.has(id))
     .map(id => lookup.get(id))
-    .filter((plan): plan is CatalogPlan => Boolean(plan)), [desk.thinkTankIds]);
+    .filter((plan): plan is CatalogPlan => Boolean(plan)),
+  [desk.thinkTankIds, plannedIds]);
+  const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
+    !cloud.courses.some(c => c.courseId === id)) : [];
+  const saveLegacyIdeas = () => {
+    if (!unsynced.length) return;
+    void cloud.importIdeas(unsynced.map(courseId => ({
+      courseId,
+      excludedTopicIds: desk.excludedTopicIdsByCourse[courseId] ?? [],
+    })));
+  };
   const grouped = useMemo(() => {
     const map = new Map<string, CatalogPlan[]>();
     for (const idea of ideas) map.set(idea.subject, [...(map.get(idea.subject) ?? []), idea]);
@@ -122,7 +138,7 @@ export default function PlanningDesk() {
       Think Tank · {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
     </button>
     <button type="button" onClick={() => selectTab("plan")}>
-      My Plan · 0 selections
+      My Plan · ${plannedIds.size} selections
     </button>
   </div>;
 
@@ -160,11 +176,20 @@ export default function PlanningDesk() {
         </button>
         <button role="tab" type="button" aria-selected={desk.tab === "plan"}
           className={desk.tab === "plan" ? "is-active" : ""} onClick={() => desk.setTab("plan")}>
-          My Plan <span>0</span>
+          My Plan <span>{plannedIds.size}</span>
         </button>
       </div>
 
       <div className="pd-body">
+        {cloud.ready && unsynced.length > 0 && <div className="pd-save-browser">
+          <strong>{unsynced.length} browser-only {unsynced.length === 1 ? "idea" : "ideas"}</strong>
+          <p>Bring your existing Think Tank choices and topic customizations into your private Demo plan. This merges without overwriting choices already saved to your account.</p>
+          <button type="button" onClick={saveLegacyIdeas} disabled={cloud.saving}>
+            Save browser ideas to Demo plan
+          </button>
+        </div>}
+        {cloud.error && <p className="pd-cloud-error" role="alert">{cloud.error}</p>}
+        {cloud.saving && <p className="pd-cloud-saving" role="status">Saving to your Demo plan…</p>}
         {onBooks && <Link className="pd-return" href="/courses"
           onClick={() => {desk.setCourseMode("plan"); closeMobileDrawer();}}>
           <ArrowLeft size={14}/> Back to Course List · Planning
@@ -300,6 +325,10 @@ export default function PlanningDesk() {
                           </div>}
                           {isCustomized && <p className="pd-topic-pdf-note">Published PDFs remain unchanged.</p>}
                         </div>}
+                        {cloud.ready && <button type="button" className="pd-books-link"
+                          onClick={() => { cloud.setStage(idea.id, "planned"); desk.setTab("plan"); }}>
+                          <BookmarkCheck size={15}/> Add to My Plan
+                        </button>}
                         <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
                           <BookOpen size={15}/> View Books
                         </Link>
@@ -317,13 +346,8 @@ export default function PlanningDesk() {
           <label className="pd-notes-label" htmlFor="pd-notes">Notes and ideas</label>
           <textarea id="pd-notes" value={desk.notes} onChange={e => desk.setNotes(e.target.value)}
             rows={3} placeholder="What are you considering?"/>
-          <p className="pd-local-note">Saved in this browser for now.</p>
-        </> : <div className="pd-plan-empty">
-          <ClipboardList size={22}/>
-          <h3>My Plan</h3>
-          <p>Student assignments aren't connected yet. You'll be able to move ideas from the Think Tank into My Plan when that step is ready.</p>
-          <button type="button" onClick={() => desk.setTab("think")}>Return to Think Tank</button>
-        </div>}
+          <p className="pd-local-note">Notes and display preferences remain in this browser. Course choices are saved to your Demo plan after merging.</p>
+        </> : <MyPlanPanel />}
       </div>
     </aside>}
   </div>;
