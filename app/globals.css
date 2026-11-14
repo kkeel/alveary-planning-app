@@ -77,20 +77,22 @@ a { color: inherit; }
 .announcement-tag span { font-size: 9px; }
 .shell-main { flex: 1; padding: 45px 44px 70px; max-width: 1600px; width: 100%; }
 .shell-page-layout { min-width: 0; flex: 1; }
-.shell-page-layout.has-planning-desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 310px); gap: 22px; align-items: start; padding-right: 32px; }
+.shell-page-layout.has-planning-desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 370px);
+  gap: 18px;
+  align-items: start;
+  padding-right: 22px;
+}
 .shell-page-layout.has-planning-desk .shell-main { min-width: 0; max-width: none; padding-right: 0; }
-.shell-page-layout.has-planning-desk > .pd-desk,
-.shell-page-layout.has-planning-desk > .pd-quiet { margin-top: 45px; }
-@media (max-width: 1150px) {
+@media (max-width: 1280px) {
+  /* Keep the complete course list at readable width. The shared Planning
+     Desk becomes a floating summary that opens a true slide-out panel. */
   .shell-page-layout.has-planning-desk { display: block; padding-right: 0; }
   .shell-page-layout.has-planning-desk .shell-main { padding-right: 26px; }
-  .shell-page-layout.has-planning-desk > .pd-desk,
-  .shell-page-layout.has-planning-desk > .pd-quiet { margin: 0 26px 40px; }
 }
 @media (max-width: 760px) {
   .shell-page-layout.has-planning-desk .shell-main { padding-right: 20px; }
-  .shell-page-layout.has-planning-desk > .pd-desk,
-  .shell-page-layout.has-planning-desk > .pd-quiet { margin: 0 20px 35px; }
 }
 @media print {
   .shell-page-layout.has-planning-desk { display: block !important; padding: 0 !important; }
