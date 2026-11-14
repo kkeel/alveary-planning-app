@@ -146,8 +146,6 @@ export default function PlanningDesk() {
         <div className="pd-header-actions">
           <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
             onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
-          <button type="button" className="pd-mobile-close" aria-label="Close Planning Desk"
-            onClick={closeMobileDrawer}><X size={20}/></button>
         </div>
       </header>
 
