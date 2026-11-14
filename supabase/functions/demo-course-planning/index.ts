@@ -168,7 +168,7 @@ Deno.serve(async (req: Request) => {
       ? [...new Set(p.studentIds)] : null;
     const groupId = studentId(p.groupId);
     const groupName = typeof p.groupName === "string" && p.groupName.trim().length > 0 &&
-      p.groupName.trim().length <= 50 && !/[\\u0000-\\u001f\\u007f]/.test(p.groupName)
+      p.groupName.trim().length <= 50 && !/[\u0000-\u001f\u007f]/.test(p.groupName)
       ? p.groupName.trim() : null;
     const priority = p.priority === null || p.priority === "" || p.priority === undefined
       ? null : typeof p.priority === "string" &&
