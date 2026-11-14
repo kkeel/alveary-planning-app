@@ -10,16 +10,25 @@ export type SavedCourse = {
   topics: SavedTopic[]; studentIds: string[]; overrides: SavedOverride[];
 };
 export type PlanningStudent = { id: string; displayName: string; gradeLevel: number | null };
+export type PlanningGroup = { id: string; name: string; studentIds: string[] };
+export type StudentPreference = {
+  courseId: string; studentId: string;
+  priority: "Core" | "High Interest" | "Additional" | null;
+  arrangement: "Combined" | "Separate" | "Both" | "Later";
+};
 export type DemoPlanSnapshot = {
   schoolYear: "2027-28"; planKind: "demo";
   students: PlanningStudent[]; courses: SavedCourse[];
+  studentGroups: PlanningGroup[]; studentPreferences: StudentPreference[];
 };
 export type LegacyIdea = { courseId: string; excludedTopicIds: string[] };
 type Action = "load" | "import" | "set_choice" | "remove_choice" | "set_stage" |
-  "set_topic" | "set_course_student" | "set_topic_student";
+  "set_topic" | "set_course_student" | "set_topic_student" |
+  "batch_assign" | "set_preference" | "upsert_group" | "delete_group";
 type DemoPlanContextValue = {
   ready: boolean; saving: boolean; error: string | null;
   courses: SavedCourse[]; students: PlanningStudent[];
+  studentGroups: PlanningGroup[]; studentPreferences: StudentPreference[];
   importIdeas: (ideas: LegacyIdea[]) => Promise<void>;
   addChoice: (courseId: string) => void;
   removeChoice: (courseId: string) => void;
@@ -27,6 +36,11 @@ type DemoPlanContextValue = {
   setTopic: (courseId: string, topicId: string, included: boolean) => void;
   assignCourse: (courseId: string, studentId: string, assigned: boolean) => void;
   assignTopic: (courseId: string, topicId: string, studentId: string, assigned: boolean) => void;
+  assignStudents: (courseId: string, studentIds: string[], assigned: boolean) => void;
+  setPreference: (courseId: string, studentId: string,
+    priority: StudentPreference["priority"], arrangement: StudentPreference["arrangement"]) => void;
+  saveGroup: (name: string, studentIds: string[], groupId?: string) => Promise<void>;
+  deleteGroup: (groupId: string) => Promise<void>;
   refresh: () => Promise<void>;
 };
 const Context = createContext<DemoPlanContextValue | null>(null);
@@ -38,12 +52,14 @@ function isSnapshot(value: unknown): value is DemoPlanSnapshot {
   const v = value as Partial<DemoPlanSnapshot>;
   return v.schoolYear === "2027-28" && v.planKind === "demo" &&
     Array.isArray(v.students) && Array.isArray(v.courses) &&
+    Array.isArray(v.studentGroups) && Array.isArray(v.studentPreferences) &&
     v.courses.every(c => typeof c.courseId === "string" &&
       (c.stage === "idea" || c.stage === "planned") &&
       Array.isArray(c.topics) && Array.isArray(c.studentIds) &&
       Array.isArray(c.overrides));
 }
-const blank: DemoPlanSnapshot = { schoolYear: "2027-28", planKind: "demo", students: [], courses: [] };
+const blank: DemoPlanSnapshot = { schoolYear: "2027-28", planKind: "demo",
+  students: [], courses: [], studentGroups: [], studentPreferences: [] };
 
 export function DemoPlanProvider({ children }: { children: ReactNode }) {
   const { status, userId, getAccessToken } = usePlannerAuth();
@@ -192,9 +208,45 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     }));
   }, [mutate]);
 
+  const assignStudents = useCallback((courseId: string, studentIds: string[], assigned: boolean) => {
+    const unique = [...new Set(studentIds)];
+    if (!unique.length) return;
+    void mutate("batch_assign", { courseId, studentIds: unique, assign: assigned }, current => ({
+      ...current,
+      courses: current.courses.map(c => c.courseId !== courseId ? c : {
+        ...c, stage: assigned ? "planned" : c.stage,
+        studentIds: assigned
+          ? [...new Set([...c.studentIds, ...unique])]
+          : c.studentIds.filter(id => !unique.includes(id)),
+        overrides: c.overrides.filter(o => !unique.includes(o.studentId)),
+      }),
+      studentPreferences: assigned ? current.studentPreferences : current.studentPreferences.filter(p =>
+        p.courseId !== courseId || !unique.includes(p.studentId)),
+    }));
+  }, [mutate]);
+
+  const setPreference = useCallback((courseId: string, studentId: string,
+    priority: StudentPreference["priority"], arrangement: StudentPreference["arrangement"]) => {
+    void mutate("set_preference", { courseId, studentId, priority, arrangement }, current => {
+      const pref: StudentPreference = { courseId, studentId, priority, arrangement };
+      return { ...current, studentPreferences: [
+        ...current.studentPreferences.filter(p =>
+          p.courseId !== courseId || p.studentId !== studentId), pref,
+      ] };
+    });
+  }, [mutate]);
+
+  const saveGroup = useCallback((name: string, studentIds: string[], groupId?: string) =>
+    mutate("upsert_group", { groupName: name, studentIds, ...(groupId ? { groupId } : {}) }),
+  [mutate]);
+  const deleteGroup = useCallback((groupId: string) =>
+    mutate("delete_group", { groupId }), [mutate]);
+
   return <Context.Provider value={{
     ready, saving, error, courses: snapshot.courses, students: snapshot.students,
-    importIdeas, addChoice, removeChoice, setStage, setTopic, assignCourse, assignTopic, refresh,
+    studentGroups: snapshot.studentGroups, studentPreferences: snapshot.studentPreferences,
+    importIdeas, addChoice, removeChoice, setStage, setTopic, assignCourse, assignTopic,
+    assignStudents, setPreference, saveGroup, deleteGroup, refresh,
   }}>{children}</Context.Provider>;
 }
 export function useDemoPlan(): DemoPlanContextValue {

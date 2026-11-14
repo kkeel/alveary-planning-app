@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import catalog from "../courses/catalog-preview.json";
@@ -46,6 +47,8 @@ export default function PlanningDesk() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showRemovedCourseId, setShowRemovedCourseId] = useState<string | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
+  const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -64,11 +67,13 @@ export default function PlanningDesk() {
 
   const plannedIds = useMemo(() => new Set(
     cloud.courses.filter(c => c.stage === "planned").map(c => c.courseId)), [cloud.courses]);
+  // Keep the row being actively edited in place after an assignment succeeds.
+  // It moves out of Think Tank only when the member leaves this review/tab.
   const ideas = useMemo(() => desk.thinkTankIds
-    .filter(id => !plannedIds.has(id))
+    .filter(id => !plannedIds.has(id) || justPlannedId === id)
     .map(id => lookup.get(id))
     .filter((plan): plan is CatalogPlan => Boolean(plan)),
-  [desk.thinkTankIds, plannedIds]);
+  [desk.thinkTankIds, plannedIds, justPlannedId]);
   const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
     !cloud.courses.some(c => c.courseId === id)) : [];
   const saveLegacyIdeas = () => {
@@ -122,6 +127,7 @@ export default function PlanningDesk() {
   }
 
   function selectTab(tab: "think" | "plan") {
+    if (tab === "plan") setJustPlannedId(null);
     desk.setTab(tab);
     desk.setQuiet(false);
     setDrawerOpen(true);
@@ -138,7 +144,7 @@ export default function PlanningDesk() {
       Think Tank · {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
     </button>
     <button type="button" onClick={() => selectTab("plan")}>
-      My Plan · ${plannedIds.size} selections
+      My Plan · {plannedIds.size} selections
     </button>
   </div>;
 
@@ -164,6 +170,11 @@ export default function PlanningDesk() {
       <header className="pd-header">
         <div className="pd-title"><Lightbulb size={20}/><h2>Your Planning Desk</h2></div>
         <div className="pd-header-actions">
+          <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
+            role={cloud.error ? "alert" : "status"}
+            aria-live="polite" title={cloud.error ?? undefined}>
+            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
+          </span>
           <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
             onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
         </div>
@@ -171,11 +182,11 @@ export default function PlanningDesk() {
 
       <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
         <button role="tab" type="button" aria-selected={desk.tab === "think"}
-          className={desk.tab === "think" ? "is-active" : ""} onClick={() => desk.setTab("think")}>
+          className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
           Think Tank <span>{ideas.length}</span>
         </button>
         <button role="tab" type="button" aria-selected={desk.tab === "plan"}
-          className={desk.tab === "plan" ? "is-active" : ""} onClick={() => desk.setTab("plan")}>
+          className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
           My Plan <span>{plannedIds.size}</span>
         </button>
       </div>
@@ -188,8 +199,7 @@ export default function PlanningDesk() {
             Save browser ideas to Demo plan
           </button>
         </div>}
-        {cloud.error && <p className="pd-cloud-error" role="alert">{cloud.error}</p>}
-        {cloud.saving && <p className="pd-cloud-saving" role="status">Saving to your Demo plan…</p>}
+        {cloud.error && <div className="pd-save-error-inline" role="alert">{cloud.error}</div>}
         {onBooks && <Link className="pd-return" href="/courses"
           onClick={() => {desk.setCourseMode("plan"); closeMobileDrawer();}}>
           <ArrowLeft size={14}/> Back to Course List · Planning
@@ -242,7 +252,11 @@ export default function PlanningDesk() {
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
-                          onClick={() => {setReviewId(reviewId === idea.id ? null : idea.id); setOpenTopicId(null);}}>
+                          onClick={() => {
+                            setReviewId(reviewId === idea.id ? null : idea.id);
+                            if (reviewId !== idea.id) setJustPlannedId(null);
+                            setOpenTopicId(null);
+                          }}>
                           <BookmarkCheck size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
                           </span>
@@ -325,18 +339,26 @@ export default function PlanningDesk() {
                           </div>}
                           {isCustomized && <p className="pd-topic-pdf-note">Published PDFs remain unchanged.</p>}
                         </div>}
-                        {cloud.ready && <button type="button" className="pd-books-link"
-                          disabled={cloud.saving || !cloud.courses.some(c => c.courseId === idea.id)}
-                          title={!cloud.courses.some(c => c.courseId === idea.id)
-                            ? "Save your browser-only ideas to the Demo account first" : undefined}
-                          onClick={() => { cloud.setStage(idea.id, "planned"); desk.setTab("plan"); }}>
-                          <BookmarkCheck size={15}/>
-                          {cloud.courses.some(c => c.courseId === idea.id)
-                            ? "Add to My Plan" : "Save browser ideas first"}
-                        </button>}
-                        <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
-                          <BookOpen size={15}/> View Books
-                        </Link>
+                        <div className="pd-review-actions">
+                          {cloud.ready && (justPlannedId === idea.id || plannedIds.has(idea.id)
+                            ? <button type="button" className="pd-plan-action"
+                              onClick={() => selectTab("plan")}>
+                                In My Plan · Review
+                              </button>
+                            : <button type="button" className="pd-plan-action"
+                              disabled={!cloud.courses.some(c => c.courseId === idea.id)}
+                              onClick={() => setAssigningId(assigningId === idea.id ? null : idea.id)}>
+                                {assigningId === idea.id ? "Hide student choices" : "Plan this course"}
+                              </button>)}
+                          <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
+                            <BookOpen size={15}/> View Books
+                          </Link>
+                        </div>
+                        {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
+                          <StudentAssignmentEditor
+                            course={cloud.courses.find(c => c.courseId === idea.id)!}
+                            onAssigned={() => setJustPlannedId(idea.id)}
+                          />}
                       </div>}
                     </div>;
                   })}
@@ -352,7 +374,7 @@ export default function PlanningDesk() {
           <textarea id="pd-notes" value={desk.notes} onChange={e => desk.setNotes(e.target.value)}
             rows={3} placeholder="What are you considering?"/>
           <p className="pd-local-note">Notes and display preferences remain in this browser. Course choices are saved to your Demo plan after merging.</p>
-        </> : <MyPlanPanel />}
+        </> : <MyPlanPanel focusCourseId={justPlannedId} />}
       </div>
     </aside>}
   </div>;
