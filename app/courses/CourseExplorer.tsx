@@ -189,6 +189,7 @@ export default function CourseExplorer() {
   const [subject, setSubject] = useState("");
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
   const planned = desk.thinkTankIds;
@@ -317,7 +318,14 @@ export default function CourseExplorer() {
           <NotebookPen size={14} /> Planning
         </button>
       </div>
-      <div className="cx-toolbar-tools">
+      <button type="button" className="cx-mobile-filter-toggle"
+        aria-controls="cx-toolbar-filter-tools" aria-expanded={mobileFiltersOpen}
+        onClick={() => { setMobileFiltersOpen(value => !value); setGradesOpen(false); }}>
+        <SlidersHorizontal size={15}/> Filters
+        <ChevronDown size={13} aria-hidden="true"/>
+      </button>
+      <div className={"cx-toolbar-tools" + (mobileFiltersOpen ? " is-mobile-expanded" : "")}
+        id="cx-toolbar-filter-tools">
         <button type="button" className={"cx-filter-control" + (grades.length ? " has-value" : "")}
           ref={gradeButtonRef} onClick={() => setGradesOpen(v => !v)} aria-expanded={gradesOpen} aria-controls="cx-grade-options">
           <SlidersHorizontal size={14} /> {grades.length ? gradeLabel(grades) : "All grades"}{country !== "all" ? " · " + (country === "us" ? "U.S." : "Canada") : ""}
@@ -338,6 +346,12 @@ export default function CourseExplorer() {
           <Printer size={17} />
         </button>
       </div>
+    </div>
+    <div className="cx-mobile-filter-summary" aria-label="Current course filters">
+      <span>{grades.length ? gradeLabel(grades) : "All grades"}</span>
+      {country !== "all" && <span>{country === "us" ? "U.S." : "Canada"}</span>}
+      {subject && <span>{subject}</span>}
+      {query && <span>Search active</span>}
     </div>
 
     {gradesOpen && <div ref={gradePanelRef} className="cx-grade-panel" id="cx-grade-options">
