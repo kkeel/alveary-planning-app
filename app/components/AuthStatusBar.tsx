@@ -20,7 +20,7 @@ export default function AuthStatusBar() {
           : signedIn
             ? "Planning preview connected. Membership permissions are still being built."
             : configured
-              ? "Explore freely or sign in with your Alveary account."
+              ? "Public browsing is available. To test sign-in without shared cookies, use Alveary SSO."
               : "Explore freely. Sign in on the Alveary website."}
       </span>
     </div>
@@ -28,7 +28,7 @@ export default function AuthStatusBar() {
       {signedIn ? <button type="button" onClick={() => void signOut()} disabled={busy}>
         {busy ? "Signing out…" : "Sign out (planner only)"}
       </button> : configured ? <button type="button" onClick={() => void signIn()} disabled={busy || status === "checking"}>
-        {busy ? "Signing in…" : "Sign in"}
+        {busy ? "Connecting…" : "Try Alveary SSO"}
       </button> : <a href={ALVEARY_LOGIN_URL} title="Sign in on the Alveary website">Sign in</a>}
     </div>
     {error && <p className="auth-bar-error" role="alert">{error}</p>}
