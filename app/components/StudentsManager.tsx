@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePlannerAuth } from "./PlannerAuthProvider";
+import { useDemoPlan } from "./DemoPlanContext";
 
 type Student = { id: string; displayName: string; gradeLevel: number | null };
 type StudentsResult = { schoolYear: string; planKind: "demo"; students: Student[] };
@@ -35,6 +36,7 @@ function isStudentsResult(value: unknown): value is StudentsResult {
 
 export default function StudentsManager() {
   const { status, userId, getAccessToken } = usePlannerAuth();
+  const demoPlan = useDemoPlan();
   const [students, setStudents] = useState<Student[]>(() =>
     userId ? studentCache.get(userId) ?? [] : []);
   const [loading, setLoading] = useState(() =>
@@ -150,6 +152,7 @@ export default function StudentsManager() {
       });
       if (userId) studentCache.set(userId, updated.students);
       setStudents(updated.students);
+      void demoPlan.refresh();
       setSuccess(wasEditing ? "Student details saved to your Demo workspace." :
         "Student added to your Demo workspace.");
       reset();
@@ -172,6 +175,7 @@ export default function StudentsManager() {
       const data = await request("archive", { studentId: student.id });
       if (userId) studentCache.set(userId, data.students);
       setStudents(data.students);
+      void demoPlan.refresh();
       setSuccess("Student archived. Their information is retained for your records.");
       if (editingId === student.id) reset();
     } catch {
