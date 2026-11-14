@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Bookmark, Check, ChevronDown, Columns3, List, NotebookPen, Printer, Search, SlidersHorizontal, X } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
+import { sortTopicsForCourse } from "./topic-order.mjs";
 
 type Plan = {
   id: string;
@@ -89,6 +90,111 @@ function TipCallout({ children }: { children: React.ReactNode }) {
   </div>;
 }
 
+type CourseRowProps = {
+  course: Plan;
+  nested?: boolean;
+  childTopics: Map<string, Plan[]>;
+  mode: Mode;
+  planned: readonly string[];
+  comparison: readonly string[];
+  onPlannedToggle: (id: string) => void;
+  onComparisonToggle: (id: string) => void;
+};
+
+/**
+ * A stable component type is essential here. Previously CourseRow was declared
+ * inside CourseExplorer and recreated on every state change; React therefore
+ * remounted the clicked row, discarded focus and could jump the scroll position.
+ *
+ * Expansion is intentionally LOCAL to this rendered occurrence. The same plan
+ * may appear under different parents or in multiple grade-specific choice
+ * groups, but opening one occurrence must not open its other appearances.
+ */
+function CourseRow({
+  course,
+  nested = false,
+  childTopics,
+  mode,
+  planned,
+  comparison,
+  onPlannedToggle,
+  onComparisonToggle,
+}: CourseRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const disclosureRef = useRef<HTMLButtonElement>(null);
+  const beforeToggleTop = useRef<number | null>(null);
+  const detailsId = useId(); // unique for each occurrence, not the shared curriculum ID
+  const isCombined = course.type === "Combined Course";
+  const children = sortTopicsForCourse(course, childTopics.get(course.editionId) ?? []);
+  const canExpand = Boolean(
+    children.length || course.description || course.tips ||
+    (!isCombined && (course.grades.length || course.schedules.length))
+  );
+  const isPlanned = planned.includes(course.id);
+  const isCompared = comparison.includes(course.id);
+
+  // Keep the clicked row in the same visible place when content above/below
+  // shrinks or expands. Browsers can otherwise reanchor the long Course List.
+  useLayoutEffect(() => {
+    const previousY = beforeToggleTop.current;
+    beforeToggleTop.current = null;
+    const nextY = disclosureRef.current?.getBoundingClientRect().top;
+    if (previousY !== null && nextY !== undefined && Math.abs(nextY - previousY) > 1) {
+      window.scrollBy(0, nextY - previousY);
+    }
+  }, [isExpanded]);
+
+  function toggleDetails() {
+    beforeToggleTop.current = disclosureRef.current?.getBoundingClientRect().top ?? null;
+    setIsExpanded(value => !value);
+  }
+
+  const childProps: Omit<CourseRowProps, "course" | "nested"> = {
+    childTopics, mode, planned, comparison, onPlannedToggle, onComparisonToggle,
+  };
+
+  return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")}>
+    <div className="cx-course-head">
+      <button ref={disclosureRef} type="button" className="cx-course-disclosure"
+        aria-expanded={canExpand ? isExpanded : undefined}
+        aria-controls={canExpand ? detailsId : undefined}
+        disabled={!canExpand}
+        onClick={toggleDetails}>
+        <span className="cx-course-name">{course.title}</span>
+        {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
+        {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
+      </button>
+      {!nested && mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
+        type="button"
+        aria-label={(isPlanned ? "Remove " : "Add ") + course.title + (isPlanned ? " from " : " to ") + "planning scratchpad"}
+        aria-pressed={isPlanned} onClick={() => onPlannedToggle(course.id)}>
+        {isPlanned ? <Check size={15} /> : <Bookmark size={15} />}
+      </button>}
+      {!nested && mode === "compare" && <button className={"cx-row-action" + (isCompared ? " is-selected" : "")}
+        type="button" aria-label={(isCompared ? "Remove " : "Compare ") + course.title}
+        aria-pressed={isCompared} disabled={!isCompared && comparison.length >= compareLimit}
+        onClick={() => onComparisonToggle(course.id)}>
+        {isCompared ? <Check size={15} /> : <Columns3 size={15} />}
+      </button>}
+    </div>
+    {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
+      {!isCombined && <div className="cx-course-meta">
+        {course.schedules.length > 0 && <div className="cx-schedule-list">
+          {course.schedules.map(schedule => <span key={schedule.id} className="cx-schedule-item">
+            {schedule.text}
+          </span>)}
+        </div>}
+        <span className="cx-grade-detail">{course.gradeDisplay || gradeLabel(course.grades)}</span>
+      </div>}
+      {course.description && <p className="cx-description">{course.description}</p>}
+      {course.tips && <TipCallout>{course.tips}</TipCallout>}
+      {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
+        {children.map(child => <CourseRow key={child.id} course={child} nested {...childProps} />)}
+      </div>}
+    </div>}
+  </div>;
+}
+
 export default function CourseExplorer() {
   const [mode, setMode] = useState<Mode>("browse");
   const [grades, setGrades] = useState<number[]>([]);
@@ -97,8 +203,6 @@ export default function CourseExplorer() {
   const [gradesOpen, setGradesOpen] = useState(false);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState<string[]>([]);
-  const [topicExpanded, setTopicExpanded] = useState<string[]>([]);
   const [planned, setPlanned] = useState<string[]>([]);
   const [comparison, setComparison] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
@@ -133,7 +237,6 @@ export default function CourseExplorer() {
       const topic = plansByEditionId.get(link.childEditionId);
       if (topic) map.set(link.parentEditionId, [...(map.get(link.parentEditionId) ?? []), topic]);
     }
-    for (const list of map.values()) list.sort(comparePlan);
     return map;
   }, [plansByEditionId]);
 
@@ -236,57 +339,14 @@ export default function CourseExplorer() {
       ids.length < compareLimit ? [...ids, id] : ids);
   }
 
-  function CourseRow({ course, nested = false }: { course: Plan; nested?: boolean }) {
-    const isExpanded = nested ? topicExpanded.includes(course.id) : expanded.includes(course.id);
-    const isCombined = course.type === "Combined Course";
-    const children = childTopics.get(course.editionId) ?? [];
-    // Topic outlines are revealed only after the parent course is opened.
-    const canExpand = Boolean(children.length || course.description || course.tips || (!isCombined && (course.grades.length || course.schedules.length)));
-    const isPlanned = planned.includes(course.id);
-    const isCompared = comparison.includes(course.id);
-
-    return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")} key={course.id}>
-      <div className="cx-course-head">
-        <button type="button" className="cx-course-disclosure"
-          aria-expanded={canExpand ? isExpanded : undefined}
-          aria-controls={canExpand ? "cx-detail-" + course.id : undefined}
-          disabled={!canExpand}
-          onClick={() => toggleInList(course.id, nested ? setTopicExpanded : setExpanded)}>
-          <span className="cx-course-name">{course.title}</span>
-          {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
-          {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
-        </button>
-        {!nested && mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
-          type="button" aria-label={(isPlanned ? "Remove " : "Add ") + course.title + (isPlanned ? " from " : " to ") + "planning scratchpad"}
-          aria-pressed={isPlanned} onClick={() => toggleInList(course.id, setPlanned)}>
-          {isPlanned ? <Check size={15} /> : <Bookmark size={15} />}
-        </button>}
-        {!nested && mode === "compare" && <button className={"cx-row-action" + (isCompared ? " is-selected" : "")}
-          type="button" aria-label={(isCompared ? "Remove " : "Compare ") + course.title}
-          aria-pressed={isCompared}
-          disabled={!isCompared && comparison.length >= compareLimit}
-          onClick={() => toggleComparison(course.id)}>
-          {isCompared ? <Check size={15} /> : <Columns3 size={15} />}
-        </button>}
-      </div>
-      {canExpand && isExpanded && <div className="cx-course-details" id={"cx-detail-" + course.id}>
-        {!isCombined && <div className="cx-course-meta">
-          {course.schedules.length > 0 && <div className="cx-schedule-list">
-            {course.schedules.map(schedule =>
-              <span key={schedule.id} className="cx-schedule-item">
-                {schedule.text}
-              </span>)}
-          </div>}
-          <span className="cx-grade-detail">{course.gradeDisplay || gradeLabel(course.grades)}</span>
-        </div>}
-        {course.description && <p className="cx-description">{course.description}</p>}
-        {course.tips && <TipCallout>{course.tips}</TipCallout>}
-        {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
-          {children.map(child => <CourseRow key={child.id} course={child} nested />)}
-        </div>}
-      </div>}
-    </div>;
-  }
+  const courseRowProps: Omit<CourseRowProps, "course" | "nested"> = {
+    childTopics,
+    mode,
+    planned,
+    comparison,
+    onPlannedToggle: (id) => toggleInList(id, setPlanned),
+    onComparisonToggle: toggleComparison,
+  };
 
   return <div className="cx-page">
     <header className="cx-heading">
@@ -370,13 +430,13 @@ export default function CourseExplorer() {
           <section className="cx-subject" key={section.name} aria-label={section.name}>
             <h2>{section.name}</h2>
             <div className="cx-rows">{section.rows.map(row => row.kind === "course" ?
-              <CourseRow key={row.course.id} course={row.course} /> :
+              <CourseRow key={row.course.id} course={row.course} {...courseRowProps} /> :
               <div className="cx-choice cx-choice--accent" key={row.group.id}>
                 <div className="cx-choice-header">
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
                 </div>
-                <div>{row.options.map(option => <CourseRow key={option.id} course={option} />)}</div>
+                <div>{row.options.map(option => <CourseRow key={option.id} course={option} {...courseRowProps} />)}</div>
               </div>)}</div>
           </section>
         ) : <div className="cx-empty">
