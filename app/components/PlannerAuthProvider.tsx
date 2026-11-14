@@ -71,6 +71,11 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [recheck, setRecheck] = useState(0);
   const signInStarted = useRef(false);
+  // Do not block the entire app every time an already-verified tab gains focus.
+  // Private API operations independently recheck live plan eligibility.
+  const verifiedAtRef = useRef(0);
+  const lastCheckAtRef = useRef(0);
+  const currentUserRef = useRef<string | null>(null);
 
   const signIn = useCallback(async () => {
     if (!client || typeof window === "undefined" || signInStarted.current) return;
@@ -107,9 +112,16 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       if (!active || event === "INITIAL_SESSION") return;
       // Do no network requests inside this callback. Supabase Auth holds its
       // own lock while notifying subscribers.
-      setSession(next?.user && !next.user.is_anonymous ? next : null);
-      setPlanAccess("checking");
-      if (next?.user && !next.user.is_anonymous) {
+      const signedSession = next?.user && !next.user.is_anonymous ? next : null;
+      const nextId = signedSession?.user.id ?? null;
+      if (currentUserRef.current !== nextId) {
+        currentUserRef.current = nextId;
+        verifiedAtRef.current = 0;
+        setPlanAccess(nextId ? "checking" : "none");
+      }
+      setSession(previous => previous?.access_token === signedSession?.access_token
+        ? previous : signedSession);
+      if (signedSession) {
         window.sessionStorage.removeItem(PENDING_KEY);
         setStarting(false);
         setError(null);
@@ -123,6 +135,8 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
         const authError = callbackError();
         const pending = window.sessionStorage.getItem(PENDING_KEY);
         if (sessionError || authError) {
+          currentUserRef.current = null;
+          verifiedAtRef.current = 0;
           setSession(null);
           setPlanAccess("none");
           setStarting(false);
@@ -134,8 +148,9 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (data.session?.user && !data.session.user.is_anonymous) {
+          currentUserRef.current = data.session.user.id;
           setSession(data.session);
-          setPlanAccess("checking");
+          if (!verifiedAtRef.current) setPlanAccess("checking");
           setStarting(false);
           window.sessionStorage.removeItem(PENDING_KEY);
           clearEntryIntent();
@@ -172,7 +187,14 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   // without trusting cached browser-side plan information.
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === "visible") setRecheck(n => n + 1);
+      if (document.visibilityState !== "visible" || !currentUserRef.current) return;
+      const now = Date.now();
+      // Quietly revalidate after a meaningful absence, not on every focus.
+      // Keep the authorized view steady during this background check.
+      if (now - verifiedAtRef.current > 90_000 &&
+          now - lastCheckAtRef.current > 30_000) {
+        setRecheck(n => n + 1);
+      }
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -180,11 +202,16 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) {
+      verifiedAtRef.current = 0;
       setPlanAccess("none");
       return;
     }
     let active = true;
-    setPlanAccess("checking");
+    lastCheckAtRef.current = Date.now();
+    // First sign-in must still verify before opening private navigation.
+    // Subsequent focus refreshes keep the established UI visible until the
+    // server confirms or revokes access.
+    if (!verifiedAtRef.current) setPlanAccess("checking");
     async function checkActiveYear() {
       try {
         if (!url || !key) throw new Error("Not configured");
@@ -200,6 +227,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
         });
         if (!active) return;
         if (!response.ok) {
+          verifiedAtRef.current = 0;
           setPlanAccess(response.status === 401 || response.status === 403
             ? "none" : "unavailable");
           return;
@@ -207,9 +235,13 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
         const result: unknown = await response.json();
         const access = result && typeof result === "object" &&
           "access" in result ? (result as { access: unknown }).access : null;
+        verifiedAtRef.current = access === "demo" ? Date.now() : 0;
         setPlanAccess(access === "demo" ? "demo" : access === "none" ? "none" : "unavailable");
       } catch {
-        if (active) setPlanAccess("unavailable");
+        if (active) {
+          verifiedAtRef.current = 0;
+          setPlanAccess("unavailable");
+        }
       }
     }
     void checkActiveYear();
@@ -224,6 +256,8 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       // Planner-only sign-out. Do not automatically re-enter SSO afterward.
       const { error: signOutError } = await client.auth.signOut({ scope: "local" });
       if (signOutError) throw signOutError;
+      currentUserRef.current = null;
+      verifiedAtRef.current = 0;
       setSession(null);
       setPlanAccess("none");
       setStarting(false);
