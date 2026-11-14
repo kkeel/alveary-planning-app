@@ -85,3 +85,18 @@
 @media print {
   .pd-wrapper, .pd-mobile-launcher, .pd-mobile-scrim { display: none !important; }
 }
+
+/* In-course topic choices are lightweight preview preferences, not PDF edits. */
+.pd-customized-label { display: block; font-size: 10px; line-height: 1.6; font-weight: 600; color: #71886d; }
+.pd-topic-review-heading { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 11px; color: #526952; }
+.pd-topic-review-heading strong { font-weight: 600; }
+.pd-topic-help, .pd-topic-zero { color: #7a897a; font-size: 10px; line-height: 1.6; margin: 7px 0; }
+.pd-topic-zero { color: #876e54; }
+.pd-restore-topics, .pd-topic-choice { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: 0 0 auto; padding: 5px 6px; border: 1px solid #dbe5d6; background: #fffefa; border-radius: 3px; color: #56715b; font-size: 10px; }
+.pd-restore-topics:hover, .pd-topic-choice:hover { background: #eef4e9; }
+.pd-topic-row { display: flex; align-items: center; gap: 5px; }
+.pd-topic-row .pd-topic-toggle { min-width: 0; flex: 1; }
+.pd-topic-row .pd-topic-toggle span { min-width: 0; }
+.pd-topic-item.is-excluded .pd-topic-toggle > span { color: #8a988b; text-decoration: line-through; }
+.pd-topic-item.is-excluded .pd-topic-choice { border-color: #b9cab1; }
+.pd-topic-saved-note { display: block; color: #82947f; font-size: 10px; font-weight: 400; text-decoration: none; }
