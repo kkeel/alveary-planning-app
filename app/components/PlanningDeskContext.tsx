@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import type { CountryFilter } from "../courses/country-filter.mjs";
 
 type PlanningDeskState = {
   thinkTankIds: string[];
@@ -10,11 +11,15 @@ type PlanningDeskState = {
   quiet: boolean;
   tab: "think" | "plan";
   courseMode: "browse" | "plan";
+  grades: number[];
+  country: CountryFilter;
   notes: string;
 };
 type PlanningDeskContextValue = PlanningDeskState & {
   ready: boolean;
   setCourseMode: (mode: "browse" | "plan") => void;
+  setGrades: Dispatch<SetStateAction<number[]>>;
+  setCountry: (country: CountryFilter) => void;
   toggleIdea: (id: string) => void;
   removeIdea: (id: string) => void;
   setQuiet: (quiet: boolean) => void;
@@ -31,8 +36,17 @@ const key = "alveary:shared-planning-desk-preview:2027-28";
 const legacyKey = "alveary:course-explorer-preview:2027-28";
 const defaults: PlanningDeskState = {
   thinkTankIds: [], subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse", notes: "",
+  collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
+  grades: [], country: "all", notes: "",
 };
+// Keep user-view preferences valid even if old or manually edited local storage is malformed.
+function normalizeGrades(input: unknown): number[] {
+  if (!Array.isArray(input)) return [];
+  return [...new Set(input.filter((grade): grade is number =>
+    typeof grade === "number" && Number.isInteger(grade) && grade >= 1 && grade <= 12
+  ))].sort((a, b) => a - b);
+}
+
 const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null);
 
 /** The preview stores personal ideas only on this browser. Do not treat this
@@ -52,6 +66,8 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
           quiet: saved.quiet === true, tab: saved.tab === "plan" ? "plan" : "think",
           courseMode: saved.courseMode === "plan" || (!saved.courseMode && Array.isArray(saved.thinkTankIds) && saved.thinkTankIds.length > 0) ? "plan" : "browse",
+          grades: normalizeGrades(saved.grades),
+          country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
           notes: typeof saved.notes === "string" ? saved.notes : "",
         });
       } else {
@@ -79,6 +95,10 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,
     setCourseMode: courseMode => setValue(v => v.courseMode === courseMode ? v : { ...v, courseMode }),
+    setGrades: next => setValue(v => ({
+      ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
+    })),
+    setCountry: country => setValue(v => v.country === country ? v : { ...v, country }),
     toggleIdea: id => setValue(v => ({
       ...v, thinkTankIds: v.thinkTankIds.includes(id)
         ? v.thinkTankIds.filter(x => x !== id) : [...v.thinkTankIds, id],
