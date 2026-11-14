@@ -37,3 +37,19 @@ Before launch: design and verify Memberstack entitlement checks and public-vs-me
 5. Click Books from the sidebar; the **same Think Tank** appears. Return to Courses and confirm notes, saved ideas, preferred quiet mode, collapsed subjects and custom ordering persisted.
 6. Compare view, grade/country filters and independent course disclosures still work as before.
 7. Confirm that **My Plan** is labeled as an unavailable assignment feature and never invents saved student selections.
+
+## November 14, 2026 — Customize combined-course topics
+
+- A saved course still appears as one subject-level Think Tank idea; all connected edition topics are included by default. Each child topic has an independent **Remove / Restore** control within that course's inline review.
+- Topic exclusions are saved in the existing browser-preview storage as a **parent plan ID → excluded child topic plan IDs** map. The original course and edition references remain untouched, and no new official course, student assignment, schedule, or PDF is created.
+- An excluded topic appears crossed out in the parent course review. The parent idea shows a customized count and **Restore all** action. A course can temporarily have zero included topics without being deleted.
+- A topic explicitly bookmarked on its own remains separately saved even when removed within a parent course. Exclusions for one course have no effect on a second course linking the same canonical topic. Removing the parent course resets only its own exclusions, so re-saving it starts with all connected topics.
+- Combined-course PDFs and individual-topic PDFs remain fixed published documents. These draft planning choices must not be interpreted as custom PDF generation.
+- Future Supabase student-plan work should convert these explicit exclusions into student/course-context selections and preserve the exact edition relationships, rather than treating a course heading alone as one indivisible lesson assignment.
+
+### Manual checks
+
+1. Save a combined course with several topics; verify all appear included. Remove one, check the parent counter and line-through, then restore it.
+2. Remove two topics, navigate to Books and back, refresh, and verify the choices remain. Restore all; remove the entire parent and re-save it to confirm it starts complete.
+3. Independently bookmark one of the topics, then exclude it from a combined course. The independent bookmark must remain. For a topic shared by two parents, excluding it in one parent must not alter the other.
+4. Check single-topic courses, combined courses with only one linked topic, mobile drawer controls, previously saved Think Tank items, and public List mode.
