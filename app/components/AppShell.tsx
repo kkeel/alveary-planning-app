@@ -5,6 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AuthStatusBar from "./AuthStatusBar";
+import PlanningDesk from "./PlanningDesk";
+import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
 import {
   ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
@@ -50,7 +52,7 @@ function AlvearyMark() {
   );
 }
 
-export default function AppShell({ children }: { children: ReactNode }) {
+function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const currentPath = pathname.replace(/\/$/, "") || "/";
@@ -62,6 +64,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
+  const { coursePlanningActive } = usePlanningDesk();
+  const showDesk = activePath === "/books" || (activePath === "/courses" && coursePlanningActive);
 
   const allRoutes = [...navigation, ...planningItems];
   const matches = search.trim()
@@ -216,11 +220,18 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
         <AuthStatusBar />
 
-        <main className="shell-main" id="main-content">{children}</main>
+        <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "")}>
+          <main className="shell-main" id="main-content">{children}</main>
+          {showDesk && <PlanningDesk />}
+        </div>
         <footer className="shell-footer">
           Alveary Planning · Development preview · Not the live member planner
         </footer>
       </div>
     </div>
   );
+}
+
+export default function AppShell({ children }: { children: ReactNode }) {
+  return <PlanningDeskProvider><AppShellInner>{children}</AppShellInner></PlanningDeskProvider>;
 }
