@@ -108,3 +108,45 @@
 .pd-removed-item { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 6px 0; font-size: 11px; color: #677667; }
 .pd-removed-item span { min-width: 0; flex: 1; }
 .pd-removed-list .pd-restore-topics { margin-top: 5px; }
+
+
+/* Saved Demo planning: warm, compact, clear group/topic assignment hierarchy. */
+.pd-save-browser { margin: 12px 4px 18px; padding: 14px; background: #f0f2e9; border: 1px solid #cdd8c9; border-radius: 5px; }
+.pd-save-browser strong { font-size: 13px; color: #34533c; }
+.pd-save-browser p { font-size: 12px; line-height: 1.5; margin: 6px 0 10px; }
+.pd-save-browser button { background: #486952; color: #fff; border: 1px solid #486952; border-radius: 3px; padding: 9px 12px; font-size: 12px; font-weight: 600; }
+.pd-cloud-error, .myplan-save-error { padding: 10px 12px; color: #923c30; background: #fff1eb; border: 1px solid #ebc9bd; border-radius: 4px; font-size: 12px; line-height: 1.4; }
+.pd-cloud-saving, .myplan-save-status { color: #53705b; font-size: 12px; line-height: 1.3; margin: 10px 2px; }
+.myplan-panel { padding: 0 2px 18px; }
+.myplan-panel > header h3 { font-family: Georgia,serif; font-size: 21px; font-weight: 400; margin: 8px 0 6px; }
+.myplan-panel > header p { font-size: 12px; line-height: 1.5; color: #647263; margin: 0 0 17px; }
+.myplan-course { padding: 15px 12px; margin: 0 0 14px; background: #fbfcfa; border: 1px solid #dae1d7; border-radius: 5px; }
+.myplan-course-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.myplan-course-heading h3 { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.myplan-course-heading p { font-size: 11px; color: #637162; margin: 5px 0 12px; }
+.myplan-subtle { background: transparent; border: 0; color: #4d6953; text-decoration: underline; text-underline-offset: 2px; padding: 3px 0; font-size: 11px; text-align: right; }
+.myplan-group { border-top: 1px solid #e1e7dd; padding-top: 11px; }
+.myplan-group strong { font-size: 12px; color: #395943; }
+.myplan-group p { margin: 4px 0 10px; color: #6c766b; font-size: 11px; line-height: 1.45; }
+.myplan-group a { text-underline-offset: 2px; color: #3f6648; }
+.myplan-student-choices { display: flex; flex-wrap: wrap; gap: 7px; }
+.myplan-student-choice { display: flex; align-items: center; gap: 6px; border: 1px solid #dce5d9; border-radius: 4px; background: #f3f6f0; padding: 7px 9px; }
+.myplan-student-choice label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.myplan-student-choice input, .myplan-topic-students input, .myplan-include input { accent-color: #567960; }
+.myplan-topic-toggle { margin-top: 12px; border: 0; background: none; color: #406349; padding: 4px 0; font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.myplan-topics { border-top: 1px solid #e0e6dc; margin-top: 8px; }
+.myplan-topic { padding: 12px 0; border-bottom: 1px solid #e5ebe2; }
+.myplan-topic.is-excluded { opacity: .72; }
+.myplan-topic-title { display: flex; align-items: baseline; justify-content: space-between; gap: 7px; }
+.myplan-topic-title strong { font-size: 12px; line-height: 1.4; }
+.myplan-include { display: inline-flex; align-items: center; white-space: nowrap; gap: 5px; font-size: 11px; color: #596d5b; }
+.myplan-topic-students { display: flex; flex-wrap: wrap; gap: 9px 12px; margin-top: 8px; }
+.myplan-topic-students label { display: inline-flex; gap: 5px; align-items: center; font-size: 11px; color: #526656; }
+.myplan-topic p { margin: 8px 0 0; font-size: 11px; line-height: 1.35; }
+.myplan-empty { padding: 15px; border: 1px dashed #cad9cd; border-radius: 4px; font-size: 12px; }
+.myplan-empty button, .myplan-idea-row button { font-size: 12px; padding: 6px 9px; border: 1px solid #72937a; background: #edf3eb; color: #406249; border-radius: 3px; }
+.myplan-idea-section { margin-top: 17px; }
+.myplan-idea-section h4 { font-size: 13px; margin: 0 0 8px; color: #435c48; }
+.myplan-idea-row { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 10px 0; border-top: 1px solid #e0e6dd; }
+.myplan-idea-row span { font-size: 12px; line-height: 1.3; }
+.myplan-idea-row button { flex-shrink: 0; }

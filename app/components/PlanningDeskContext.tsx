@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { CountryFilter } from "../courses/country-filter.mjs";
+import { useDemoPlan } from "./DemoPlanContext";
 
 type PlanningDeskState = {
   thinkTankIds: string[];
@@ -68,6 +69,7 @@ const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null)
 /** The preview stores personal ideas only on this browser. Do not treat this
  * as a household plan or allow it to unlock member-only data or actions. */
 export function PlanningDeskProvider({ children, storageScope }: { children: ReactNode; storageScope: string }) {
+  const cloud = useDemoPlan();
   const storageKey = keyPrefix + storageScope;
   const [value, setValue] = useState<PlanningDeskState>(defaults);
   const [ready, setReady] = useState(false);
@@ -101,6 +103,37 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
     catch { /* storage is optional for a public-safe UI preview */ }
   }, [value, ready, storageKey, storageScope]);
 
+  // Rehydrate choices from another browser only after the authenticated
+  // Supabase plan is available. Never discard unsynced legacy local choices.
+  useEffect(() => {
+    if (!ready || storageScope === "public" || !cloud.ready) return;
+    setValue(previous => {
+      const ids = [...previous.thinkTankIds];
+      const exclusions = { ...previous.excludedTopicIdsByCourse };
+      let changed = false;
+      for (const saved of cloud.courses) {
+        if (!ids.includes(saved.courseId)) {
+          ids.push(saved.courseId);
+          changed = true;
+        }
+        // New optimistic bookmarks initially have no topic payload. Do not
+        // erase legacy topic exclusions while their server save is pending.
+        if (saved.topics.length) {
+          const excluded = saved.topics.filter(t => !t.included).map(t => t.topicId);
+          const existing = exclusions[saved.courseId] ?? [];
+          if (existing.length !== excluded.length ||
+            excluded.some(id => !existing.includes(id))) {
+            if (excluded.length) exclusions[saved.courseId] = excluded;
+            else delete exclusions[saved.courseId];
+            changed = true;
+          }
+        }
+      }
+      return changed ? { ...previous, thinkTankIds: ids,
+        excludedTopicIdsByCourse: exclusions } : previous;
+    });
+  }, [ready, storageScope, cloud.ready, cloud.courses]);
+
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,
     setCourseMode: courseMode => setValue(v => v.courseMode === courseMode ? v : { ...v, courseMode }),
@@ -108,7 +141,18 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
     })),
     setCountry: country => setValue(v => v.country === country ? v : { ...v, country }),
-    toggleIdea: id => setValue(v => {
+    toggleIdea: id => {
+      const exists = value.thinkTankIds.includes(id);
+      const saved = cloud.courses.find(c => c.courseId === id);
+      if (exists && saved?.stage === "planned" &&
+          !window.confirm("Remove this course from My Plan and its student topic assignments? This cannot be undone.")) {
+        return;
+      }
+      if (cloud.ready) {
+        if (exists && cloud.courses.some(c => c.courseId === id)) cloud.removeChoice(id);
+        else if (!exists) cloud.addChoice(id);
+      }
+      setValue(v => {
       const bookmarked = v.thinkTankIds.includes(id);
       const exclusions = { ...v.excludedTopicIdsByCourse };
       // Removing a course clears only that course's draft customization.
@@ -119,14 +163,23 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
         thinkTankIds: bookmarked ? v.thinkTankIds.filter(x => x !== id) : [...v.thinkTankIds, id],
         excludedTopicIdsByCourse: exclusions,
       };
-    }),
-    removeIdea: id => setValue(v => {
+      });
+    },
+    removeIdea: id => {
+      if (cloud.ready && cloud.courses.some(c => c.courseId === id)) cloud.removeChoice(id);
+      setValue(v => {
       const exclusions = { ...v.excludedTopicIdsByCourse };
       delete exclusions[id];
       return { ...v, thinkTankIds: v.thinkTankIds.filter(x => x !== id),
         excludedTopicIdsByCourse: exclusions };
-    }),
-    toggleCourseTopic: (courseId, topicId, includedTopicIds) => setValue(v => {
+      });
+    },
+    toggleCourseTopic: (courseId, topicId, includedTopicIds) => {
+      if (cloud.ready && cloud.courses.some(c => c.courseId === courseId)) {
+        const nowExcluded = (value.excludedTopicIdsByCourse[courseId] ?? []).includes(topicId);
+        cloud.setTopic(courseId, topicId, nowExcluded);
+      }
+      setValue(v => {
       // Only change connected topic editions for an actually saved parent.
       if (!v.thinkTankIds.includes(courseId) || !includedTopicIds.includes(topicId)) return v;
       const current = v.excludedTopicIdsByCourse[courseId] ?? [];
@@ -137,13 +190,21 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       if (next.length) exclusions[courseId] = next;
       else delete exclusions[courseId];
       return { ...v, excludedTopicIdsByCourse: exclusions };
-    }),
-    restoreCourseTopics: courseId => setValue(v => {
+      });
+    },
+    restoreCourseTopics: courseId => {
+      if (cloud.ready && cloud.courses.some(c => c.courseId === courseId)) {
+        for (const topicId of value.excludedTopicIdsByCourse[courseId] ?? []) {
+          cloud.setTopic(courseId, topicId, true);
+        }
+      }
+      setValue(v => {
       if (!v.thinkTankIds.includes(courseId) || !v.excludedTopicIdsByCourse[courseId]) return v;
       const exclusions = { ...v.excludedTopicIdsByCourse };
       delete exclusions[courseId];
       return { ...v, excludedTopicIdsByCourse: exclusions };
-    }),
+      });
+    },
     setQuiet: quiet => setValue(v => ({ ...v, quiet })),
     setTab: tab => setValue(v => ({ ...v, tab })),
     setNotes: notes => setValue(v => ({ ...v, notes })),
@@ -179,7 +240,7 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       delete ordered[subject];
       return { ...v, orderedIdsBySubject: ordered };
     }),
-  }), [value, ready]);
+  }), [value, ready, cloud]);
 
   return <PlanningDeskContext.Provider value={api}>{children}</PlanningDeskContext.Provider>;
 }
