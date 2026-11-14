@@ -92,13 +92,12 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
         : [...v.collapsedSubjects, subject],
     })),
     moveSubject: (subject, direction, suggestedSubjects) => setValue(v => {
-      const order = [...suggestedSubjects.filter(x=>!v.subjectOrder.includes(x)), ...v.subjectOrder.filter(x=>suggestedSubjects.includes(x))];
       // First customization respects the suggested order, not recently-added order.
       const normalized = v.subjectOrder.length
         ? [...v.subjectOrder.filter(x=>suggestedSubjects.includes(x)), ...suggestedSubjects.filter(x=>!v.subjectOrder.includes(x))]
         : [...suggestedSubjects];
       const index = normalized.indexOf(subject), next = index + direction;
-      if (!order.includes(subject) || next < 0 || next >= normalized.length) return v;
+      if (!normalized.includes(subject) || next < 0 || next >= normalized.length) return v;
       [normalized[index], normalized[next]] = [normalized[next], normalized[index]];
       return { ...v, subjectOrder: normalized };
     }),
