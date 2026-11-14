@@ -326,8 +326,13 @@ export default function PlanningDesk() {
                           {isCustomized && <p className="pd-topic-pdf-note">Published PDFs remain unchanged.</p>}
                         </div>}
                         {cloud.ready && <button type="button" className="pd-books-link"
+                          disabled={cloud.saving || !cloud.courses.some(c => c.courseId === idea.id)}
+                          title={!cloud.courses.some(c => c.courseId === idea.id)
+                            ? "Save your browser-only ideas to the Demo account first" : undefined}
                           onClick={() => { cloud.setStage(idea.id, "planned"); desk.setTab("plan"); }}>
-                          <BookmarkCheck size={15}/> Add to My Plan
+                          <BookmarkCheck size={15}/>
+                          {cloud.courses.some(c => c.courseId === idea.id)
+                            ? "Add to My Plan" : "Save browser ideas first"}
                         </button>}
                         <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
                           <BookOpen size={15}/> View Books
