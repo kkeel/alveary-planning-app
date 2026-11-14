@@ -125,7 +125,11 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           setError("The sign-in returned without a planner session. Please check the Memberstack SSO configuration.");
           clearEntryIntent();
         } else if (memberEntryIntent()) {
-          await signIn();
+          // During the Memberstack cookie bridge diagnostic, do NOT launch
+          // legacy Supabase OAuth automatically from the dashboard entry link.
+          // Members can inspect their existing Memberstack session below the
+          // status bar; the old Sign in button remains as an explicit fallback.
+          clearEntryIntent();
         }
       } catch {
         if (!active) return;
