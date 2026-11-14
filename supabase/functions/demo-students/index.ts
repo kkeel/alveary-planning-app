@@ -71,7 +71,16 @@ function assertDatabase(error: unknown, stage: string): void {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return response(req, 204, {});
+  if (req.method === "OPTIONS") {
+    const origin = req.headers.get("Origin");
+    const headers = new Headers({
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+      "Vary": "Origin",
+    });
+    if (origin && origins.has(origin)) headers.set("Access-Control-Allow-Origin", origin);
+    return new Response(null, { status: 204, headers });
+  }
   if (req.method !== "POST") return response(req, 405, { error: "method_not_allowed" });
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!/^Bearer [A-Za-z0-9._-]+$/.test(authHeader) || authHeader.length > 9000) {
