@@ -31,7 +31,18 @@ export default function PlanningDesk() {
     const br = grouped.get(b)?.[0]?.subjectSort ?? 999;
     return ar - br || a.localeCompare(b);
   });
-  const subjectOrder = [...desk.subjectOrder.filter(x => grouped.has(x)), ...suggestedSubjects.filter(x => !desk.subjectOrder.includes(x))];
+  // If a new subject is saved after manual reordering, place it beside the
+  // nearest still-visible curriculum neighbor without shifting older stacks.
+  const subjectOrder = desk.subjectOrder.filter(x => grouped.has(x));
+  for (const subject of suggestedSubjects) {
+    if (subjectOrder.includes(subject)) continue;
+    const location = suggestedSubjects.indexOf(subject);
+    const before = suggestedSubjects.slice(0, location).reverse().find(x => subjectOrder.includes(x));
+    const after = suggestedSubjects.slice(location + 1).find(x => subjectOrder.includes(x));
+    if (before) subjectOrder.splice(subjectOrder.indexOf(before) + 1, 0, subject);
+    else if (after) subjectOrder.splice(subjectOrder.indexOf(after), 0, subject);
+    else subjectOrder.push(subject);
+  }
 
   function orderedIdeas(subject: string) {
     const items = grouped.get(subject) ?? [];
