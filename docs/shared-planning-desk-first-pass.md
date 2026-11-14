@@ -53,3 +53,11 @@ Before launch: design and verify Memberstack entitlement checks and public-vs-me
 2. Remove two topics, navigate to Books and back, refresh, and verify the choices remain. Restore all; remove the entire parent and re-save it to confirm it starts complete.
 3. Independently bookmark one of the topics, then exclude it from a combined course. The independent bookmark must remain. For a topic shared by two parents, excluding it in one parent must not alter the other.
 4. Check single-topic courses, combined courses with only one linked topic, mobile drawer controls, previously saved Think Tank items, and public List mode.
+
+## November 14, 2026 — Compact topic review and mobile controls
+
+- The combined-course review prioritizes included topics. Removed topics move under a closed **N removed · Restore** disclosure, with individual Restore and Restore all available once expanded.
+- Repeated instructional prose is removed; customized courses have only a small note that published PDFs are unchanged. Existing parent-scoped topic exclusions persist in the same browser-local store.
+- On phone widths (600px and below), keep the List/Planning mode switch and a small active filter summary visible; grade, country, subject, search and print tools expand behind a Filters toggle.
+- At 1280px and below, replace the floating summary card with a round lightbulb-only launcher plus Think Tank count, offset using the safe-area inset. Opening it also reopens Quiet Mode so the drawer always shows.
+- Manual checks: remove/restore a topic and refresh; open Restore all; test phone Safari controls and save filter grades/country across navigation, open/close drawer and Quiet Mode, and verify desktop toolbar remains unchanged.
