@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 type AuthStatus = "checking" | "public" | "signed-in";
@@ -26,9 +26,28 @@ const client: SupabaseClient | null = url && key
 const ENTRY_QUERY = "connect";
 const PENDING_KEY = "alveary:planner:oauth-pending";
 
+// Only links intentionally aimed at the member planner should start SSO.
+// Do not redirect ordinary public visits to Courses, Books, or Supplies.
 function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get(ENTRY_QUERY) === "1";
+}
+
+// An exact dashboard referrer is a convenience fallback for the current
+// dashboard button. With the browser's default cross-origin referrer policy,
+// only the origin may be exposed. In that case we deliberately do NOT guess
+// that an ordinary public link is a member-dashboard login. Use ?connect=1.
+function fromAlvearyTestDashboard(): boolean {
+  if (typeof document === "undefined" || !document.referrer) return false;
+  try {
+    const referrer = new URL(document.referrer);
+    return referrer.protocol === "https:" &&
+      (referrer.hostname === "alveary.org" ||
+        referrer.hostname === "www.alveary.org") &&
+      /^\/alveary-2027-2028\/dashboard-test\/?$/.test(referrer.pathname);
+  } catch {
+    return false;
+  }
 }
 function clearEntryIntent() {
   if (typeof window === "undefined") return;
@@ -54,9 +73,11 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const signInStarted = useRef(false);
 
   const signIn = useCallback(async () => {
-    if (!client || typeof window === "undefined") return;
+    if (!client || typeof window === "undefined" || signInStarted.current) return;
+    signInStarted.current = true;
     setBusy(true);
     setError(null);
     clearEntryIntent();
@@ -73,7 +94,9 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       window.sessionStorage.setItem(PENDING_KEY, String(Date.now()));
       window.location.assign(data.url);
     } catch {
+      signInStarted.current = false;
       window.sessionStorage.removeItem(PENDING_KEY);
+      setStatus("public");
       setError("We couldn't start Alveary sign-in. Public browsing is still available.");
       setBusy(false);
     }
@@ -119,17 +142,22 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         setUserId(null);
-        setStatus("public");
         if (pending) {
+          setStatus("public");
           window.sessionStorage.removeItem(PENDING_KEY);
           setError("The sign-in returned without a planner session. Please check the Memberstack SSO configuration.");
           clearEntryIntent();
-        } else if (memberEntryIntent()) {
-          // During the Memberstack cookie bridge diagnostic, do NOT launch
-          // legacy Supabase OAuth automatically from the dashboard entry link.
-          // Members can inspect their existing Memberstack session below the
-          // status bar; the old Sign in button remains as an explicit fallback.
+        } else if (memberEntryIntent() || fromAlvearyTestDashboard()) {
+          // The dashboard link requests the same working Memberstack SSO flow
+          // as the explicit button. This query flag is navigation intent, NOT
+          // authentication or entitlement. The provider verifies identity.
+          // Clear the flag before redirecting so an unsuccessful callback
+          // cannot restart the flow indefinitely.
           clearEntryIntent();
+          setStatus("checking");
+          await signIn();
+        } else {
+          setStatus("public");
         }
       } catch {
         if (!active) return;
