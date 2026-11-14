@@ -32,6 +32,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Script id="memberstack-cross-subdomain-config" strategy="beforeInteractive">
           {`window.memberstackConfig = { useCookies: true, setCookieOnRootDomain: true };`}
         </Script>
+        <Script
+          id="alveary-memberstack"
+          strategy="beforeInteractive"
+          src="https://static.memberstack.com/scripts/v2/memberstack.js"
+          data-memberstack-app="app_clbb9rspy00160ujl6tsxbsrj"
+        />
       </head>
       <body className={`${plantin.variable} ${circular.variable}`}>
         <AppShell>{children}</AppShell>

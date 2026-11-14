@@ -28,3 +28,10 @@ The browser uses the hosted Memberstack 2 script with the approved Alveary appli
 The diagnostic intentionally does not change the current Supabase OAuth sign-in or the public/signed-in preview toggles. Seeing `identity verified` does **not** grant a Demo membership, load records, or suppress an OAuth verification email until we replace the old login after entitlement verification.
 
 Source: https://docs.memberstack.com/hc/en-us/articles/18004875142555-Enable-Cross-Domain-Login-with-Memberstack
+
+
+## Head installation correction (November 14)
+
+Memberstack's Test Mode inspector identified a **Misplaced install code** warning: the hosted SDK was previously loaded from a client component with `afterInteractive`, which placed it outside the global page head. The corrected implementation loads both root-cookie configuration and the hosted SDK as ordered `beforeInteractive` scripts in `app/layout.tsx` (in the document head) and uses the documented `memberstack.ready` event / `$memberstackReady` flag in the diagnostic client component. There is only one SDK installation. This should resolve the misplaced-code warning; confirm via a live-domain retest.
+
+**Separate domain configuration:** the Memberstack dashboard's *Detected domains* list showed `plan.alveary.org` had not yet been added to *Application domains*. Add `plan.alveary.org` as **Live Mode** to connect real Memberstack accounts and the real **Testing Plan**. Memberstack Test Mode and the Testing Plan are different concepts. On the live site, the Memberstack Test Mode badge should disappear. The live website still needs the shared root-cookie configuration before its own SDK install to carry authentication across subdomains.

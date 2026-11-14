@@ -1,9 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import Script from "next/script";
-
-const memberstackAppId = "app_clbb9rspy00160ujl6tsxbsrj";
+import { useCallback, useEffect, useState } from "react";
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 type CheckResult = "not-checked" | "checking" | "verified" | "missing" | "invalid" | "unavailable";
 
@@ -14,6 +11,7 @@ type MemberstackBrowser = {
 declare global {
   interface Window {
     $memberstackDom?: MemberstackBrowser;
+    $memberstackReady?: boolean;
     memberstackConfig?: { useCookies: boolean; setCookieOnRootDomain: boolean };
   }
 }
@@ -26,6 +24,19 @@ export default function MemberstackConnectionCheck() {
   const [scriptReady, setScriptReady] = useState(false);
   const [result, setResult] = useState<CheckResult>("not-checked");
   const [roleCompatible, setRoleCompatible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // A global beforeInteractive script can be ready before React hydrates.
+    // Memberstack publishes both a readiness flag and a one-time event.
+    const ready = () => {
+      if (window.$memberstackReady && window.$memberstackDom?.getMemberCookie) {
+        setScriptReady(true);
+      }
+    };
+    ready();
+    document.addEventListener("memberstack.ready", ready);
+    return () => document.removeEventListener("memberstack.ready", ready);
+  }, []);
 
   const verify = useCallback(async () => {
     setRoleCompatible(null);
@@ -68,13 +79,6 @@ export default function MemberstackConnectionCheck() {
   }, []);
 
   return <>
-    <Script
-      src="https://static.memberstack.com/scripts/v2/memberstack.js"
-      strategy="afterInteractive"
-      data-memberstack-app={memberstackAppId}
-      onReady={() => setScriptReady(true)}
-      onError={() => setResult("unavailable")}
-    />
     <div className="ms-connection-check" role="group" aria-label="Memberstack connection diagnostic">
       <button type="button" disabled={!scriptReady || result === "checking"}
         onClick={() => void verify()}>
