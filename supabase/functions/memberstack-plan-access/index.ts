@@ -70,10 +70,10 @@ Deno.serve(async (req: Request) => {
 
     const subject = identities[0].identity_data?.sub;
     if (typeof subject !== "string") return reply(req, 403, "none");
-    // Existing verified OIDC subject is "<24-lowercase-hex-id>_<app-id>".
+    // Verified Supabase OIDC subject is "<24-lowercase-hex-id>-<app-id>".
     // The Memberstack Admin API uses "mem_..." public member IDs.
     // Require this exact app binding; do not accept a browser-supplied ID.
-    const match = new RegExp("^([0-9a-f]{24})_" + memberstackAppId + "$").exec(subject);
+    const match = new RegExp("^([0-9a-f]{24})-" + memberstackAppId + "$").exec(subject);
     if (!match) return reply(req, 503, "unavailable", "identity_format_unrecognized");
     const internalId = match[1];
     const expectedMemberId = "mem_" + internalId;
