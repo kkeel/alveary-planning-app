@@ -173,7 +173,7 @@ export default function PlanningDesk() {
           <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
             role={cloud.error ? "alert" : "status"}
             aria-live="polite" title={cloud.error ?? undefined}>
-            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : ""}
+            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
           </span>
           <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
             onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
