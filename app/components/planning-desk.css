@@ -73,10 +73,9 @@
 @media (max-width: 1280px) {
   .pd-wrapper { position: static; max-height: none; margin: 0; }
   .pd-wrapper > .pd-desk, .pd-wrapper > .pd-quiet { display: none; }
-  .pd-mobile-launcher { position: fixed; display: block; z-index: 70; bottom: 17px; right: 17px; width: min(320px, calc(100vw - 34px)); padding: 12px 13px; background: #fffefa; border: 1px solid #aebfa8; border-radius: 5px; box-shadow: 0 5px 22px #26312838; }
-  .pd-mobile-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: #4f6c53; }
-  .pd-mobile-launcher .pd-quiet-summary { margin-top: 7px; }
-  .pd-mobile-launcher .pd-quiet-summary button { font-size: 10px; padding: 7px 8px; }
+  .pd-mobile-launcher { position: fixed; display: flex; align-items: center; justify-content: center; z-index: 70; bottom: calc(17px + env(safe-area-inset-bottom, 0px)); right: 17px; width: 56px; height: 56px; padding: 0; border: 1px solid #aebfa8; border-radius: 50%; color: #4f6c53; background: #fffefa; box-shadow: 0 5px 22px #26312838; cursor: pointer; }
+  .pd-mobile-launcher:hover { background: #f3f7ef; }
+  .pd-mobile-count { position: absolute; top: -6px; right: -5px; display: flex; align-items: center; justify-content: center; min-width: 21px; height: 21px; border-radius: 999px; padding: 0 4px; box-sizing: border-box; color: #fff; background: #596e5e; font-size: 10px; line-height: 1; font-weight: 700; border: 2px solid #fffefa; }
   .pd-wrapper.is-mobile-open .pd-mobile-launcher { display: none; }
   .pd-wrapper.is-mobile-open > .pd-desk { display: flex; position: fixed; top: 0; right: 0; bottom: 0; z-index: 92; width: min(450px, 100vw); max-height: none; border-radius: 0; box-shadow: -8px 0 26px #26312828; padding: 17px 16px 0; }
   .pd-wrapper.is-mobile-open .pd-mobile-scrim { display: block; position: fixed; inset: 0; z-index: 90; border: 0; background: #1f2b2188; cursor: default; }
@@ -100,3 +99,12 @@
 .pd-topic-item.is-excluded .pd-topic-toggle > span { color: #8a988b; text-decoration: line-through; }
 .pd-topic-item.is-excluded .pd-topic-choice { border-color: #b9cab1; }
 .pd-topic-saved-note { display: block; color: #82947f; font-size: 10px; font-weight: 400; text-decoration: none; }
+
+/* Included topics stay visible; removed topics are tucked into a restore area. */
+.pd-topic-pdf-note { margin: 10px 0 0; color: #8a9688; font-size: 10px; line-height: 1.45; }
+.pd-removed { border-top: 1px solid #e1e7dc; margin-top: 8px; padding-top: 8px; }
+.pd-removed-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 5px 0; border: 0; background: transparent; color: #657e66; font-size: 11px; font-weight: 600; }
+.pd-removed-list { margin: 5px 0 0 17px; border-left: 2px solid #e2e8de; padding-left: 9px; }
+.pd-removed-item { display: flex; align-items: center; justify-content: space-between; gap: 7px; padding: 6px 0; font-size: 11px; color: #677667; }
+.pd-removed-item span { min-width: 0; flex: 1; }
+.pd-removed-list .pd-restore-topics { margin-top: 5px; }
