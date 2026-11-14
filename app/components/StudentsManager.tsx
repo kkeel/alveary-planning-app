@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 
@@ -11,6 +11,9 @@ const year = "2027-28";
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const grades = Array.from({ length: 13 }, (_, n) => n);
+// Ephemeral per-auth-user data, not localStorage or a persistent public cache.
+// Keep the last server-confirmed list across route unmount/remount in one tab.
+const studentCache = new Map<string, Student[]>();
 
 function labelForGrade(grade: number | null): string {
   if (grade === null) return "Grade to be decided";
@@ -31,10 +34,14 @@ function isStudentsResult(value: unknown): value is StudentsResult {
 }
 
 export default function StudentsManager() {
-  const { status, getAccessToken } = usePlannerAuth();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { status, userId, getAccessToken } = usePlannerAuth();
+  const [students, setStudents] = useState<Student[]>(() =>
+    userId ? studentCache.get(userId) ?? [] : []);
+  const [loading, setLoading] = useState(() =>
+    !userId || !studentCache.has(userId));
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const editRevision = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -64,20 +71,38 @@ export default function StudentsManager() {
   }, [getAccessToken]);
 
   useEffect(() => {
-    if (status !== "signed-in") return;
+    if (status !== "signed-in" || !userId) return;
     let active = true;
-    setLoading(true);
+    const revision = editRevision.current;
+    const cached = studentCache.get(userId);
+    if (cached) {
+      setStudents(cached);
+      setLoading(false);
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+      setRefreshing(false);
+    }
     setError(null);
+    // Revalidate after navigation without blanking a previously loaded list.
     void request("list").then(data => {
-      if (active) { setStudents(data.students); setLoading(false); }
-    }).catch(() => {
-      if (active) {
-        setLoading(false);
-        setError("We couldn't open your Demo family workspace. Please try refreshing this page.");
+      if (!active) return;
+      if (editRevision.current === revision) {
+        studentCache.set(userId, data.students);
+        setStudents(data.students);
       }
+      setLoading(false);
+      setRefreshing(false);
+    }).catch(() => {
+      if (!active) return;
+      setLoading(false);
+      setRefreshing(false);
+      setError(cached
+        ? "We couldn't update your students just now. Showing the last saved list."
+        : "We couldn't open your Demo family workspace. Please try refreshing this page.");
     });
     return () => { active = false; };
-  }, [request, status]);
+  }, [request, status, userId]);
 
   function reset() {
     setName("");
@@ -104,34 +129,53 @@ export default function StudentsManager() {
       setError("Choose a grade from Kindergarten through Grade 12, or decide later.");
       return;
     }
+    editRevision.current += 1;
+    const wasEditing = Boolean(editingId);
+    const currentStudentId = editingId;
+    const pendingId = "pending:" + Date.now();
+    const before = wasEditing ? students.find(student => student.id === currentStudentId) : undefined;
+    // The change appears immediately, but is labelled as saving until the
+    // server confirms. Never put provisional data into the shared cache.
+    setStudents(current => wasEditing
+      ? current.map(student => student.id === currentStudentId
+        ? { ...student, displayName, gradeLevel } : student)
+      : [...current, { id: pendingId, displayName, gradeLevel }]);
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
-      const updated = await request(editingId ? "update" : "add", {
-        ...(editingId ? { studentId: editingId } : {}),
+      const updated = await request(wasEditing ? "update" : "add", {
+        ...(currentStudentId ? { studentId: currentStudentId } : {}),
         displayName, gradeLevel,
       });
+      if (userId) studentCache.set(userId, updated.students);
       setStudents(updated.students);
-      setSuccess(editingId ? "Student details saved to your Demo workspace." :
+      setSuccess(wasEditing ? "Student details saved to your Demo workspace." :
         "Student added to your Demo workspace.");
       reset();
     } catch {
-      setError("We couldn't save that student. Nothing was changed in your course Think Tank.");
+      setStudents(current => wasEditing && before
+        ? current.map(student => student.id === before.id ? before : student)
+        : current.filter(student => student.id !== pendingId));
+      setError("We couldn't save that student. Your previous saved information is unchanged.");
     } finally { setSaving(false); }
   }
   async function archive(student: Student) {
     if (saving || !window.confirm("Archive " + student.displayName +
       " from your active student list? Their record will be kept for historical planning.")) return;
+    editRevision.current += 1;
+    setStudents(current => current.filter(item => item.id !== student.id));
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
       const data = await request("archive", { studentId: student.id });
+      if (userId) studentCache.set(userId, data.students);
       setStudents(data.students);
       setSuccess("Student archived. Their information is retained for your records.");
       if (editingId === student.id) reset();
     } catch {
+      setStudents(current => [...current, student]);
       setError("We couldn't archive that student. Please try again.");
     } finally { setSaving(false); }
   }
@@ -147,7 +191,9 @@ export default function StudentsManager() {
       <section className="demo-students-panel" aria-label="Your students">
         <div className="demo-students-heading">
           <h2>My students</h2>
-          <span>{loading ? "Loading" : students.length + (students.length === 1 ? " student" : " students")}</span>
+          <span>{loading ? "Opening…" : students.length + (students.length === 1 ? " student" : " students")}
+            {refreshing ? " · Updating" : ""}
+          </span>
         </div>
         {loading ? <p role="status" className="demo-students-muted">Opening your private Demo workspace…</p> :
           students.length === 0 ? <p className="demo-students-empty">No students added yet. Start with one, or return whenever you&apos;re ready.</p> :
@@ -155,11 +201,11 @@ export default function StudentsManager() {
             {students.map(student => <li className="demo-student-row" key={student.id}>
               <div className="demo-student-details">
                 <strong>{student.displayName}</strong>
-                <span>{labelForGrade(student.gradeLevel)}</span>
+                <span>{student.id.startsWith("pending:") ? "Saving…" : labelForGrade(student.gradeLevel)}</span>
               </div>
               <div className="demo-student-actions">
-                <button type="button" onClick={() => edit(student)} disabled={saving} aria-label={"Edit " + student.displayName}>Edit</button>
-                <button type="button" onClick={() => void archive(student)} disabled={saving} aria-label={"Archive " + student.displayName}>Archive</button>
+                <button type="button" onClick={() => edit(student)} disabled={saving || student.id.startsWith("pending:")} aria-label={"Edit " + student.displayName}>Edit</button>
+                <button type="button" onClick={() => void archive(student)} disabled={saving || student.id.startsWith("pending:")} aria-label={"Archive " + student.displayName}>Archive</button>
               </div>
             </li>)}
           </ul>}
