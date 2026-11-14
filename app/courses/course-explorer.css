@@ -119,6 +119,7 @@
   text-align: left;
   padding: 9px 15px;
 }
+.cx-course-disclosure { scroll-margin-top: 150px; }
 .cx-course-disclosure:hover:not(:disabled) { background: #fafbf7; }
 .cx-course-disclosure:disabled { cursor: default; color: #262b26; opacity: 1; }
 .cx-course-name { flex: 1; min-width: 0; font-family: var(--font-circular), "DM Sans", sans-serif; font-size: 16px; font-weight: 500; line-height: 1.4; }
