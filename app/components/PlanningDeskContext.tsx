@@ -5,6 +5,8 @@ import type { CountryFilter } from "../courses/country-filter.mjs";
 
 type PlanningDeskState = {
   thinkTankIds: string[];
+  // Parent course ID → child edition plan IDs excluded from that course only.
+  excludedTopicIdsByCourse: Record<string, string[]>;
   subjectOrder: string[];
   orderedIdsBySubject: Record<string, string[]>;
   collapsedSubjects: string[];
@@ -22,6 +24,8 @@ type PlanningDeskContextValue = PlanningDeskState & {
   setCountry: (country: CountryFilter) => void;
   toggleIdea: (id: string) => void;
   removeIdea: (id: string) => void;
+  toggleCourseTopic: (courseId: string, topicId: string, includedTopicIds: string[]) => void;
+  restoreCourseTopics: (courseId: string) => void;
   setQuiet: (quiet: boolean) => void;
   setTab: (tab: "think" | "plan") => void;
   setNotes: (notes: string) => void;
@@ -35,7 +39,7 @@ type PlanningDeskContextValue = PlanningDeskState & {
 const key = "alveary:shared-planning-desk-preview:2027-28";
 const legacyKey = "alveary:course-explorer-preview:2027-28";
 const defaults: PlanningDeskState = {
-  thinkTankIds: [], subjectOrder: [], orderedIdsBySubject: {},
+  thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
   grades: [], country: "all", notes: "",
 };
@@ -45,6 +49,19 @@ function normalizeGrades(input: unknown): number[] {
   return [...new Set(input.filter((grade): grade is number =>
     typeof grade === "number" && Number.isInteger(grade) && grade >= 1 && grade <= 12
   ))].sort((a, b) => a - b);
+}
+
+function normalizeExcludedTopics(input: unknown): Record<string, string[]> {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const result: Record<string, string[]> = {};
+  for (const [courseId, ids] of Object.entries(input)) {
+    if (courseId === "__proto__" || courseId === "constructor" || courseId === "prototype") continue;
+    if (!Array.isArray(ids)) continue;
+    const validIds = [...new Set(ids.filter((id): id is string =>
+      typeof id === "string" && id.length > 0))];
+    if (validIds.length) result[courseId] = validIds;
+  }
+  return result;
 }
 
 const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null);
@@ -61,6 +78,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
         const saved = JSON.parse(raw) as Partial<PlanningDeskState>;
         setValue({
           thinkTankIds: Array.isArray(saved.thinkTankIds) ? saved.thinkTankIds.filter((x): x is string => typeof x === "string") : [],
+          excludedTopicIdsByCourse: normalizeExcludedTopics(saved.excludedTopicIdsByCourse),
           subjectOrder: Array.isArray(saved.subjectOrder) ? saved.subjectOrder.filter((x): x is string => typeof x === "string") : [],
           orderedIdsBySubject: saved.orderedIdsBySubject && typeof saved.orderedIdsBySubject === "object" ? saved.orderedIdsBySubject : {},
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
@@ -99,11 +117,42 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
       ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
     })),
     setCountry: country => setValue(v => v.country === country ? v : { ...v, country }),
-    toggleIdea: id => setValue(v => ({
-      ...v, thinkTankIds: v.thinkTankIds.includes(id)
-        ? v.thinkTankIds.filter(x => x !== id) : [...v.thinkTankIds, id],
-    })),
-    removeIdea: id => setValue(v => ({ ...v, thinkTankIds: v.thinkTankIds.filter(x => x !== id) })),
+    toggleIdea: id => setValue(v => {
+      const bookmarked = v.thinkTankIds.includes(id);
+      const exclusions = { ...v.excludedTopicIdsByCourse };
+      // Removing a course clears only that course's draft customization.
+      // Re-saving it once again starts with all published topics included.
+      if (bookmarked) delete exclusions[id];
+      return {
+        ...v,
+        thinkTankIds: bookmarked ? v.thinkTankIds.filter(x => x !== id) : [...v.thinkTankIds, id],
+        excludedTopicIdsByCourse: exclusions,
+      };
+    }),
+    removeIdea: id => setValue(v => {
+      const exclusions = { ...v.excludedTopicIdsByCourse };
+      delete exclusions[id];
+      return { ...v, thinkTankIds: v.thinkTankIds.filter(x => x !== id),
+        excludedTopicIdsByCourse: exclusions };
+    }),
+    toggleCourseTopic: (courseId, topicId, includedTopicIds) => setValue(v => {
+      // Only change connected topic editions for an actually saved parent.
+      if (!v.thinkTankIds.includes(courseId) || !includedTopicIds.includes(topicId)) return v;
+      const current = v.excludedTopicIdsByCourse[courseId] ?? [];
+      const next = current.includes(topicId)
+        ? current.filter(id => id !== topicId)
+        : [...current, topicId];
+      const exclusions = { ...v.excludedTopicIdsByCourse };
+      if (next.length) exclusions[courseId] = next;
+      else delete exclusions[courseId];
+      return { ...v, excludedTopicIdsByCourse: exclusions };
+    }),
+    restoreCourseTopics: courseId => setValue(v => {
+      if (!v.thinkTankIds.includes(courseId) || !v.excludedTopicIdsByCourse[courseId]) return v;
+      const exclusions = { ...v.excludedTopicIdsByCourse };
+      delete exclusions[courseId];
+      return { ...v, excludedTopicIdsByCourse: exclusions };
+    }),
     setQuiet: quiet => setValue(v => ({ ...v, quiet })),
     setTab: tab => setValue(v => ({ ...v, tab })),
     setNotes: notes => setValue(v => ({ ...v, notes })),
