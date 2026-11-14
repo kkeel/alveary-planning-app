@@ -115,6 +115,7 @@ export default function PlanningDesk() {
                 onClick={()=>desk.moveSubject(subject,-1,suggestedSubjects)}><ArrowUp size={14}/></button>
               <button title={"Move "+subject+" down"} aria-label={"Move "+subject+" down"} type="button" disabled={index===subjectOrder.length-1}
                 onClick={()=>desk.moveSubject(subject,1,suggestedSubjects)}><ArrowDown size={14}/></button>
+              {desk.orderedIdsBySubject[subject]?.length > 0 && <button title={"Restore suggested order for "+subject} aria-label={"Restore suggested order for "+subject} type="button" onClick={()=>desk.resetIdeaOrder(subject)}><RotateCcw size={13}/></button>}
             </div>
             {!isCollapsed && <div className="pd-subject-items">
               {list.map((idea,i)=><div className="pd-idea" key={idea.id}>
@@ -134,7 +135,7 @@ export default function PlanningDesk() {
                   <span className="pd-review-type">{idea.type==="Topic"?"Individual topic":idea.type==="Combined Course"?"Combined course":"Course"}</span>
                   <p>{idea.description || "No additional course description has been supplied yet."}</p>
                   {idea.tips && <p className="pd-review-tip">{idea.tips}</p>}
-                  <Link href="/books">Explore books for this course <BookOpen size={13}/></Link>
+                  <Link href="/books">Open Book List (preview) <BookOpen size={13}/></Link>
                   <p className="pd-review-note">Student assignments and book preparation will be connected in the next planning phase.</p>
                 </div>}
               </div>)}
