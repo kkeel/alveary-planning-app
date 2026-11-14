@@ -68,7 +68,7 @@
 .pd-quiet-summary { margin-top: 11px; display: flex; flex-wrap: wrap; gap: 7px; }
 .pd-quiet-summary button { border: 1px solid #e0e6da; border-radius: 3px; padding: 8px 10px; background: #f8faf5; color: #516c55; font-size: 11px; }
 .pd-wrapper button:focus-visible, .pd-wrapper a:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
-.pd-mobile-launcher, .pd-mobile-close, .pd-mobile-scrim { display: none; }
+.pd-mobile-launcher, .pd-mobile-scrim { display: none; }
 
 @media (max-width: 1280px) {
   .pd-wrapper { position: static; max-height: none; margin: 0; }
@@ -80,7 +80,6 @@
   .pd-wrapper.is-mobile-open .pd-mobile-launcher { display: none; }
   .pd-wrapper.is-mobile-open > .pd-desk { display: flex; position: fixed; top: 0; right: 0; bottom: 0; z-index: 92; width: min(450px, 100vw); max-height: none; border-radius: 0; box-shadow: -8px 0 26px #26312828; padding: 17px 16px 0; }
   .pd-wrapper.is-mobile-open .pd-mobile-scrim { display: block; position: fixed; inset: 0; z-index: 90; border: 0; background: #1f2b2188; cursor: default; }
-  .pd-header-actions .pd-mobile-close { display: inline-flex; }
   .pd-desk .pd-body { padding-bottom: 30px; }
 }
 @media print {
