@@ -62,3 +62,17 @@ No SQL tables or RLS policies have been configured in this PR. Implement verifie
 ## Content visibility principles
 
 A route such as `/books`, `/courses`, `/supplies`, `/exams`, or `/lesson-plans` can remain publicly addressable. Actual restricted data must be fetched only under server-enforced access control (Supabase RLS and/or authorized signed delivery). Public visitors must not download restricted JSON, PDF or member data that was merely hidden in React.
+
+## November 14 — Authentication-aware **UI preview** (NOT membership authorization)
+
+The public/Planning shell now consumes a single Supabase Auth session state through `PlannerAuthProvider`, shared by the status bar and navigation. This is **a display-mode gate only**:
+
+- **Public or checking:** the Course List is List-only; the Planning toggle, bookmark actions and Planning Desk are not shown. Courses, Books and Supplies stay public. Students, Scheduling, Lesson Plans, Exams and Year at a Glance are removed from the navigation and their client-rendered route bodies show a sign-in notice if opened directly.
+- **Signed in:** the Course List defaults to Planning (but List can still be selected); the Planning Overview's Choose courses link explicitly opens Planning. The member-only route links appear. No new paid curriculum content or student data has been exposed.
+- **Browser-local Think Tank prototype:** temporary draft selections are scoped by Supabase user ID on this device, not copied between accounts or migrated from the old shared prototype. Users may see an empty Think Tank after this update; this is expected and not an actual Supabase member plan.
+- **Do not equate Supabase session with paid membership.** A signed-in basic-only, expired or test account may see the preview navigation; access to real private records must remain denied until Memberstack identity and year/workspace entitlements are independently verified server-side. No private rows are accessible through this UI.
+- A static-export React route guard is **not** authorization for protected JSON/PDFs. Future member-only data must be fetched through RLS and appropriately secured delivery. Member authorization and Memberstack coordinated sign-out remain incomplete.
+
+### SSO retest
+
+Memberstack Custom SSO now has both Skip authorization screen and Skip login for members already signed in enabled, with the website check URL set to `https://www.alveary.org/`. The extra login screenshot shows Chrome **Incognito**; confirm whether the Alveary website session was established **in the same Incognito window**. Separate normal/incognito browser contexts do not share cookies. If the same-context test still prompts again, confirm the website URL truly loads Memberstack and compare canonical `www` vs non-`www` host; check Memberstack-hosted auth behavior. The logged-in test arriving "Signed in" establishes basic OIDC auth completion only; verification-email and member entitlement rules are separate unresolved tasks.
