@@ -86,6 +86,32 @@
 .cx-grade-choices input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .cx-grade-choices label:focus-within { outline: 2px solid #596e5e; outline-offset: 2px; }
 .cx-grade-panel > p { margin: 5px 0 0; font-size: 11px; color: #707d70; }
+.cx-country-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 13px;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e9e1;
+}
+.cx-country-label { color: #49584e; font-size: 12px; font-weight: 600; }
+.cx-country-options { display: inline-flex; align-items: center; gap: 3px; }
+.cx-country-options button {
+  border: 1px solid #d9ded1;
+  background: #fff;
+  border-radius: 3px;
+  color: #596e5e;
+  padding: 6px 12px;
+  min-height: 30px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+}
+.cx-country-options button:hover { border-color: #91a58e; }
+.cx-country-options button.is-selected { background: #e9ede2; border-color: #93a58f; font-weight: 600; color: #293b2e; }
+.cx-country-options button:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
+.cx-country-hint { font-size: 10px; color: #839084; }
+
 
 .cx-page-columns { display: grid; grid-template-columns: minmax(0, 840px) minmax(0, 1fr); align-items: start; gap: 38px; }
 .cx-page-columns--planning { grid-template-columns: minmax(0, 840px) minmax(235px, 310px); }
