@@ -51,7 +51,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           orderedIdsBySubject: saved.orderedIdsBySubject && typeof saved.orderedIdsBySubject === "object" ? saved.orderedIdsBySubject : {},
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
           quiet: saved.quiet === true, tab: saved.tab === "plan" ? "plan" : "think",
-          courseMode: saved.courseMode === "plan" ? "plan" : "browse",
+          courseMode: saved.courseMode === "plan" || (!saved.courseMode && Array.isArray(saved.thinkTankIds) && saved.thinkTankIds.length > 0) ? "plan" : "browse",
           notes: typeof saved.notes === "string" ? saved.notes : "",
         });
       } else {
@@ -61,6 +61,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           ...prev,
           thinkTankIds: Array.isArray(legacy.planned) ? legacy.planned.filter((x): x is string => typeof x === "string") : [],
           notes: typeof legacy.notes === "string" ? legacy.notes : "",
+          courseMode: Array.isArray(legacy.planned) && legacy.planned.length > 0 ? "plan" : "browse",
         }));
       }
     } catch {
