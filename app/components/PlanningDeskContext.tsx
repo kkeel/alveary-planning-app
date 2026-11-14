@@ -116,13 +116,17 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           ids.push(saved.courseId);
           changed = true;
         }
-        const excluded = saved.topics.filter(t => !t.included).map(t => t.topicId);
-        const existing = exclusions[saved.courseId] ?? [];
-        if (existing.length !== excluded.length ||
-          excluded.some(id => !existing.includes(id))) {
-          if (excluded.length) exclusions[saved.courseId] = excluded;
-          else delete exclusions[saved.courseId];
-          changed = true;
+        // New optimistic bookmarks initially have no topic payload. Do not
+        // erase legacy topic exclusions while their server save is pending.
+        if (saved.topics.length) {
+          const excluded = saved.topics.filter(t => !t.included).map(t => t.topicId);
+          const existing = exclusions[saved.courseId] ?? [];
+          if (existing.length !== excluded.length ||
+            excluded.some(id => !existing.includes(id))) {
+            if (excluded.length) exclusions[saved.courseId] = excluded;
+            else delete exclusions[saved.courseId];
+            changed = true;
+          }
         }
       }
       return changed ? { ...previous, thinkTankIds: ids,
