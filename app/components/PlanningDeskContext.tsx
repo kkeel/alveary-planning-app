@@ -9,12 +9,12 @@ type PlanningDeskState = {
   collapsedSubjects: string[];
   quiet: boolean;
   tab: "think" | "plan";
+  courseMode: "browse" | "plan";
   notes: string;
 };
 type PlanningDeskContextValue = PlanningDeskState & {
   ready: boolean;
-  coursePlanningActive: boolean;
-  setCoursePlanningActive: (active: boolean) => void;
+  setCourseMode: (mode: "browse" | "plan") => void;
   toggleIdea: (id: string) => void;
   removeIdea: (id: string) => void;
   setQuiet: (quiet: boolean) => void;
@@ -31,7 +31,7 @@ const key = "alveary:shared-planning-desk-preview:2027-28";
 const legacyKey = "alveary:course-explorer-preview:2027-28";
 const defaults: PlanningDeskState = {
   thinkTankIds: [], subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "think", notes: "",
+  collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse", notes: "",
 };
 const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null);
 
@@ -40,7 +40,6 @@ const PlanningDeskContext = createContext<PlanningDeskContextValue | null>(null)
 export function PlanningDeskProvider({ children }: { children: ReactNode }) {
   const [value, setValue] = useState<PlanningDeskState>(defaults);
   const [ready, setReady] = useState(false);
-  const [coursePlanningActive, setCoursePlanningActive] = useState(false);
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(key);
@@ -52,6 +51,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           orderedIdsBySubject: saved.orderedIdsBySubject && typeof saved.orderedIdsBySubject === "object" ? saved.orderedIdsBySubject : {},
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
           quiet: saved.quiet === true, tab: saved.tab === "plan" ? "plan" : "think",
+          courseMode: saved.courseMode === "plan" || (!saved.courseMode && Array.isArray(saved.thinkTankIds) && saved.thinkTankIds.length > 0) ? "plan" : "browse",
           notes: typeof saved.notes === "string" ? saved.notes : "",
         });
       } else {
@@ -61,6 +61,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
           ...prev,
           thinkTankIds: Array.isArray(legacy.planned) ? legacy.planned.filter((x): x is string => typeof x === "string") : [],
           notes: typeof legacy.notes === "string" ? legacy.notes : "",
+          courseMode: Array.isArray(legacy.planned) && legacy.planned.length > 0 ? "plan" : "browse",
         }));
       }
     } catch {
@@ -76,7 +77,8 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
   }, [value, ready]);
 
   const api = useMemo<PlanningDeskContextValue>(() => ({
-    ...value, ready, coursePlanningActive, setCoursePlanningActive,
+    ...value, ready,
+    setCourseMode: courseMode => setValue(v => v.courseMode === courseMode ? v : { ...v, courseMode }),
     toggleIdea: id => setValue(v => ({
       ...v, thinkTankIds: v.thinkTankIds.includes(id)
         ? v.thinkTankIds.filter(x => x !== id) : [...v.thinkTankIds, id],
@@ -117,7 +119,7 @@ export function PlanningDeskProvider({ children }: { children: ReactNode }) {
       delete ordered[subject];
       return { ...v, orderedIdsBySubject: ordered };
     }),
-  }), [value, ready, coursePlanningActive]);
+  }), [value, ready]);
 
   return <PlanningDeskContext.Provider value={api}>{children}</PlanningDeskContext.Provider>;
 }

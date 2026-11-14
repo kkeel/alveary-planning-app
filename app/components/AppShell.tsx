@@ -64,8 +64,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
-  const { coursePlanningActive } = usePlanningDesk();
-  const showDesk = activePath === "/books" || (activePath === "/courses" && coursePlanningActive);
+  const { courseMode } = usePlanningDesk();
+  const showDesk = activePath === "/books" || (activePath === "/courses" && courseMode === "plan");
 
   const allRoutes = [...navigation, ...planningItems];
   const matches = search.trim()
