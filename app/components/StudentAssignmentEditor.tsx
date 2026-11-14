@@ -65,13 +65,13 @@ export default function StudentAssignmentEditor({ course, showCourseInfo = false
     </div>
     <div className="plan-group-shortcuts" aria-label="Quick-select groups">
       <button type="button" onClick={() => assign(demo.students.map(s => s.id))}
-        disabled={!demo.students.length || demo.saving}
+        disabled={!demo.students.length}
         title="Assign all current students, without creating duplicate course records">
         Family <small>{demo.students.length}</small>
       </button>
       {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
         <button type="button" onClick={() => assign(group.studentIds)}
-          disabled={!group.studentIds.length || demo.saving}
+          disabled={!group.studentIds.length}
           title={"Assign everyone currently in " + group.name}>
           {group.name} <small>{group.studentIds.length}</small>
         </button>
@@ -113,8 +113,7 @@ export default function StudentAssignmentEditor({ course, showCourseInfo = false
 
     {demo.students.length ? <div className="plan-individuals" aria-label="Individual student assignments">
       {demo.students.map(student => <label key={student.id}>
-        <input type="checkbox" checked={assigned.has(student.id)} disabled={demo.saving}
-          onChange={e => {
+        <input type="checkbox" checked={assigned.has(student.id)} onChange={e => {
             demo.assignStudents(course.courseId, [student.id], e.target.checked);
             if (e.target.checked) onAssigned?.();
           }}/>
@@ -145,7 +144,7 @@ export default function StudentAssignmentEditor({ course, showCourseInfo = false
           return <div className="plan-preference-row" key={student.id}>
             <strong>{student.displayName}</strong>
             <label>Priority
-              <select value={priority ?? ""} disabled={demo.saving}
+              <select value={priority ?? ""}
                 onChange={e => demo.setPreference(course.courseId, student.id,
                   (e.target.value || null) as StudentPreference["priority"], arrangement)}>
                 <option value="">Not set</option>
@@ -153,7 +152,7 @@ export default function StudentAssignmentEditor({ course, showCourseInfo = false
               </select>
             </label>
             <label>Arrangement
-              <select value={arrangement} disabled={demo.saving}
+              <select value={arrangement}
                 onChange={e => demo.setPreference(course.courseId, student.id, priority,
                   e.target.value as StudentPreference["arrangement"])}>
                 {arrangements.map(item => <option key={item} value={item}>{item}</option>)}
