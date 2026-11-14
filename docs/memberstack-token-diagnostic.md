@@ -18,3 +18,13 @@ The function is deployed with Supabase's **verify JWT off** because the incoming
 5. After testing, build a separate server-side plan verification/reconciliation handler and only then enable verified Demo entitlement rules and private RLS.
 
 Sources: https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend and https://supabase.com/docs/guides/auth/third-party/custom-oidc
+
+## Browser-to-Supabase diagnostic now implemented
+
+The browser uses the hosted Memberstack 2 script with the approved Alveary application ID. An inline configuration is installed before the SDK to request `useCookies: true` and `setCookieOnRootDomain: true` on the planner subdomain. The temporary **Check Alveary connection** button reads the signed member token through `window.$memberstackDom.getMemberCookie()` and POSTs it to the verification function using an Authorization header. It stores no raw token, displays no email or member ID and never uses member identity to access protected records.
+
+**Important prerequisite on the Webflow root website:** Memberstack's official cross-domain instructions require the same cookie options to be configured *before* the existing Memberstack installation script on `www.alveary.org` as well. Merely configuring this in the Next.js subdomain cannot retroactively share a login that was stored in the website's own localStorage or as a host-only cookie. After updating Webflow, publish and log out/in on the Alveary website before testing the existing test-dashboard link in the same browser context.
+
+The diagnostic intentionally does not change the current Supabase OAuth sign-in or the public/signed-in preview toggles. Seeing `identity verified` does **not** grant a Demo membership, load records, or suppress an OAuth verification email until we replace the old login after entitlement verification.
+
+Source: https://docs.memberstack.com/hc/en-us/articles/18004875142555-Enable-Cross-Domain-Login-with-Memberstack

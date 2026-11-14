@@ -1,6 +1,7 @@
 "use client";
 
 import { usePlannerAuth } from "./PlannerAuthProvider";
+import MemberstackConnectionCheck from "./MemberstackConnectionCheck";
 
 const ALVEARY_LOGIN_URL = "https://alveary.org/login";
 
@@ -31,5 +32,6 @@ export default function AuthStatusBar() {
       </button> : <a href={ALVEARY_LOGIN_URL} title="Sign in on the Alveary website">Sign in</a>}
     </div>
     {error && <p className="auth-bar-error" role="alert">{error}</p>}
+    <MemberstackConnectionCheck />
   </div>;
 }

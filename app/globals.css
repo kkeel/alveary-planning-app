@@ -284,3 +284,9 @@ p { line-height: 1.65; }
 @media print {
   .shell-topbar, .alveary-sidebar { display: none !important; }
 }
+
+/* Non-authorizing Memberstack-to-Supabase development connection check. */
+.ms-connection-check { flex: 0 0 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px; padding-top: 7px; font-size: 11px; line-height: 1.5; color: #58695a; }
+.ms-connection-check button { color: #415d46; background: #f5f8f2; border: 1px solid #b9c9b4; border-radius: 4px; padding: 6px 10px; font-size: 11px; }
+.ms-connection-check button:disabled { opacity: .6; cursor: default; }
+.ms-connection-check span { max-width: 650px; }
