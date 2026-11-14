@@ -91,8 +91,9 @@ export default function MemberstackConnectionCheck() {
         {" "}Demo access is not enabled yet.
       </span>}
       {result === "missing" && <span role="status">
-        No shared Alveary login found on this domain. Check that Memberstack root-domain
-        cookies are enabled on the Alveary website and sign in there again.
+        No shared login cookie found. This is expected while the main Alveary website
+        uses local storage. The separate "Try Alveary SSO" button tests Memberstack's
+        existing-session sign-in without requiring shared cookies.
       </span>}
       {result === "invalid" && <span role="status">
         A Memberstack token was found, but verification failed. Try signing into
@@ -102,7 +103,7 @@ export default function MemberstackConnectionCheck() {
         Connection check unavailable. Public pages remain accessible.
       </span>}
       {result === "not-checked" && <span>
-        Development check only; no membership access is granted.
+        This checks shared cookies only. Alveary SSO can work independently; neither check grants membership access.
       </span>}
     </div>
   </>;
