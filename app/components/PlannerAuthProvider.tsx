@@ -1,12 +1,15 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 
 type AuthStatus = "checking" | "public" | "signed-in";
+type PlanAccess = "checking" | "demo" | "none" | "unavailable";
 type PlannerAuthValue = {
   status: AuthStatus;
   userId: string | null;
+  authenticated: boolean;
+  planAccess: PlanAccess;
   configured: boolean;
   busy: boolean;
   error: string | null;
@@ -14,47 +17,38 @@ type PlannerAuthValue = {
   signOut: () => Promise<void>;
 };
 
-// One browser client, shared by the status bar and the preview route controls.
-// IMPORTANT: A Supabase session proves login only, NOT paid membership.
+// A Supabase session establishes Memberstack OIDC identity only. Planning mode
+// additionally requires server-verified current-year Memberstack plan access.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const client: SupabaseClient | null = url && key
-  ? createClient(url, key, { auth: {
-      autoRefreshToken: true, persistSession: true, detectSessionInUrl: true,
-    } })
+  ? createClient(url, key, {
+      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true },
+    })
   : null;
 const ENTRY_QUERY = "connect";
 const PENDING_KEY = "alveary:planner:oauth-pending";
 
-// Only links intentionally aimed at the member planner should start SSO.
-// Do not redirect ordinary public visits to Courses, Books, or Supplies.
 function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get(ENTRY_QUERY) === "1";
 }
-
-// An exact dashboard referrer is a convenience fallback for the current
-// dashboard button. With the browser's default cross-origin referrer policy,
-// only the origin may be exposed. In that case we deliberately do NOT guess
-// that an ordinary public link is a member-dashboard login. Use ?connect=1.
 function fromAlvearyTestDashboard(): boolean {
   if (typeof document === "undefined" || !document.referrer) return false;
   try {
     const referrer = new URL(document.referrer);
     return referrer.protocol === "https:" &&
-      (referrer.hostname === "alveary.org" ||
-        referrer.hostname === "www.alveary.org") &&
+      (referrer.hostname === "alveary.org" || referrer.hostname === "www.alveary.org") &&
       /^\/alveary-2027-2028\/dashboard-test\/?$/.test(referrer.pathname);
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 function clearEntryIntent() {
   if (typeof window === "undefined") return;
   const current = new URL(window.location.href);
   if (!current.searchParams.has(ENTRY_QUERY)) return;
   current.searchParams.delete(ENTRY_QUERY);
-  window.history.replaceState(window.history.state, "", current.pathname + current.search + current.hash);
+  window.history.replaceState(window.history.state, "",
+    current.pathname + current.search + current.hash);
 }
 function callbackError(): string | null {
   if (typeof window === "undefined") return null;
@@ -69,15 +63,18 @@ function callbackError(): string | null {
 const AuthContext = createContext<PlannerAuthValue | null>(null);
 
 export function PlannerAuthProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>(client ? "checking" : "public");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [starting, setStarting] = useState(Boolean(client));
+  const [planAccess, setPlanAccess] = useState<PlanAccess>("checking");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recheck, setRecheck] = useState(0);
   const signInStarted = useRef(false);
 
   const signIn = useCallback(async () => {
     if (!client || typeof window === "undefined" || signInStarted.current) return;
     signInStarted.current = true;
+    setStarting(true);
     setBusy(true);
     setError(null);
     clearEntryIntent();
@@ -96,7 +93,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     } catch {
       signInStarted.current = false;
       window.sessionStorage.removeItem(PENDING_KEY);
-      setStatus("public");
+      setStarting(false);
       setError("We couldn't start Alveary sign-in. Public browsing is still available.");
       setBusy(false);
     }
@@ -105,16 +102,16 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!client) return;
     let active = true;
-    const { data: listener } = client.auth.onAuthStateChange((event, session) => {
+    const { data: listener } = client.auth.onAuthStateChange((event, next) => {
       if (!active || event === "INITIAL_SESSION") return;
-      if (session?.user && !session.user.is_anonymous) {
+      // Do no network requests inside this callback. Supabase Auth holds its
+      // own lock while notifying subscribers.
+      setSession(next?.user && !next.user.is_anonymous ? next : null);
+      setPlanAccess("checking");
+      if (next?.user && !next.user.is_anonymous) {
         window.sessionStorage.removeItem(PENDING_KEY);
-        setUserId(session.user.id);
-        setStatus("signed-in");
+        setStarting(false);
         setError(null);
-      } else {
-        setUserId(null);
-        setStatus("public");
       }
     });
 
@@ -125,8 +122,9 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
         const authError = callbackError();
         const pending = window.sessionStorage.getItem(PENDING_KEY);
         if (sessionError || authError) {
-          setUserId(null);
-          setStatus("public");
+          setSession(null);
+          setPlanAccess("none");
+          setStarting(false);
           setError(authError
             ? `Alveary sign-in returned an error (${authError}). Please try again.`
             : "Supabase could not finish sign-in. Please try again.");
@@ -135,34 +133,32 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (data.session?.user && !data.session.user.is_anonymous) {
-          setUserId(data.session.user.id);
-          setStatus("signed-in");
+          setSession(data.session);
+          setPlanAccess("checking");
+          setStarting(false);
           window.sessionStorage.removeItem(PENDING_KEY);
           clearEntryIntent();
           return;
         }
-        setUserId(null);
+        setSession(null);
+        setPlanAccess("none");
         if (pending) {
-          setStatus("public");
           window.sessionStorage.removeItem(PENDING_KEY);
-          setError("The sign-in returned without a planner session. Please check the Memberstack SSO configuration.");
+          setStarting(false);
+          setError("Sign-in returned without a planning session. Please try Alveary SSO again.");
           clearEntryIntent();
         } else if (memberEntryIntent() || fromAlvearyTestDashboard()) {
-          // The dashboard link requests the same working Memberstack SSO flow
-          // as the explicit button. This query flag is navigation intent, NOT
-          // authentication or entitlement. The provider verifies identity.
-          // Clear the flag before redirecting so an unsuccessful callback
-          // cannot restart the flow indefinitely.
-          clearEntryIntent();
-          setStatus("checking");
+          // Navigation intent is not membership authorization; start normal
+          // OIDC exactly once, and verify the member's plan after redirect.
           await signIn();
         } else {
-          setStatus("public");
+          setStarting(false);
         }
       } catch {
         if (!active) return;
-        setUserId(null);
-        setStatus("public");
+        setSession(null);
+        setStarting(false);
+        setPlanAccess("none");
         setError("We couldn't check the planner session. Public browsing remains available.");
         clearEntryIntent();
       }
@@ -171,16 +167,65 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, [signIn]);
 
+  // Recheck on return to the tab, so changes/revocations are picked up
+  // without trusting cached browser-side plan information.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") setRecheck(n => n + 1);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setPlanAccess("none");
+      return;
+    }
+    let active = true;
+    setPlanAccess("checking");
+    async function checkActiveYear() {
+      try {
+        if (!url || !key) throw new Error("Not configured");
+        const response = await fetch(url + "/functions/v1/memberstack-plan-access", {
+          method: "POST",
+          cache: "no-store",
+          credentials: "omit",
+          headers: {
+            "Authorization": "Bearer " + session!.access_token,
+            "apikey": key!,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!active) return;
+        if (!response.ok) {
+          setPlanAccess(response.status === 401 || response.status === 403
+            ? "none" : "unavailable");
+          return;
+        }
+        const result: unknown = await response.json();
+        const access = result && typeof result === "object" &&
+          "access" in result ? (result as { access: unknown }).access : null;
+        setPlanAccess(access === "demo" ? "demo" : access === "none" ? "none" : "unavailable");
+      } catch {
+        if (active) setPlanAccess("unavailable");
+      }
+    }
+    void checkActiveYear();
+    return () => { active = false; };
+  }, [session?.access_token, recheck]);
+
   const signOut = useCallback(async () => {
     if (!client) return;
     setBusy(true);
     setError(null);
     try {
-      // Local preview-only sign-out. Memberstack global logout is separate.
+      // Planner-only sign-out. Do not automatically re-enter SSO afterward.
       const { error: signOutError } = await client.auth.signOut({ scope: "local" });
       if (signOutError) throw signOutError;
-      setUserId(null);
-      setStatus("public");
+      setSession(null);
+      setPlanAccess("none");
+      setStarting(false);
     } catch {
       setError("Couldn't sign out of the planner. Please try again.");
     } finally {
@@ -188,8 +233,16 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  return <AuthContext.Provider value={{ status, userId, configured: Boolean(client),
-    busy, error, signIn, signOut }}>{children}</AuthContext.Provider>;
+  const authenticated = Boolean(session?.user && !session.user.is_anonymous);
+  // There is deliberately no intermediate "signed-in = member" UI. A member
+  // must pass BOTH a validated OIDC login and current-year plan verification.
+  const status: AuthStatus = starting || (authenticated && planAccess === "checking")
+    ? "checking" : authenticated && planAccess === "demo" ? "signed-in" : "public";
+
+  return <AuthContext.Provider value={{
+    status, userId: session?.user.id ?? null, authenticated, planAccess,
+    configured: Boolean(client), busy, error, signIn, signOut,
+  }}>{children}</AuthContext.Provider>;
 }
 
 export function usePlannerAuth() {

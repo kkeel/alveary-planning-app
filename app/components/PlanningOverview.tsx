@@ -6,7 +6,7 @@ import { usePlanningDesk } from "./PlanningDeskContext";
 
 /** Public browsing is open; member planning entry points use an auth-aware preview. */
 export default function PlanningOverview() {
-  const { status } = usePlannerAuth();
+  const { status, authenticated, planAccess } = usePlannerAuth();
   const { setCourseMode } = usePlanningDesk();
   const signedIn = status === "signed-in";
 
@@ -34,7 +34,11 @@ export default function PlanningOverview() {
       {status === "checking" ? "Checking your Alveary sign-in…" :
         signedIn
           ? "This is a planning preview. Student records and member-specific permissions are not yet enabled."
-          : "Courses, Books and Supplies are open for browsing. Sign in with Alveary to see the planning preview."}
+          : authenticated && planAccess === "unavailable"
+            ? "Signed in, but we couldn't verify an active Demo plan. Public lists are available while access is being configured."
+            : authenticated
+              ? "You're signed in, but your account does not currently have an eligible Demo plan. You can still browse the public lists."
+              : "Courses, Books and Supplies are open for browsing. Sign in with an eligible Alveary plan to start planning."}
     </div>
   </>;
 }

@@ -111,6 +111,20 @@ function AppShellInner({ children }: { children: ReactNode }) {
     setSearchActive(false);
   }
 
+  // Do not render public navigation, list pages, or private links while
+  // restoring the SSO session AND verifying the current-year plan.
+  // This single calm screen replaces the public-to-member flash.
+  if (checking) {
+    return <div className="alveary-connecting" role="status" aria-live="polite">
+      <div className="alveary-connecting-content">
+        <AlvearyMark />
+        <div className="alveary-connecting-line" aria-hidden="true"><span /></div>
+        <h1>Connecting to Alveary</h1>
+        <p>Checking your school-year planning access.</p>
+      </div>
+    </div>;
+  }
+
   return (
     <div className={`alveary-shell ${collapsed ? "is-collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <aside className="alveary-sidebar" aria-label="Alveary navigation">
