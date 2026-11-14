@@ -26,9 +26,28 @@ const client: SupabaseClient | null = url && key
 const ENTRY_QUERY = "connect";
 const PENDING_KEY = "alveary:planner:oauth-pending";
 
+// Only links intentionally aimed at the member planner should start SSO.
+// Do not redirect ordinary public visits to Courses, Books, or Supplies.
 function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get(ENTRY_QUERY) === "1";
+}
+
+// An exact dashboard referrer is a convenience fallback for the current
+// dashboard button. With the browser's default cross-origin referrer policy,
+// only the origin may be exposed. In that case we deliberately do NOT guess
+// that an ordinary public link is a member-dashboard login. Use ?connect=1.
+function fromAlvearyTestDashboard(): boolean {
+  if (typeof document === "undefined" || !document.referrer) return false;
+  try {
+    const referrer = new URL(document.referrer);
+    return referrer.protocol === "https:" &&
+      (referrer.hostname === "alveary.org" ||
+        referrer.hostname === "www.alveary.org") &&
+      /^\\/alveary-2027-2028\\/dashboard-test\\/?$/.test(referrer.pathname);
+  } catch {
+    return false;
+  }
 }
 function clearEntryIntent() {
   if (typeof window === "undefined") return;
@@ -124,12 +143,15 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           window.sessionStorage.removeItem(PENDING_KEY);
           setError("The sign-in returned without a planner session. Please check the Memberstack SSO configuration.");
           clearEntryIntent();
-        } else if (memberEntryIntent()) {
-          // During the Memberstack cookie bridge diagnostic, do NOT launch
-          // legacy Supabase OAuth automatically from the dashboard entry link.
-          // Members can inspect their existing Memberstack session below the
-          // status bar; the old Sign in button remains as an explicit fallback.
+        } else if (memberEntryIntent() || fromAlvearyTestDashboard()) {
+          // The dashboard link requests the same working Memberstack SSO flow
+          // as the explicit button. This query flag is navigation intent, NOT
+          // authentication or entitlement. The provider verifies identity.
+          // Clear the flag before redirecting so an unsuccessful callback
+          // cannot restart the flow indefinitely.
           clearEntryIntent();
+          setStatus("checking");
+          await signIn();
         }
       } catch {
         if (!active) return;
