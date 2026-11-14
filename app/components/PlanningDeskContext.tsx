@@ -143,6 +143,11 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
     setCountry: country => setValue(v => v.country === country ? v : { ...v, country }),
     toggleIdea: id => {
       const exists = value.thinkTankIds.includes(id);
+      const saved = cloud.courses.find(c => c.courseId === id);
+      if (exists && saved?.stage === "planned" &&
+          !window.confirm("Remove this course from My Plan and its student topic assignments? This cannot be undone.")) {
+        return;
+      }
       if (cloud.ready) {
         if (exists && cloud.courses.some(c => c.courseId === id)) cloud.removeChoice(id);
         else if (!exists) cloud.addChoice(id);
