@@ -235,8 +235,7 @@ export default function PlanningDesk() {
                       {selectedReview?.id === idea.id && <div className="pd-review">
                         {idea.description && <p className="pd-review-description">{idea.description}</p>}
                         {idea.tips && <PlacementNote text={idea.tips}/>}
-                        {selectedTopics.length > 0 && <div className="pd-topic-review">
-                          <h3>Topics in this course <span>{selectedTopics.length}</span></h3>
+                        {selectedTopics.length > 0 && <div className="pd-topic-review" aria-label="Included topics">
                           {selectedTopics.map(topic => {
                             const isOpen = openTopicId === topic.id;
                             return <div className="pd-topic-item" key={topic.id}>
