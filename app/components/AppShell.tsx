@@ -20,6 +20,7 @@ type NavItem = {
 
 const navigation: NavItem[] = [
   { href: "/", label: "Planning overview", icon: "planning" },
+  { href: "/students", label: "Students", icon: "students" },
   { href: "/courses", label: "Courses", icon: "courses" },
   { href: "/scheduling", label: "Schedule", icon: "schedule" },
   { href: "/books", label: "Books", icon: "books" },
