@@ -173,13 +173,15 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   // A topic selected from a combined course becomes its own independent
   // course choice. The parent group and its other topics stay in Think Tank.
   const planTopic = useCallback((topicId: string) => {
-    void mutate("set_choice", { courseId: topicId, stage: "planned" }, current => {
+    // Opening the editor must NOT plan an unassigned topic. Assignment
+    // changes the choice to planned only when a student is selected.
+    void mutate("set_choice", { courseId: topicId, stage: "idea" }, current => {
       const existing = current.courses.find(c => c.courseId === topicId);
       return {
         ...current,
         courses: existing
-          ? current.courses.map(c => c.courseId === topicId ? { ...c, stage: "planned" } : c)
-          : [...current.courses, { courseId: topicId, stage: "planned",
+          ? current.courses
+          : [...current.courses, { courseId: topicId, stage: "idea",
             topics: [], studentIds: [], overrides: [] }],
       };
     });

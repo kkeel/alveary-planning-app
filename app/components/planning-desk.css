@@ -375,3 +375,62 @@
 .pd-course-tips > strong { display:block; font-size:11px; margin-bottom:5px; }
 .pd-course-tips > p { white-space:pre-line; font-size:11px;
   line-height:1.6; margin:0; }
+
+
+/* Compact, progressive planning controls, responsive to the 370px desk. */
+.pd-plan-action { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
+.pd-plan-action svg { flex:none; }
+.pd-topic-row { display:flex; align-items:flex-start; gap:4px; min-width:0; }
+.pd-topic-row .pd-topic-toggle { flex:1 1 auto; min-width:0; width:auto; padding:6px 0; }
+.pd-topic-row .pd-topic-toggle > span { flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+.pd-topic-row .pd-topic-icon { flex:0 0 26px; width:26px; min-height:28px;
+  display:inline-flex; align-items:center; justify-content:center; padding:5px;
+  border:0; background:transparent; border-radius:3px;
+  color:#729078; text-decoration:none; box-sizing:border-box; }
+.pd-topic-row .pd-topic-icon:hover, .pd-topic-row .pd-topic-icon[aria-expanded="true"] {
+  background:#ecf4e9; color:#3f6846; }
+.pd-topic-row .pd-topic-add { border:1px solid #cbdccc; background:#f3f8f0; }
+.pd-topic-row .pd-topic-remove { color:#829783; }
+.pd-topic-sharing { display:block; flex:none; margin:1px 0 5px 20px;
+  font-size:10px; line-height:1.35; color:#618767; overflow-wrap:anywhere; }
+.pd-topic-sharing > span { margin-right:3px; font-size:13px; font-weight:700; }
+.pd-topic-info { padding:5px 0 7px 19px; }
+.pd-topic-tips { display:flex; align-items:flex-start; gap:8px; margin:8px 0;
+  padding:8px 10px; border-left:2px solid #bbceb9; background:#f2f6ef; }
+.pd-topic-tips svg { flex:0 0 15px; color:#6b846f; margin-top:2px; }
+.pd-topic-tips p { flex:1; min-width:0; margin:0; font-size:11px; line-height:1.6;
+  white-space:pre-line; color:#4c664f; }
+.pd-topic-edit-section { margin:5px 0 9px 18px; }
+.pd-topic-edit-section .pd-inline-edit { display:inline-flex; align-items:center; gap:5px; }
+.pd-topic-shared-editor { padding:8px 9px; margin:7px 0 2px;
+  background:#f9fbf6; border:1px solid #e1eadd; border-radius:4px; }
+.pd-topic-student-sources { padding:8px 0; border-top:1px solid #e3eadf; }
+.pd-topic-student-sources > strong { display:block; font-size:11px;
+  color:#486c50; margin-bottom:5px; }
+.pd-topic-source-choices { display:flex; flex-direction:column; gap:5px; }
+.pd-topic-source-choices label { display:flex; align-items:center; gap:7px;
+  border:1px solid #e1e9db; border-radius:3px; background:white;
+  padding:6px 8px; font-size:10px; color:#6a816b; cursor:pointer; }
+.pd-topic-source-choices label.is-assigned { background:#eff5eb; color:#446b4c; }
+.pd-topic-source-choices label span { flex:1; min-width:0; overflow-wrap:anywhere; }
+.pd-topic-source-choices input { flex:none; accent-color:#527d5a; }
+.myplan-row .pd-course-shared { display:inline; flex:none; padding:0; margin-left:2px; }
+.pd-course-tips { display:flex; align-items:flex-start; gap:8px; }
+.pd-course-tips > svg { flex:0 0 15px; color:#718c73; margin-top:1px; }
+.pd-course-tips > p { flex:1; min-width:0; }
+.pd-plan-info-disclosure { display:inline-flex; align-items:center; gap:6px;
+  margin:0 0 9px; padding:5px 3px; border:0; background:transparent;
+  color:#527356; font-size:11px; font-weight:600; }
+.pd-plan-info-disclosure svg { flex:none; }
+.pd-review-actions .pd-plan-action { min-height:30px; }
+.myplan-review .pd-plan-action { display:inline-flex; align-items:center; gap:5px; }
+/* A wider docked overlay rather than a full-page takeover. */
+@media (min-width:1281px) {
+  .pd-wrapper.is-wide > .pd-desk { position:fixed; top:64px; right:22px;
+    bottom:18px; z-index:80; width:min(690px,calc(100vw - 115px));
+    max-height:none; box-shadow:-8px 8px 30px #20332228; }
+}
+@media (max-width:1280px) {
+  .pd-wrapper.is-mobile-open.is-wide > .pd-desk {
+    width:min(690px,calc(100vw - 20px)); }
+}
