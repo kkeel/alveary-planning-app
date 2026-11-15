@@ -239,3 +239,67 @@
 .plan-topic-details > p { color: #5f7260; font-size: 11px; line-height: 1.5; white-space: pre-line; }
 .plan-topic-details .plan-individuals { margin-top: 8px; }
 .plan-book-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px; font-weight: 600; }
+
+
+/* Progressive course/topic planning: reveal only what's requested. */
+.pd-info-disclosures { display:flex; flex-direction:column; gap:3px; margin:5px 0 9px; }
+.pd-info-disclosures section { min-width:0; }
+.pd-info-toggle { display:inline-flex; align-items:center; gap:5px; padding:5px 1px;
+  color:#55715a; font-size:11px; font-weight:600; border:0; background:transparent; }
+.pd-info-disclosures .pd-review-description { padding-left:18px; margin:2px 0 9px;
+  color:#536954; white-space:pre-line; font-size:11px; line-height:1.65; }
+.pd-row-tool { display:inline-flex; align-items:center; justify-content:center;
+  min-width:27px; min-height:28px; border:0; border-radius:3px;
+  background:transparent; color:#78907b; text-decoration:none; flex-shrink:0; }
+.pd-row-tool:hover,.pd-row-tool[aria-expanded="true"] { background:#eef4eb; color:#4a6952; }
+.pd-inline-info { margin:0 12px 8px 25px; padding:5px 9px;
+  border-left:2px solid #dfebdd; background:#fafbf7; }
+.pd-review-actions { margin:8px 0; }
+.pd-plan-added { color:#59815e; font-size:11px; font-weight:600; }
+.pd-plan-action { background:#eff5ee; }
+.pd-assign-in-place { margin:11px 0; padding:10px 11px;
+  border:1px solid #e0e9dc; border-radius:4px; background:#fbfcfa; }
+.pd-assignment-title { display:flex; align-items:center; justify-content:space-between;
+  gap:9px; font-size:11px; color:#4e6953; }
+.pd-inline-edit { border:0; background:transparent; text-decoration:underline;
+  text-underline-offset:3px; color:#57715b; font-size:11px; padding:5px 2px; }
+.pd-done-row { border-top:1px solid #e3ebe0; display:flex; align-items:center;
+  flex-wrap:wrap; gap:7px 12px; padding:12px 0 4px; }
+.pd-done-row small { color:#7c8b7b; font-size:10px; line-height:1.45; }
+.pd-done-action,.pd-topic-plan-footer button { background:#56775b; border:1px solid #56775b;
+  color:white; border-radius:3px; font-size:11px; font-weight:600; padding:8px 16px; }
+.pd-done-action:disabled,.pd-topic-plan-footer button:disabled { opacity:.48; cursor:default; }
+.pd-topic-plan { border:1px solid #acc5ac; background:#edf5e9; border-radius:3px;
+  color:#476b4c; font-size:10px; padding:5px 7px; flex-shrink:0; }
+.pd-topic-info > p { margin:4px 0 7px; white-space:pre-line; }
+.pd-topic-review-heading small { font-size:10px; font-weight:400; color:#879787; }
+.pd-other-uses { margin:8px 0; background:#f3f6ef; border-left:2px solid #b9cbb8;
+  padding:7px 9px; color:#637863; }
+.pd-other-uses strong { font-size:10px; }
+.pd-other-uses p { margin:4px 0; font-size:10px; line-height:1.4; }
+.pd-topic-assignees { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+.pd-topic-assignees label { display:inline-flex; align-items:center; gap:5px;
+  background:white; border:1px solid #dce8dc; border-radius:3px; padding:5px 7px;
+  color:#4c684f; font-size:11px; }
+.pd-topic-assignees input { accent-color:#5c8062; }
+.pd-topic-plan-inline { margin:8px 0 10px 16px; border:1px solid #dce6da;
+  border-radius:4px; background:#fbfdf8; padding:10px; }
+.pd-topic-plan-footer { margin-top:10px; border-top:1px solid #e5ebe2;
+  padding-top:10px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.pd-topic-plan-footer span { flex:1; min-width:160px; font-size:10px; color:#718872; }
+.pd-topic-plan-footer button { padding:7px 11px; }
+.pd-student-inline-form { display:grid; gap:6px; margin:7px 0 11px; padding:9px;
+  border:1px solid #d8e4d6; background:#f6f9f4; border-radius:3px; }
+.pd-student-inline-form label { font-size:10px; font-weight:600; color:#546e57; }
+.pd-student-inline-form input,.pd-student-inline-form select { min-width:0; width:100%;
+  box-sizing:border-box; font-size:12px; border:1px solid #cddbcc;
+  border-radius:3px; padding:8px; background:#fff; color:#344d39; }
+.pd-student-inline-form button { justify-self:start; padding:7px 10px; font-size:11px;
+  border:1px solid #a9c1aa; border-radius:3px; background:#eaf3e9; color:#44654a; }
+.pd-inline-student-error { font-size:10px; color:#9b4a39; }
+.myplan-row .pd-idea-heading { align-items:flex-start; }
+.myplan-row .pd-idea-review { min-width:0; }
+.myplan-review > .pd-topic-review { margin:3px 0 10px; }
+.myplan-review .pd-review-actions { margin:10px 0 5px; }
+.myplan-review .pd-plan-action { font-size:11px; }
+.myplan-review .myplan-return { margin:0; padding:7px; }

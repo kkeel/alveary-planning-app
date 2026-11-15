@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import Link from "next/link";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 import { useDemoPlan } from "./DemoPlanContext";
+import catalog from "../courses/catalog-preview.json";
 
 type Student = { id: string; displayName: string; gradeLevel: number | null };
 type StudentsResult = { schoolYear: string; planKind: "demo"; students: Student[] };
@@ -12,6 +13,7 @@ const year = "2027-28";
 const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const grades = Array.from({ length: 13 }, (_, n) => n);
+const courseTitles = new Map(catalog.courses.map(c => [c.id, c.title]));
 // Ephemeral per-auth-user data, not localStorage or a persistent public cache.
 // Keep the last server-confirmed list across route unmount/remount in one tab.
 const studentCache = new Map<string, Student[]>();
@@ -105,6 +107,24 @@ export default function StudentsManager() {
     });
     return () => { active = false; };
   }, [request, status, userId]);
+
+  // The Planning Desk can add students without leaving its course review.
+  // Reuse the same server-confirmed roster when the Students page opens;
+  // its normal private API refresh still runs in the background.
+  useEffect(() => {
+    if (status !== "signed-in" || !userId || !demoPlan.ready || saving) return;
+    studentCache.set(userId, demoPlan.students);
+    setStudents(demoPlan.students);
+    setLoading(false);
+  }, [status, userId, demoPlan.ready, demoPlan.students, saving]);
+
+  function coursesFor(studentId: string): string[] {
+    return demoPlan.courses.filter(course => course.stage === "planned" &&
+      course.topics.some(topic => topic.included && (
+        course.overrides.find(o => o.topicId === topic.topicId && o.studentId === studentId)
+          ?.assigned ?? course.studentIds.includes(studentId)
+      ))).map(course => courseTitles.get(course.courseId) ?? "Saved course");
+  }
 
   function reset() {
     setName("");
@@ -206,6 +226,15 @@ export default function StudentsManager() {
               <div className="demo-student-details">
                 <strong>{student.displayName}</strong>
                 <span>{student.id.startsWith("pending:") ? "Saving…" : labelForGrade(student.gradeLevel)}</span>
+                {!student.id.startsWith("pending:") && demoPlan.ready && (() => {
+                  const courses = coursesFor(student.id);
+                  return <details className="demo-student-course-summary">
+                    <summary>{courses.length} {courses.length === 1 ? "course" : "courses"} in My Plan</summary>
+                    {courses.length
+                      ? <ul>{courses.map((title,index) => <li key={index}>{title}</li>)}</ul>
+                      : <p>Courses will appear here as you assign them.</p>}
+                  </details>;
+                })()}
               </div>
               <div className="demo-student-actions">
                 <button type="button" onClick={() => edit(student)} disabled={saving || student.id.startsWith("pending:")} aria-label={"Edit " + student.displayName}>Edit</button>

@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info } from "lucide-react";
+import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
+import CourseTopicReview from "./CourseTopicReview";
+import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
-const lookup = new Map(catalog.courses.map(c => [c.id, c]));
+const lookup = new Map(catalog.courses.map(course => [course.id, course]));
 const compare = (a: SavedCourse, b: SavedCourse) => {
   const x = lookup.get(a.courseId), y = lookup.get(b.courseId);
   return (x?.presentationSort ?? "").localeCompare(y?.presentationSort ?? "") ||
@@ -17,11 +20,16 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
   preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]): string {
-  const assigned = people.filter(s => course.studentIds.includes(s.id));
-  if (!assigned.length) return "Choose students when you're ready";
-  return assigned.map(s => {
-    const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === s.id);
-    return [s.displayName, pref?.priority ?? null,
+  // If a single topic has been assigned via an individual override, include
+  // that student even when no combined-course assignment exists.
+  const assigned = people.filter(student =>
+    course.studentIds.includes(student.id) ||
+    course.topics.some(t => t.included && course.overrides.some(o =>
+      o.topicId === t.topicId && o.studentId === student.id && o.assigned)));
+  if (!assigned.length) return "Students to be decided";
+  return assigned.map(student => {
+    const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === student.id);
+    return [student.displayName, pref?.priority ?? null,
       pref?.arrangement !== "Later" ? pref?.arrangement : null].filter(Boolean).join(" · ");
   }).join("  /  ");
 }
@@ -30,30 +38,31 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [infoId, setInfoId] = useState<string | null>(null);
+  const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
   const planned = demo.courses.filter(c => c.stage === "planned");
 
   useEffect(() => {
-    if (focusCourseId && planned.some(c => c.courseId === focusCourseId)) {
+    if (focusCourseId && planned.some(c => c.courseId === focusCourseId))
       setOpenId(focusCourseId);
-    }
-  // Focus is set explicitly when moving from Think Tank, not on data refresh.
+  // Deliberately follow explicit navigation intent, not every server refresh.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusCourseId]);
 
   const groups = useMemo(() => {
     const sections = new Map<string, SavedCourse[]>();
-    for (const choice of planned) {
-      const subject = lookup.get(choice.courseId)?.subject ?? "Other";
-      sections.set(subject, [...(sections.get(subject) ?? []), choice]);
+    for (const course of planned) {
+      const subject = lookup.get(course.courseId)?.subject ?? "Other";
+      sections.set(subject, [...(sections.get(subject) ?? []), course]);
     }
-    const all = [...sections.entries()];
-    all.sort((a,b) => {
-      const aa = a[1].map(c => lookup.get(c.courseId)?.subjectSort ?? 9999);
-      const bb = b[1].map(c => lookup.get(c.courseId)?.subjectSort ?? 9999);
-      return Math.min(...aa) - Math.min(...bb) || a[0].localeCompare(b[0]);
+    const entries = [...sections.entries()];
+    entries.sort((a, b) => {
+      const ar = a[1].map(c => lookup.get(c.courseId)?.subjectSort ?? 9999);
+      const br = b[1].map(c => lookup.get(c.courseId)?.subjectSort ?? 9999);
+      return Math.min(...ar) - Math.min(...br) || a[0].localeCompare(b[0]);
     });
-    return all.map(([subject, items]) => [subject, [...items].sort(compare)] as const);
+    return entries.map(([subject, courses]) => [subject, courses.sort(compare)] as const);
   }, [planned]);
 
   if (!demo.ready) return <div className="pd-plan-empty">
@@ -61,12 +70,10 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
-    <p className="pd-intro myplan-intro">
-      Courses you're planning to use. Open any course to review its details or adjust students.
-    </p>
+    <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
     {!planned.length && <div className="pd-plan-empty">
-      <p>Your plan can begin with just one course. The rest of your ideas can stay in the Think Tank.</p>
-      <button type="button" onClick={() => desk.setTab("think")}>Explore Think Tank</button>
+      <p>Start with one course or topic. The others can stay in Think Tank as long as you like.</p>
+      <button type="button" onClick={() => desk.setTab("think")}>Open Think Tank</button>
     </div>}
     <div className="pd-subject-list">
       {groups.map(([subject, courses]) => {
@@ -74,20 +81,19 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
         return <section className="pd-subject" key={subject}>
           <div className="pd-subject-heading">
             <button type="button" className="pd-subject-toggle" aria-expanded={!collapsed}
-              onClick={() => setCollapsedSubjects(v => collapsed
-                ? v.filter(x => x !== subject) : [...v, subject])}>
+              onClick={() => setCollapsedSubjects(previous => collapsed
+                ? previous.filter(value => value !== subject) : [...previous,subject])}>
               {collapsed ? <ChevronRight size={15}/> : <ChevronDown size={15}/>}
               <strong>{subject}</strong><span>{courses.length}</span>
             </button>
           </div>
           {!collapsed && <div className="pd-subject-items">
             {courses.map(course => {
-              const courseCatalog: CatalogCourse | undefined = lookup.get(course.courseId);
+              const item: CatalogCourse | undefined = lookup.get(course.courseId);
               const open = openId === course.courseId;
-              const includedCount = course.topics.filter(t => t.included).length;
-              const countLabel = courseCatalog?.type === "Combined Course"
-                ? " · " + includedCount + " of " + course.topics.length + " topics"
-                : "";
+              const infoOpen = infoId === course.courseId;
+              const editing = editingStudentsId === course.courseId;
+              const includedCount = course.topics.filter(topic => topic.included).length;
               return <div className={"pd-idea myplan-row" + (open ? " is-expanded" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -95,19 +101,43 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     onClick={() => setOpenId(open ? null : course.courseId)}>
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
-                      {courseCatalog?.title ?? "Saved course"}
+                      {item?.title ?? "Saved course"}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.studentPreferences)}{countLabel}
+                        {studentSummary(course,demo.students,demo.studentPreferences)}
+                        {item?.type === "Combined Course" &&
+                          " · " + includedCount + " of " + course.topics.length + " topics"}
                       </small>
                     </span>
                   </button>
-                </div>
-                {open && <div className="pd-review myplan-review">
-                  <StudentAssignmentEditor course={course} showCourseInfo/>
-                  <button type="button" className="myplan-return"
-                    onClick={() => { demo.setStage(course.courseId, "idea"); setOpenId(null); }}>
-                    Return to Think Tank
+                  <button type="button" className="pd-row-tool" aria-expanded={infoOpen}
+                    aria-label={"Description and tips for " + (item?.title ?? "course")}
+                    title="View description and tips"
+                    onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
+                    <Info size={15}/>
                   </button>
+                  <Link className="pd-row-tool" href="/books"
+                    aria-label={"View books for " + (item?.title ?? "course")}
+                    title="View Books"><BookOpen size={15}/></Link>
+                </div>
+                {infoOpen && item && <div className="pd-inline-info">
+                  <CourseInfoDisclosure course={item}/>
+                </div>}
+                {open && <div className="pd-review myplan-review">
+                  {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
+                    onToggleTopic={(topicId,included) =>
+                      demo.setTopic(course.courseId,topicId,included)}/>}
+                  <div className="pd-review-actions">
+                    <button type="button" className="pd-plan-action"
+                      aria-expanded={editing}
+                      onClick={() => setEditingStudentsId(editing ? null : course.courseId)}>
+                      {editing ? "Done editing students" : "Edit students & priorities"}
+                    </button>
+                    <button type="button" className="myplan-return" onClick={() => {
+                      demo.setStage(course.courseId, "idea");
+                      setOpenId(null); setEditingStudentsId(null);
+                    }}>Return to Think Tank</button>
+                  </div>
+                  {editing && <StudentAssignmentEditor course={course}/>}
                 </div>}
               </div>;
             })}
@@ -115,8 +145,5 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
         </section>;
       })}
     </div>
-    {!!planned.length && <p className="myplan-footer-note">
-      Your other ideas can stay in the Think Tank as long as you like.
-    </p>}
   </section>;
 }
