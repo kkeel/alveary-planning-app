@@ -282,7 +282,7 @@ export default function PlanningDesk() {
                                   setJustPlannedId(idea.id);
                                   setAssigningId(idea.id);
                                 }}>
-                                Plan all included topics
+                                {idea.type === "Combined Course" ? "Plan all included topics" : "Add this topic to My Plan"}
                               </button>)}
                           <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
                             <BookOpen size={15}/> View Books
