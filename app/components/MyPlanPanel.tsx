@@ -119,7 +119,7 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                       </small>
                     </span>
                   </button>
-                  <Link className="pd-row-tool" href="/books"
+                  <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(course.courseId)}
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>
                 </div>
