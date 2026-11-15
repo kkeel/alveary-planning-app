@@ -142,7 +142,9 @@ export default function CourseTopicReview({
   };
   return <div className="pd-topic-review" aria-label={"Topics in " + parent.title}>
     <div className="pd-topic-review-heading">
-      <strong>Topics · {included.length} of {children.length}</strong>
+      <strong>Topics{removed.length > 0
+        ? " · Customized: " + included.length + " of " + children.length + " included"
+        : ""}</strong>
       {mode === "plan" && <small>Each can be scheduled or printed separately</small>}
     </div>
     {included.map(topic => renderTopic(topic))}
