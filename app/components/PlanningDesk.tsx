@@ -324,7 +324,7 @@ export default function PlanningDesk() {
                             choice.stage === "planned" && choice.studentIds.length > 0) &&
                           <div className="pd-done-row">
                           <button type="button" className="pd-done-action"
-                            disabled={cloud.saving || Boolean(cloud.error)}
+                            title="Finish this course; saving continues quietly if still in progress"
                             onClick={() => {
                               setReviewId(null);
                               setJustPlannedId(null);
