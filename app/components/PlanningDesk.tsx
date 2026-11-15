@@ -308,30 +308,33 @@ export default function PlanningDesk() {
                           <div className="pd-assign-in-place">
                             <div className="pd-assignment-title">
                               <strong>Who will study these included topics?</strong>
-                              <button type="button" className="pd-inline-edit"
-                                onClick={() => {
-                                  setAssigningId(null);
-                                  setJustPlannedId(null);
-                                }}>Hide</button>
+                              <div className="pd-assignment-quick-actions">
+                                <button type="button" className="pd-inline-edit"
+                                  onClick={() => {
+                                    setAssigningId(null);
+                                    setJustPlannedId(null);
+                                  }}>Hide</button>
+                                <button type="button" className="pd-done-action"
+                                  disabled={!cloud.courses.some(choice =>
+                                    choice.courseId === idea.id && choice.stage === "planned" &&
+                                    choice.studentIds.length > 0)}
+                                  style={{ visibility: cloud.courses.some(choice =>
+                                    choice.courseId === idea.id && choice.stage === "planned" &&
+                                    choice.studentIds.length > 0) ? "visible" : "hidden" }}
+                                  title="Finish; the change will keep saving in the background"
+                                  onClick={() => {
+                                    setReviewId(null);
+                                    setJustPlannedId(null);
+                                    setAssigningId(null);
+                                  }}>Done</button>
+                              </div>
                             </div>
                             <StudentAssignmentEditor
                               course={cloud.courses.find(c => c.courseId === idea.id)!}
                               onAssigned={() => setJustPlannedId(idea.id)}
                             />
                           </div>}
-                        {assigningId === idea.id && justPlannedId === idea.id &&
-                          cloud.courses.some(choice => choice.courseId === idea.id &&
-                            choice.stage === "planned" && choice.studentIds.length > 0) &&
-                          <div className="pd-done-row">
-                          <button type="button" className="pd-done-action"
-                            disabled={cloud.saving || Boolean(cloud.error)}
-                            onClick={() => {
-                              setReviewId(null);
-                              setJustPlannedId(null);
-                              setAssigningId(null);
-                            }}>Done</button>
-                          <small>Finished for now — this course moves out of Think Tank.</small>
-                        </div>}
+
                       </div>}
                     </div>;
                   })}

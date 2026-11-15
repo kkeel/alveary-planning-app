@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, UserRoundPen } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
@@ -134,7 +134,7 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                       if (!open) setOpenId(course.courseId);
                       setEditingStudentsId(editing ? null : course.courseId);
                     }}>
-                    <UserRoundPen size={15} aria-hidden="true"/>
+                    <UsersRound size={15} aria-hidden="true"/>
                   </button>
                 </div>
                 {open && <div className="pd-review myplan-review">

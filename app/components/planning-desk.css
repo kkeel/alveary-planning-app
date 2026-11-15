@@ -462,3 +462,52 @@
   outline:2px solid #59836a;
   outline-offset:2px;
 }
+
+
+/* Topic titles and the adjacent info icon open the same disclosure. */
+.pd-topic-row .pd-topic-title-button {
+  border:0;
+  background:transparent;
+  text-align:left;
+  font-family:inherit;
+  font-size:11px;
+  line-height:1.5;
+  color:#4c604f;
+  cursor:pointer;
+}
+.pd-topic-row .pd-topic-title-button:hover,
+.pd-topic-row .pd-topic-title-button[aria-expanded="true"] {
+  color:#3f6948;
+  text-decoration:underline;
+  text-decoration-color:#b6ccb9;
+  text-underline-offset:3px;
+}
+.pd-topic-row .pd-topic-title-button:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+  border-radius:2px;
+}
+
+
+/* Keep Done in immediate reach after selecting students; never shift the
+   editor controls when Done becomes available during an optimistic save. */
+.pd-assignment-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 9px;
+}
+.pd-assignment-quick-actions {
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-shrink:0;
+}
+.pd-assignment-quick-actions .pd-done-action {
+  min-height:30px;
+  padding:6px 12px;
+  line-height:1.2;
+  margin:0;
+}
