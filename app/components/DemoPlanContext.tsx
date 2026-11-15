@@ -211,7 +211,20 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ action: "add", displayName: name, gradeLevel }),
       });
       if (!result.ok) throw new Error("student_add_failed");
-      return request("load");
+      const saved: unknown = await result.json();
+      if (!saved || typeof saved !== "object" || Array.isArray(saved) ||
+          !Array.isArray((saved as { students?: unknown }).students)) {
+        throw new Error("student_save_response_invalid");
+      }
+      const confirmed = (saved as { students: PlanningStudent[] }).students;
+      // The student save itself may succeed even if refreshing the course
+      // snapshot subsequently fails. Don't invite a duplicate student
+      // submission; retain the confirmed student list and last known plan.
+      try {
+        return await request("load");
+      } catch {
+        return { ...latestConfirmed.current, students: confirmed };
+      }
     });
     chain.current = work;
     try {
