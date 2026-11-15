@@ -125,7 +125,7 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     title="Description & tips"
                     onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
                     <Info size={15}/><span>Description &amp; tips</span>
-                  </button>
+                  </button>}
                   <Link className="pd-row-tool" href="/books"
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>
