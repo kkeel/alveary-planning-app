@@ -142,15 +142,20 @@ export default function CourseTopicReview({
       {planning && standalone && <div className="pd-topic-plan-inline">
         <div className="pd-assignment-title">
           <strong>Plan this topic</strong>
-          <button type="button" className="pd-inline-edit"
-            onClick={() => setPlanningTopicId(null)}>Hide</button>
+          <div className="pd-assignment-quick-actions">
+            <button type="button" className="pd-inline-edit"
+              onClick={() => setPlanningTopicId(null)}>Hide</button>
+            <button type="button" className="pd-done-action"
+              disabled={!hasAssignedStudent}
+              style={{ visibility: hasAssignedStudent ? "visible" : "hidden" }}
+              title="Finish this topic; the change will keep saving in the background"
+              onClick={() => setPlanningTopicId(null)}>Done</button>
+          </div>
         </div>
         <StudentAssignmentEditor course={standalone}/>
-        {hasAssignedStudent && <div className="pd-topic-plan-footer">
-          <span>Only this topic moves to My Plan. The rest of the combined course stays in Think Tank.</span>
-          <button type="button" onClick={() => setPlanningTopicId(null)}
-            title="Finish selecting students; your change saves quietly in the background">Done</button>
-        </div>}
+        <p className="plan-microcopy">
+          This topic can be planned separately; the rest of the combined course stays in Think Tank.
+        </p>
       </div>}
     </div>;
   }
