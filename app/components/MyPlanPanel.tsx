@@ -122,6 +122,15 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                   <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(course.courseId)}
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>
+                  <button type="button" className="pd-row-tool pd-course-edit-icon"
+                    aria-label={"Edit students and priorities for " + (item?.title ?? "course")}
+                    title="Edit students and priorities" aria-expanded={editing}
+                    onClick={() => {
+                      if (!open) setOpenId(course.courseId);
+                      setEditingStudentsId(editing ? null : course.courseId);
+                    }}>
+                    <UserRoundPen size={15} aria-hidden="true"/>
+                  </button>
                 </div>
                 {open && <div className="pd-review myplan-review">
                   {item && (item.description || item.tips) && <>
@@ -137,11 +146,6 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}/>}
                   <div className="pd-review-actions">
-                    <button type="button" className="pd-plan-action"
-                      aria-expanded={editing}
-                      onClick={() => setEditingStudentsId(editing ? null : course.courseId)}>
-                      <UserRoundPen size={14} aria-hidden="true"/> {editing ? "Done" : "Edit"}
-                    </button>
                     <button type="button" className="myplan-return" onClick={() => {
                       demo.setStage(course.courseId, "idea");
                       setOpenId(null); setEditingStudentsId(null);
