@@ -462,3 +462,26 @@
   outline:2px solid #59836a;
   outline-offset:2px;
 }
+
+
+/* Topic titles and the adjacent info icon open the same disclosure. */
+.pd-topic-row .pd-topic-title-button {
+  border:0;
+  background:transparent;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  cursor:pointer;
+}
+.pd-topic-row .pd-topic-title-button:hover,
+.pd-topic-row .pd-topic-title-button[aria-expanded="true"] {
+  color:#3f6948;
+  text-decoration:underline;
+  text-decoration-color:#b6ccb9;
+  text-underline-offset:3px;
+}
+.pd-topic-row .pd-topic-title-button:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+  border-radius:2px;
+}
