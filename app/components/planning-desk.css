@@ -487,3 +487,27 @@
   outline-offset:2px;
   border-radius:2px;
 }
+
+
+/* Keep Done in immediate reach after selecting students; never shift the
+   editor controls when Done becomes available during an optimistic save. */
+.pd-assignment-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 9px;
+}
+.pd-assignment-quick-actions {
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-shrink:0;
+}
+.pd-assignment-quick-actions .pd-done-action {
+  min-height:30px;
+  padding:6px 12px;
+  line-height:1.2;
+  margin:0;
+}
