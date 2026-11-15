@@ -77,6 +77,7 @@ export default function CourseTopicReview({
     const infoOpen = infoTopicId === topic.id;
     const hasDetails = Boolean(topic.description || topic.tips);
     const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
+    const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
     const standalone = demo.courses.find(course => course.courseId === topic.id);
     const planning = planningTopicId === topic.id;
@@ -87,14 +88,15 @@ export default function CourseTopicReview({
       <div className="pd-topic-row">
         {hasDetails
           ? <button type="button" className="pd-topic-name pd-topic-title-button"
-              aria-label={"Show description and tips for " + topic.title}
-              aria-expanded={infoOpen} onClick={toggleInfo}>
+              aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
+              aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
               {topic.title}
             </button>
           : <span className="pd-topic-name">{topic.title}</span>}
         {hasDetails && <button type="button" className="pd-topic-icon"
-          aria-label={"Description and tips for " + topic.title} title="Description & tips"
-          aria-expanded={infoOpen} onClick={toggleInfo}>
+          aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
+          title="Description & tips" aria-expanded={infoOpen}
+          aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
         <Link className="pd-topic-icon" href={"/books?course=" + encodeURIComponent(topic.id)}
@@ -126,7 +128,7 @@ export default function CourseTopicReview({
       </div>
       <TopicOtherUses topicEditionId={topic.editionId}
         parentCourseId={parent.id} index={sharingIndex}/>
-      {infoOpen && <div className="pd-topic-info">
+      {infoOpen && <div className="pd-topic-info" id={detailsId}>
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <div className="pd-topic-tips">
           <PlacementSymbol size={17}/><p>{topic.tips}</p>
