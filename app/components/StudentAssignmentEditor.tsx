@@ -6,7 +6,7 @@ import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreferen
 import catalog from "../courses/catalog-preview.json";
 
 const details = new Map(catalog.courses.map(c => [c.id, c]));
-const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Both", "Later"];
+const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
 
