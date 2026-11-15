@@ -31,6 +31,8 @@ type DemoPlanContextValue = {
   studentGroups: PlanningGroup[]; studentPreferences: StudentPreference[];
   importIdeas: (ideas: LegacyIdea[]) => Promise<void>;
   addChoice: (courseId: string) => void;
+  planTopic: (topicId: string) => void;
+  addStudent: (displayName: string, gradeLevel: number | null) => Promise<boolean>;
   removeChoice: (courseId: string) => void;
   setStage: (courseId: string, stage: "idea" | "planned") => void;
   setTopic: (courseId: string, topicId: string, included: boolean) => void;
@@ -168,6 +170,71 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
           { courseId, stage: "idea", topics: [], studentIds: [], overrides: [] }],
       });
   }, [mutate]);
+  // A topic selected from a combined course becomes its own independent
+  // course choice. The parent group and its other topics stay in Think Tank.
+  const planTopic = useCallback((topicId: string) => {
+    void mutate("set_choice", { courseId: topicId, stage: "planned" }, current => {
+      const existing = current.courses.find(c => c.courseId === topicId);
+      return {
+        ...current,
+        courses: existing
+          ? current.courses.map(c => c.courseId === topicId ? { ...c, stage: "planned" } : c)
+          : [...current.courses, { courseId: topicId, stage: "planned",
+            topics: [], studentIds: [], overrides: [] }],
+      };
+    });
+  }, [mutate]);
+
+  // Reuse the SAME secure student API as the Students page. The private
+  // planning snapshot is then refreshed in the serialized mutation queue,
+  // so both screens immediately agree after the save completes.
+  const addStudent = useCallback(async (displayName: string, gradeLevel: number | null): Promise<boolean> => {
+    const name = displayName.trim().replace(/\s+/g, " ");
+    if (!ready || !enabled.current || !name || name.length > 60 ||
+        (gradeLevel !== null && (!Number.isInteger(gradeLevel) || gradeLevel < 0 || gradeLevel > 12))) {
+      setError("Choose a name or nickname and an optional grade.");
+      return false;
+    }
+    if (!url || !key) {
+      setError("Student saving is not available right now.");
+      return false;
+    }
+    pending.current += 1;
+    setSaving(true);
+    setError(null);
+    const work = chain.current.catch(() => undefined).then(async () => {
+      const token = await getAccessToken();
+      if (!token) throw new Error("not_signed_in");
+      const result = await fetch(url + "/functions/v1/demo-students", {
+        method: "POST", credentials: "omit", cache: "no-store",
+        headers: { Authorization: "Bearer " + token, apikey: key, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "add", displayName: name, gradeLevel }),
+      });
+      if (!result.ok) throw new Error("student_add_failed");
+      return request("load");
+    });
+    chain.current = work;
+    try {
+      const data = await work;
+      if (enabled.current) {
+        latestConfirmed.current = data;
+        pending.current -= 1;
+        if (pending.current === 0) {
+          setSnapshot(data);
+          setSaving(false);
+        }
+      }
+      return true;
+    } catch {
+      if (enabled.current) {
+        pending.current -= 1;
+        if (pending.current === 0) setSaving(false);
+        setError("That student couldn't be saved. Please try again.");
+      }
+      return false;
+    }
+  }, [ready, getAccessToken, request]);
+
   const removeChoice = useCallback((courseId: string) => {
     void mutate("remove_choice", { courseId }, current => ({
       ...current, courses: current.courses.filter(c => c.courseId !== courseId),
@@ -245,7 +312,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   return <Context.Provider value={{
     ready, saving, error, courses: snapshot.courses, students: snapshot.students,
     studentGroups: snapshot.studentGroups, studentPreferences: snapshot.studentPreferences,
-    importIdeas, addChoice, removeChoice, setStage, setTopic, assignCourse, assignTopic,
+    importIdeas, addChoice, planTopic, addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
     assignStudents, setPreference, saveGroup, deleteGroup, refresh,
   }}>{children}</Context.Provider>;
 }
