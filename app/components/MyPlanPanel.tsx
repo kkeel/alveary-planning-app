@@ -21,7 +21,7 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]): string {
+  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const assigned = people.filter(student =>
