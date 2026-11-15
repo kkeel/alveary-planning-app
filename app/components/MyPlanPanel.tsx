@@ -105,7 +105,12 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                 key={course.courseId}>
                 <div className="pd-idea-heading">
                   <button className="pd-idea-review" type="button" aria-expanded={open}
-                    onClick={() => setOpenId(open ? null : course.courseId)}>
+                    onClick={() => {
+                      setOpenId(open ? null : course.courseId);
+                      // Reopening a course should never reveal a stale edit
+                      // form until the member explicitly requests it.
+                      setEditingStudentsId(null);
+                    }}>
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
                       {item?.title ?? "Saved course"}
