@@ -469,8 +469,10 @@
   border:0;
   background:transparent;
   text-align:left;
-  font:inherit;
-  color:inherit;
+  font-family:inherit;
+  font-size:11px;
+  line-height:1.5;
+  color:#4c604f;
   cursor:pointer;
 }
 .pd-topic-row .pd-topic-title-button:hover,
