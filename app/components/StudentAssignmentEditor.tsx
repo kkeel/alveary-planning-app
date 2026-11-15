@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
+import { ChevronDown, ChevronRight, UsersRound, X } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
 
@@ -11,8 +11,8 @@ const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
 
 export default function StudentAssignmentEditor({
-  course, onAssigned,
-}: { course: SavedCourse; onAssigned?: () => void }) {
+  course, onAssigned, onClose,
+}: { course: SavedCourse; onAssigned?: () => void; onClose?: () => void }) {
   const demo = useDemoPlan();
   const grouped = details.get(course.courseId)?.type === "Combined Course";
   const [showPreferences, setShowPreferences] = useState(false);
@@ -60,7 +60,12 @@ export default function StudentAssignmentEditor({
 
   return <div className="plan-editor">
     <div className="plan-assign-head">
-      <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>
+      {onClose
+        ? <button type="button" className="plan-students-close"
+            aria-label="Close students editor" title="Close students editor" onClick={onClose}>
+            <UsersRound size={14} aria-hidden="true"/> Students <X size={13} aria-hidden="true"/>
+          </button>
+        : <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>}
       <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
         onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
         {addingStudent ? "Cancel adding" : "+ Add student"}

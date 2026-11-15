@@ -9,6 +9,7 @@ import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
+import PlacementSymbol from "./PlacementSymbol";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -20,7 +21,7 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]): string {
+  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const assigned = people.filter(student =>
@@ -28,11 +29,18 @@ function studentSummary(course: SavedCourse,
     course.topics.some(t => t.included && course.overrides.some(o =>
       o.topicId === t.topicId && o.studentId === student.id && o.assigned)));
   if (!assigned.length) return "Students to be decided";
-  return assigned.map(student => {
+  return assigned.map((student, index) => {
     const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === student.id);
-    return [student.displayName, pref?.priority ?? null,
-      pref?.arrangement !== "Later" ? pref?.arrangement : null].filter(Boolean).join(" · ");
-  }).join("  /  ");
+    return <span className="myplan-student-summary" key={student.id}>
+      {index > 0 && <span className="myplan-student-separator"> / </span>}
+      {student.displayName}
+      {pref?.arrangement === "Combined" && <span className="myplan-combined-symbol"
+        title="Combined arrangement" aria-label="Combined arrangement">
+        <PlacementSymbol size={14}/>
+      </span>}
+      {pref?.priority && <span> · {pref.priority}</span>}
+    </span>;
+  });
 }
 
 export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: string | null }) {
@@ -156,7 +164,9 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                       setOpenId(null); setEditingStudentsId(null);
                     }}>Return to Think Tank</button>
                   </div>
-                  {editing && <StudentAssignmentEditor course={course}/>}
+                  {editing && <StudentAssignmentEditor course={course}
+                    onClose={item?.type === "Combined Course"
+                      ? () => setEditingStudentsId(null) : undefined}/>}
                 </div>}
               </div>;
             })}
