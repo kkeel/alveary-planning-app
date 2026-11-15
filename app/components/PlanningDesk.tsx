@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowUp, BookOpen, BookmarkCheck, ChevronDown, ChevronRight,
-  Lightbulb, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X,
+  Lightbulb, Maximize2, Minimize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +38,7 @@ export default function PlanningDesk() {
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [wideDesk, setWideDesk] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
 
@@ -137,7 +138,8 @@ export default function PlanningDesk() {
     </button>
   </div>;
 
-  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "")}>
+  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "") +
+    (wideDesk ? " is-wide" : "")}>
     <button type="button" className="pd-mobile-launcher"
       aria-label={"Open Planning Desk. " + ideas.length + " Think Tank ideas"}
       title="Open Planning Desk" aria-expanded={drawerOpen}
@@ -164,6 +166,11 @@ export default function PlanningDesk() {
             aria-live="polite" title={cloud.error ?? undefined}>
             {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
           </span>
+          <button type="button" aria-label={wideDesk ? "Return to regular Planning Desk width" : "Expand Planning Desk"}
+            title={wideDesk ? "Regular desk width" : "Wider planning space"}
+            aria-pressed={wideDesk} onClick={() => setWideDesk(value => !value)}>
+            {wideDesk ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+          </button>
           <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
             onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
         </div>
@@ -278,14 +285,17 @@ export default function PlanningDesk() {
                                 title={!cloud.courses.some(c => c.courseId === idea.id)
                                   ? "Save this browser idea to your Demo plan first" : undefined}
                                 onClick={() => {
-                                  cloud.setStage(idea.id, "planned");
-                                  setJustPlannedId(idea.id);
+                                  // Opening student choices does not promote
+                                  // an unassigned idea into My Plan.
                                   setAssigningId(idea.id);
                                 }}>
-                                {idea.type === "Combined Course" ? "Plan all included topics" : "Add this topic to My Plan"}
+                                <Plus size={14} aria-hidden="true"/>
+                                {idea.type === "Combined Course" ? "All" : "Plan"}
                               </button>)}
-                          <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
-                            <BookOpen size={15}/> View Books
+                          <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(idea.id)}
+                            aria-label={"View books for " + idea.title} title="View books"
+                            onClick={closeMobileDrawer}>
+                            <BookOpen size={15} aria-hidden="true"/>
                           </Link>
                         </div>
                         <CourseTopicReview parent={idea} mode="think"
@@ -299,14 +309,20 @@ export default function PlanningDesk() {
                             <div className="pd-assignment-title">
                               <strong>Who will study these included topics?</strong>
                               <button type="button" className="pd-inline-edit"
-                                onClick={() => setAssigningId(null)}>Hide</button>
+                                onClick={() => {
+                                  setAssigningId(null);
+                                  setJustPlannedId(null);
+                                }}>Hide</button>
                             </div>
                             <StudentAssignmentEditor
                               course={cloud.courses.find(c => c.courseId === idea.id)!}
                               onAssigned={() => setJustPlannedId(idea.id)}
                             />
                           </div>}
-                        {justPlannedId === idea.id && <div className="pd-done-row">
+                        {assigningId === idea.id && justPlannedId === idea.id &&
+                          cloud.courses.some(choice => choice.courseId === idea.id &&
+                            choice.stage === "planned" && choice.studentIds.length > 0) &&
+                          <div className="pd-done-row">
                           <button type="button" className="pd-done-action"
                             disabled={cloud.saving || Boolean(cloud.error)}
                             onClick={() => {
