@@ -48,6 +48,9 @@ export function otherUses(
 }
 
 export function hasSharedTopic(index: TopicSharingIndex, course: SavedCourse): boolean {
+  // A course-only ↔ means its *assigned* topic is also assigned through
+  // another grouping. Inclusion in an otherwise unassigned plan is not enough.
   return course.topics.some(topic => topic.included &&
+    (index.get(topic.topicEditionId) ?? []).some(use => use.courseId === course.courseId) &&
     otherUses(index, topic.topicEditionId, course.courseId).length > 0);
 }
