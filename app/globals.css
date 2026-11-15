@@ -387,3 +387,12 @@ p { line-height: 1.65; }
   .demo-student-row { flex-wrap: wrap; align-items: flex-start; }
   .demo-student-actions { width: 100%; }
 }
+
+
+/* Optional per-student course overview; closed by default to avoid clutter. */
+.demo-student-course-summary { margin-top:8px; max-width:100%; }
+.demo-student-course-summary summary { cursor:pointer; color:#59735d; font-size:11px;
+  text-decoration:underline; text-underline-offset:2px; width:max-content; max-width:100%; }
+.demo-student-course-summary ul { list-style:disc; padding-left:17px; margin:8px 0 0; }
+.demo-student-course-summary li { font-size:11px; line-height:1.45; margin:5px 0; }
+.demo-student-course-summary p { font-size:11px; color:#7d8c7b; margin:7px 0 0; }
