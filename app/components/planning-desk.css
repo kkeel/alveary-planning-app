@@ -511,3 +511,26 @@
   line-height:1.2;
   margin:0;
 }
+
+/* In My Plan the combined-course Students heading closes just its editor.
+   The topic editors retain their existing in-row icon behavior. */
+.plan-assign-head .plan-students-close {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 3px;
+  border:0;
+  border-radius:3px;
+  background:transparent;
+  color:#415b45;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.plan-assign-head .plan-students-close:hover { color:#2e6940; background:#edf4ea; }
+.plan-assign-head .plan-students-close:focus-visible { outline:2px solid #59836a; outline-offset:2px; }
+.plan-assign-head .plan-students-close svg:last-child { margin-left:4px; opacity:.7; }
+.myplan-student-summary { display:inline; }
+.myplan-student-separator { white-space:pre; }
+.myplan-combined-symbol { display:inline-flex; vertical-align:-3px; margin-left:3px; color:#66856c; }
+.myplan-combined-symbol svg { flex-shrink:0; }
