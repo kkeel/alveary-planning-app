@@ -101,12 +101,12 @@ export default function CourseTopicReview({
             {standalone?.stage === "planned" && <small className="pd-topic-saved-note">Also in My Plan separately</small>}
           </span>
         </button>
-        {canPlan && !isRemoved && <button type="button" className="pd-topic-plan"
+        {canPlan && !isRemoved && open && <button type="button" className="pd-topic-plan"
           onClick={() => {
             if (standalone?.stage !== "planned") demo.planTopic(topic.id);
             setPlanningTopicId(topic.id);
             setOpenedTopicId(topic.id);
-          }}>{standalone?.stage === "planned" ? "Edit plan" : "Plan topic"}</button>}
+          }}>{standalone?.stage === "planned" ? "Edit plan" : "Plan this topic"}</button>}
         <button type="button" className="pd-topic-choice"
           aria-label={(isRemoved ? "Restore " : "Remove ") + topic.title + " in " + parent.title}
           onClick={() => onToggleTopic(topic.id, isRemoved)}>
