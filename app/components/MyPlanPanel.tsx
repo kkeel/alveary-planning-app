@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, UserRoundPen } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
@@ -109,31 +109,30 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
                       {item?.title ?? "Saved course"}
-                      {shared && <span className="pd-course-shared"
-                        title="A topic in this course is also assigned through another planned course"
-                        aria-label="Has a shared topic">↔</span>}
                       <small className="myplan-summary">
                         {studentSummary(course,demo.students,demo.studentPreferences)}
+                        {shared && <span className="pd-course-shared"
+                          title="A topic is also assigned in another planned course"
+                          aria-label="Shared topic"> ↔</span>}
                         {customized && " · Customized: " + includedCount +
                           " of " + course.topics.length + " topics"}
                       </small>
                     </span>
                   </button>
-                  {item && (item.description || item.tips) && <button type="button"
-                    className="pd-row-tool pd-info-action" aria-expanded={infoOpen}
-                    aria-label={"Description & tips for " + (item?.title ?? "course")}
-                    title="Description & tips"
-                    onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
-                    <Info size={15}/><span>Description &amp; tips</span>
-                  </button>}
                   <Link className="pd-row-tool" href="/books"
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>
                 </div>
-                {infoOpen && item && <div className="pd-inline-info">
-                  <CourseInfoDisclosure course={item}/>
-                </div>}
                 {open && <div className="pd-review myplan-review">
+                  {item && (item.description || item.tips) && <>
+                    <button type="button" className="pd-plan-info-disclosure"
+                      aria-expanded={infoOpen}
+                      onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
+                      <Info size={14} aria-hidden="true"/> Description &amp; tips
+                      {infoOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+                    </button>
+                    {infoOpen && <CourseInfoDisclosure course={item}/>}
+                  </>}
                   {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}/>}
@@ -141,7 +140,7 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     <button type="button" className="pd-plan-action"
                       aria-expanded={editing}
                       onClick={() => setEditingStudentsId(editing ? null : course.courseId)}>
-                      {editing ? "Done editing students" : "Edit students & priorities"}
+                      <UserRoundPen size={14} aria-hidden="true"/> {editing ? "Done" : "Edit"}
                     </button>
                     <button type="button" className="myplan-return" onClick={() => {
                       demo.setStage(course.courseId, "idea");
