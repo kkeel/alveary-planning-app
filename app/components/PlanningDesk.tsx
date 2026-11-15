@@ -11,8 +11,8 @@ import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
-import PlacementSymbol from "./PlacementSymbol";
-import { sortTopicsForCourse } from "../courses/topic-order.mjs";
+import CourseInfoDisclosure from "./CourseInfoDisclosure";
+import CourseTopicReview from "./CourseTopicReview";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
@@ -30,23 +30,14 @@ const sorted = (a: CatalogPlan, b: CatalogPlan) =>
   a.presentationSort.localeCompare(b.presentationSort) ||
   a.sort.localeCompare(b.sort) || a.id.localeCompare(b.id);
 
-function PlacementNote({ text }: { text: string }) {
-  return <div className="pd-placement-note">
-    <span className="pd-placement-icon"><PlacementSymbol size={20}/></span>
-    <p>{text}</p>
-  </div>;
-}
-
 export default function PlanningDesk() {
   const desk = usePlanningDesk();
   const cloud = useDemoPlan();
   const pathname = usePathname();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   const [reviewId, setReviewId] = useState<string | null>(null);
-  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [showRemovedCourseId, setShowRemovedCourseId] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
 
@@ -127,17 +118,15 @@ export default function PlanningDesk() {
   }
 
   function selectTab(tab: "think" | "plan") {
-    if (tab === "plan") setJustPlannedId(null);
+    if (tab === "plan") {
+      setJustPlannedId(null);
+      setAssigningId(null);
+    }
     desk.setTab(tab);
     desk.setQuiet(false);
     setDrawerOpen(true);
   }
   function closeMobileDrawer() { setDrawerOpen(false); setOpenMenu(null); }
-
-  const selectedReview = reviewId ? lookup.get(reviewId) : null;
-  const selectedTopics = selectedReview
-    ? sortTopicsForCourse(selectedReview, topicConnections.get(selectedReview.editionId) ?? [])
-    : [];
 
   const summaries = <div className="pd-quiet-summary">
     <button type="button" onClick={() => selectTab("think")}>
@@ -246,16 +235,12 @@ export default function PlanningDesk() {
                     const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
                     const isCustomized = excludedCount > 0;
                     const includedCount = courseTopics.length - excludedCount;
-                    const removedOpen = showRemovedCourseId === idea.id;
-                    const visibleTopics = selectedTopics.filter(t => !excludedTopicIds.includes(t.id));
-                    const removedTopics = selectedTopics.filter(t => excludedTopicIds.includes(t.id));
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
                           onClick={() => {
                             setReviewId(reviewId === idea.id ? null : idea.id);
                             if (reviewId !== idea.id) setJustPlannedId(null);
-                            setOpenTopicId(null);
                           }}>
                           <BookmarkCheck size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
@@ -283,82 +268,54 @@ export default function PlanningDesk() {
                           setOpenMenu(null);
                         }}><X size={13}/> Remove</button>
                       </div>}
-                      {selectedReview?.id === idea.id && <div className="pd-review">
-                        {idea.description && <p className="pd-review-description">{idea.description}</p>}
-                        {idea.tips && <PlacementNote text={idea.tips}/>}
-                        {selectedTopics.length > 0 && <div className="pd-topic-review" aria-label="Course topic choices">
-                          <div className="pd-topic-review-heading">
-                            <strong>Topics · {includedCount} of {selectedTopics.length}</strong>
-                          </div>
-                          {visibleTopics.map(topic => {
-                            const isOpen = openTopicId === topic.id;
-                            const separatelySaved = desk.thinkTankIds.includes(topic.id);
-                            return <div className="pd-topic-item" key={topic.id}>
-                              <div className="pd-topic-row">
-                                <button type="button" className="pd-topic-toggle" aria-expanded={isOpen}
-                                  onClick={() => setOpenTopicId(isOpen ? null : topic.id)}>
-                                  {isOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-                                  <span>{topic.title}
-                                    {separatelySaved && <small className="pd-topic-saved-note">Also saved separately</small>}
-                                  </span>
-                                </button>
-                                <button type="button" className="pd-topic-choice"
-                                  aria-label={"Remove " + topic.title + " from " + idea.title}
-                                  onClick={() => desk.toggleCourseTopic(idea.id, topic.id, selectedTopics.map(t => t.id))}>
-                                  Remove
-                                </button>
-                              </div>
-                              {isOpen && (topic.description || topic.tips) && <div className="pd-topic-info">
-                                {topic.description && <p>{topic.description}</p>}
-                                {topic.tips && <PlacementNote text={topic.tips}/>}
-                              </div>}
-                            </div>;
-                          })}
-                          {includedCount === 0 && <p className="pd-topic-zero">No topics included yet.</p>}
-                          {removedTopics.length > 0 && <div className="pd-removed">
-                            <button type="button" className="pd-removed-toggle"
-                              aria-expanded={removedOpen}
-                              onClick={() => setShowRemovedCourseId(removedOpen ? null : idea.id)}>
-                              {removedOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-                              {removedTopics.length} removed · {removedOpen ? "Hide" : "Restore"}
-                            </button>
-                            {removedOpen && <div className="pd-removed-list">
-                              {removedTopics.map(topic => <div className="pd-removed-item" key={topic.id}>
-                                <span>{topic.title}</span>
-                                <button type="button" className="pd-topic-choice"
-                                  aria-label={"Restore " + topic.title + " to " + idea.title}
-                                  onClick={() => desk.toggleCourseTopic(idea.id, topic.id, selectedTopics.map(t => t.id))}>
-                                  Restore
-                                </button>
-                              </div>)}
-                              <button type="button" className="pd-restore-topics"
-                                onClick={() => {desk.restoreCourseTopics(idea.id); setShowRemovedCourseId(null);}}>
-                                <RotateCcw size={12}/> Restore all
-                              </button>
-                            </div>}
-                          </div>}
-                          {isCustomized && <p className="pd-topic-pdf-note">Published PDFs remain unchanged.</p>}
-                        </div>}
+                      {reviewId === idea.id && <div className="pd-review">
+                        <CourseInfoDisclosure course={idea}/>
                         <div className="pd-review-actions">
                           {cloud.ready && (justPlannedId === idea.id || plannedIds.has(idea.id)
-                            ? <button type="button" className="pd-plan-action"
-                              onClick={() => selectTab("plan")}>
-                                In My Plan · Review
-                              </button>
+                            ? <span className="pd-plan-added">In My Plan</span>
                             : <button type="button" className="pd-plan-action"
-                              disabled={!cloud.courses.some(c => c.courseId === idea.id)}
-                              onClick={() => setAssigningId(assigningId === idea.id ? null : idea.id)}>
-                                {assigningId === idea.id ? "Hide student choices" : "Plan this course"}
+                                disabled={!cloud.courses.some(c => c.courseId === idea.id)}
+                                title={!cloud.courses.some(c => c.courseId === idea.id)
+                                  ? "Save this browser idea to your Demo plan first" : undefined}
+                                onClick={() => {
+                                  cloud.setStage(idea.id, "planned");
+                                  setJustPlannedId(idea.id);
+                                  setAssigningId(idea.id);
+                                }}>
+                                Plan all included topics
                               </button>)}
                           <Link className="pd-books-link" href="/books" onClick={closeMobileDrawer}>
                             <BookOpen size={15}/> View Books
                           </Link>
                         </div>
+                        <CourseTopicReview parent={idea} mode="think"
+                          savedChoice={cloud.courses.find(c => c.courseId === idea.id)}
+                          excludedTopicIds={excludedTopicIds}
+                          onToggleTopic={topicId =>
+                            desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
+                        />
                         {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
-                          <StudentAssignmentEditor
-                            course={cloud.courses.find(c => c.courseId === idea.id)!}
-                            onAssigned={() => setJustPlannedId(idea.id)}
-                          />}
+                          <div className="pd-assign-in-place">
+                            <div className="pd-assignment-title">
+                              <strong>Who will study these included topics?</strong>
+                              <button type="button" className="pd-inline-edit"
+                                onClick={() => setAssigningId(null)}>Hide</button>
+                            </div>
+                            <StudentAssignmentEditor
+                              course={cloud.courses.find(c => c.courseId === idea.id)!}
+                              onAssigned={() => setJustPlannedId(idea.id)}
+                            />
+                          </div>}
+                        {justPlannedId === idea.id && <div className="pd-done-row">
+                          <button type="button" className="pd-done-action"
+                            disabled={cloud.saving || Boolean(cloud.error)}
+                            onClick={() => {
+                              setReviewId(null);
+                              setJustPlannedId(null);
+                              setAssigningId(null);
+                            }}>Done</button>
+                          <small>Finished for now — this course moves out of Think Tank.</small>
+                        </div>}
                       </div>}
                     </div>;
                   })}
