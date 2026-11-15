@@ -8,6 +8,7 @@ import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
+import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -42,6 +43,9 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
   const planned = demo.courses.filter(c => c.stage === "planned");
+  const sharedTopics = useMemo(() =>
+    buildTopicSharingIndex(demo.courses, demo.students),
+    [demo.courses, demo.students]);
 
   useEffect(() => {
     if (focusCourseId && planned.some(c => c.courseId === focusCourseId))
@@ -94,6 +98,9 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
               const includedCount = course.topics.filter(topic => topic.included).length;
+              const customized = item?.type === "Combined Course" &&
+                includedCount !== course.topics.length;
+              const shared = hasSharedTopic(sharedTopics, course);
               return <div className={"pd-idea myplan-row" + (open ? " is-expanded" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -102,19 +109,23 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
                       {item?.title ?? "Saved course"}
+                      {shared && <span className="pd-course-shared"
+                        title="A topic in this course is also assigned through another planned course"
+                        aria-label="Has a shared topic">↔</span>}
                       <small className="myplan-summary">
                         {studentSummary(course,demo.students,demo.studentPreferences)}
-                        {item?.type === "Combined Course" &&
-                          " · " + includedCount + " of " + course.topics.length + " topics"}
+                        {customized && " · Customized: " + includedCount +
+                          " of " + course.topics.length + " topics"}
                       </small>
                     </span>
                   </button>
-                  <button type="button" className="pd-row-tool" aria-expanded={infoOpen}
-                    aria-label={"Description and tips for " + (item?.title ?? "course")}
-                    title="View description and tips"
+                  {item && (item.description || item.tips) && <button type="button"
+                    className="pd-row-tool pd-info-action" aria-expanded={infoOpen}
+                    aria-label={"Description & tips for " + (item?.title ?? "course")}
+                    title="Description & tips"
                     onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
-                    <Info size={15}/>
-                  </button>
+                    <Info size={15}/><span>Description &amp; tips</span>
+                  </button>}
                   <Link className="pd-row-tool" href="/books"
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>

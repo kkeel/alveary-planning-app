@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, RotateCcw } from "lucide-react";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
+import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -23,28 +24,17 @@ function isTopicAssigned(course: SavedCourse, topicId: string, studentId: string
   return special ? special.assigned : course.studentIds.includes(studentId);
 }
 
-/** Only the current household's already-authorized plan data is inspected. */
+/** A concise inline summary. The detailed course/student mapping is in the tooltip. */
 export function TopicOtherUses({
-  topicEditionId, parentCourseId,
-}: { topicEditionId: string; parentCourseId: string }) {
-  const demo = useDemoPlan();
-  const other = demo.courses.filter(course => course.stage === "planned" &&
-    course.courseId !== parentCourseId &&
-    course.topics.some(topic => topic.topicEditionId === topicEditionId && topic.included))
-    .map(course => {
-      const topic = course.topics.find(t => t.topicEditionId === topicEditionId)!;
-      const names = demo.students.filter(student => isTopicAssigned(course, topic.topicId, student.id))
-        .map(student => student.displayName);
-      return names.length
-        ? { courseTitle: byId.get(course.courseId)?.title ?? "another course", names }
-        : null;
-    }).filter((entry): entry is { courseTitle: string; names: string[] } => Boolean(entry));
-  if (!other.length) return null;
-  return <div className="pd-other-uses">
-    <strong>Also in this family&apos;s plan</strong>
-    {other.map((entry, i) =>
-      <p key={i}>{entry.courseTitle} · {entry.names.join(", ")}</p>)}
-  </div>;
+  topicEditionId, parentCourseId, index,
+}: { topicEditionId: string; parentCourseId: string; index: TopicSharingIndex }) {
+  const uses = otherUses(index, topicEditionId, parentCourseId);
+  if (!uses.length) return null;
+  const summary = uses.map(use => use.studentNames.join(", ") +
+    " (" + use.courseTitle + ")").join("; ");
+  return <small className="pd-topic-sharing" title={"Also assigned in: " + summary}>
+    <span aria-hidden="true">↔</span> {summary}
+  </small>;
 }
 
 type Props = {
@@ -59,6 +49,8 @@ export default function CourseTopicReview({
   parent, savedChoice, mode, excludedTopicIds = [], onToggleTopic,
 }: Props) {
   const demo = useDemoPlan();
+  const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
+    [demo.courses, demo.students]);
   const [openedTopicId, setOpenedTopicId] = useState<string | null>(null);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [planningTopicId, setPlanningTopicId] = useState<string | null>(null);
@@ -72,8 +64,10 @@ export default function CourseTopicReview({
   [isCombined, parent]);
   if (!isCombined || !children.length) {
     return mode === "plan" && savedChoice?.topics[0]
-      ? <TopicOtherUses parentCourseId={parent.id}
-          topicEditionId={savedChoice.topics[0].topicEditionId}/> : null;
+      ? <div className="pd-single-topic-sharing">
+          <TopicOtherUses parentCourseId={parent.id}
+            topicEditionId={savedChoice.topics[0].topicEditionId} index={sharingIndex}/>
+        </div> : null;
   }
 
   const excluded = (topicId: string) => {
@@ -99,6 +93,8 @@ export default function CourseTopicReview({
           {open ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
           <span>{topic.title}
             {standalone?.stage === "planned" && <small className="pd-topic-saved-note">Also in My Plan separately</small>}
+            <TopicOtherUses topicEditionId={topic.editionId} parentCourseId={parent.id}
+              index={sharingIndex}/>
           </span>
         </button>
         {canPlan && !isRemoved && open && <button type="button" className="pd-topic-plan"
@@ -116,7 +112,6 @@ export default function CourseTopicReview({
       {open && <div className="pd-topic-info">
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <p>{topic.tips}</p>}
-        <TopicOtherUses topicEditionId={topic.editionId} parentCourseId={parent.id}/>
         {mode === "plan" && savedParent && !isRemoved && <>
           <button type="button" className="pd-inline-edit" aria-expanded={editingStudentsId === topic.id}
             onClick={() => setEditingStudentsId(editingStudentsId === topic.id ? null : topic.id)}>
@@ -147,7 +142,9 @@ export default function CourseTopicReview({
   };
   return <div className="pd-topic-review" aria-label={"Topics in " + parent.title}>
     <div className="pd-topic-review-heading">
-      <strong>Topics · {included.length} of {children.length}</strong>
+      <strong>Topics{removed.length > 0
+        ? " · Customized: " + included.length + " of " + children.length + " included"
+        : ""}</strong>
       {mode === "plan" && <small>Each can be scheduled or printed separately</small>}
     </div>
     {included.map(topic => renderTopic(topic))}

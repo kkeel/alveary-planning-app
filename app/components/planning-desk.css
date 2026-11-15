@@ -303,3 +303,75 @@
 .myplan-review .pd-review-actions { margin:10px 0 5px; }
 .myplan-review .pd-plan-action { font-size:11px; }
 .myplan-review .myplan-return { margin:0; padding:7px; }
+
+
+/* Refinement: no overlapping student/group controls in narrow Planning Desk. */
+.plan-editor > .plan-individuals {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  column-gap:9px;
+  row-gap:10px;
+  margin:12px 0 14px;
+  min-width:0;
+}
+.plan-editor > .plan-individuals > label {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  box-sizing:border-box;
+  min-height:36px;
+  margin:0;
+  white-space:nowrap;
+}
+.plan-editor > .plan-group-shortcuts {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  column-gap:9px;
+  row-gap:9px;
+  margin:0 0 13px;
+  min-width:0;
+}
+.plan-editor > .plan-group-shortcuts > button,
+.plan-editor > .plan-group-shortcuts .plan-group-pill > button {
+  box-sizing:border-box;
+  min-height:34px;
+  margin:0;
+}
+.plan-editor > .plan-group-shortcuts .plan-group-pill {
+  display:inline-flex;
+  align-items:stretch;
+  max-width:100%;
+}
+.plan-editor > .plan-group-shortcuts .plan-group-pill button { min-width:0; }
+
+/* Compact but meaningful cross-course reuse signals. */
+.pd-course-shared { display:inline; flex:none; padding-left:5px;
+  color:#6b936f; font-size:13px; font-weight:700; white-space:nowrap; }
+.pd-topic-sharing { display:inline; flex:none; margin-left:6px;
+  color:#658568; font-size:10px; font-weight:500; line-height:1.4;
+  overflow-wrap:anywhere; }
+.pd-topic-sharing span { display:inline; flex:none; font-size:13px; font-weight:700; }
+.pd-single-topic-sharing { padding:2px 4px 7px; }
+.myplan-row .pd-idea-heading { align-items:flex-start; gap:5px; }
+.myplan-row .pd-idea-review { flex:1 1 auto; min-width:0; width:auto; }
+.myplan-row .pd-row-tool { flex:0 0 auto; box-sizing:border-box; }
+.myplan-row .pd-info-action { display:inline-flex; align-items:center; gap:5px;
+  padding:4px 6px; font-size:10px; color:#64806a; white-space:nowrap; }
+.myplan-row .pd-info-action span { flex:none; white-space:nowrap; font-size:10px; }
+@media (max-width:560px) {
+  .myplan-row .pd-info-action span { display:none; }
+  .myplan-row .pd-info-action { padding:4px; }
+}
+/* Think Tank shows these immediately; My Plan exposes both together with
+   a single Description & tips disclosure, never two nested toggles. */
+.pd-course-description-tips { padding:4px 0 7px; min-width:0; }
+.pd-course-description-tips .pd-review-description {
+  margin:3px 0 9px; white-space:pre-line; line-height:1.6;
+}
+.pd-course-tips { padding:8px 10px; background:#f2f6ef;
+  border-left:2px solid #b8cbb5; color:#4c664f; }
+.pd-course-tips > strong { display:block; font-size:11px; margin-bottom:5px; }
+.pd-course-tips > p { white-space:pre-line; font-size:11px;
+  line-height:1.6; margin:0; }
