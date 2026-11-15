@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, Minus, Plus, RotateCcw, UserRoundPen } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, Minus, Plus, RotateCcw, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
@@ -75,6 +75,8 @@ export default function CourseTopicReview({
 
   function renderTopic(topic: CatalogCourse, isRemoved = false) {
     const infoOpen = infoTopicId === topic.id;
+    const hasDetails = Boolean(topic.description || topic.tips);
+    const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
     const editing = editingTopicId === topic.id;
     const standalone = demo.courses.find(course => course.courseId === topic.id);
     const planning = planningTopicId === topic.id;
@@ -83,11 +85,16 @@ export default function CourseTopicReview({
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
-        <span className="pd-topic-name">{topic.title}</span>
-        {(topic.description || topic.tips) && <button type="button" className="pd-topic-icon"
-          aria-label={"Information and tips for " + topic.title} title="Description & tips"
-          aria-expanded={infoOpen}
-          onClick={() => setInfoTopicId(infoOpen ? null : topic.id)}>
+        {hasDetails
+          ? <button type="button" className="pd-topic-name pd-topic-title-button"
+              aria-label={"Show description and tips for " + topic.title}
+              aria-expanded={infoOpen} onClick={toggleInfo}>
+              {topic.title}
+            </button>
+          : <span className="pd-topic-name">{topic.title}</span>}
+        {hasDetails && <button type="button" className="pd-topic-icon"
+          aria-label={"Description and tips for " + topic.title} title="Description & tips"
+          aria-expanded={infoOpen} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
         <Link className="pd-topic-icon" href={"/books?course=" + encodeURIComponent(topic.id)}
@@ -99,7 +106,7 @@ export default function CourseTopicReview({
             aria-label={"Edit students for " + topic.title} title="Edit students"
             aria-expanded={editing}
             onClick={() => setEditingTopicId(editing ? null : topic.id)}>
-            <UserRoundPen size={15} aria-hidden="true"/>
+            <UsersRound size={15} aria-hidden="true"/>
           </button>}
         {mode === "think" && !isRemoved && demo.ready &&
           <button type="button" className="pd-topic-icon pd-topic-add"
@@ -139,8 +146,8 @@ export default function CourseTopicReview({
         <StudentAssignmentEditor course={standalone}/>
         {hasAssignedStudent && <div className="pd-topic-plan-footer">
           <span>Only this topic moves to My Plan. The rest of the combined course stays in Think Tank.</span>
-          <button type="button" disabled={demo.saving || Boolean(demo.error)}
-            onClick={() => setPlanningTopicId(null)}>Done</button>
+          <button type="button" onClick={() => setPlanningTopicId(null)}
+            title="Finish selecting students; your change saves quietly in the background">Done</button>
         </div>}
       </div>}
     </div>;
