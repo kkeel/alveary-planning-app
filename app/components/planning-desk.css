@@ -434,3 +434,31 @@
   .pd-wrapper.is-mobile-open.is-wide > .pd-desk {
     width:min(690px,calc(100vw - 20px)); }
 }
+
+
+/* Topic titles are static labels; the adjacent actions own all disclosure. */
+.pd-topic-row .pd-topic-name {
+  display:block;
+  flex:1 1 auto;
+  min-width:0;
+  padding:6px 0;
+  color:#4c604f;
+  font-size:11px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.pd-topic-item.is-excluded .pd-topic-name {
+  color:#8a988b;
+  text-decoration:line-through;
+}
+.pd-topic-row .pd-topic-edit[aria-expanded="true"],
+.myplan-row .pd-course-edit-icon[aria-expanded="true"] {
+  background:#e5f0e3;
+  color:#3f6846;
+}
+.myplan-row .pd-course-edit-icon { flex:0 0 auto; }
+.pd-topic-row .pd-topic-icon:focus-visible,
+.myplan-row .pd-course-edit-icon:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+}

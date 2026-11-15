@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, Minus, Plus, RotateCcw, UserRoundPen } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, Minus, Plus, RotateCcw, UserRoundPen } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
+import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
 
@@ -45,7 +46,6 @@ export default function CourseTopicReview({
   const demo = useDemoPlan();
   const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
     [demo.courses, demo.students]);
-  const [openedTopicId, setOpenedTopicId] = useState<string | null>(null);
   const [infoTopicId, setInfoTopicId] = useState<string | null>(null);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [planningTopicId, setPlanningTopicId] = useState<string | null>(null);
@@ -74,7 +74,6 @@ export default function CourseTopicReview({
   const removed = children.filter(topic => excluded(topic.id));
 
   function renderTopic(topic: CatalogCourse, isRemoved = false) {
-    const open = openedTopicId === topic.id;
     const infoOpen = infoTopicId === topic.id;
     const editing = editingTopicId === topic.id;
     const standalone = demo.courses.find(course => course.courseId === topic.id);
@@ -84,11 +83,7 @@ export default function CourseTopicReview({
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
-        <button type="button" className="pd-topic-toggle" aria-expanded={open}
-          onClick={() => setOpenedTopicId(open ? null : topic.id)}>
-          {open ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-          <span>{topic.title}</span>
-        </button>
+        <span className="pd-topic-name">{topic.title}</span>
         {(topic.description || topic.tips) && <button type="button" className="pd-topic-icon"
           aria-label={"Information and tips for " + topic.title} title="Description & tips"
           aria-expanded={infoOpen}
@@ -99,6 +94,13 @@ export default function CourseTopicReview({
           aria-label={"View books for " + topic.title} title="View books">
           <BookOpen size={14} aria-hidden="true"/>
         </Link>
+        {mode === "plan" && savedChoice && !isRemoved &&
+          <button type="button" className="pd-topic-icon pd-topic-edit"
+            aria-label={"Edit students for " + topic.title} title="Edit students"
+            aria-expanded={editing}
+            onClick={() => setEditingTopicId(editing ? null : topic.id)}>
+            <UserRoundPen size={15} aria-hidden="true"/>
+          </button>}
         {mode === "think" && !isRemoved && demo.ready &&
           <button type="button" className="pd-topic-icon pd-topic-add"
             aria-label={"Plan only " + topic.title} title="Plan only this topic"
@@ -120,17 +122,14 @@ export default function CourseTopicReview({
       {infoOpen && <div className="pd-topic-info">
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <div className="pd-topic-tips">
-          <Lightbulb size={15} aria-hidden="true"/><p>{topic.tips}</p>
+          <PlacementSymbol size={17}/><p>{topic.tips}</p>
         </div>}
       </div>}
-      {open && mode === "plan" && savedChoice && !isRemoved && <div className="pd-topic-edit-section">
-        <button type="button" className="pd-inline-edit" aria-expanded={editing}
-          onClick={() => setEditingTopicId(editing ? null : topic.id)}>
-          <UserRoundPen size={14} aria-hidden="true"/> {editing ? "Done" : "Edit"} students
-        </button>
-        {editing && <SharedTopicStudentEditor
-          topicEditionId={topic.editionId} currentCourseId={parent.id}/>}
-      </div>}
+      {editing && mode === "plan" && savedChoice && !isRemoved &&
+        <div className="pd-topic-edit-section">
+          <SharedTopicStudentEditor
+            topicEditionId={topic.editionId} currentCourseId={parent.id}/>
+        </div>}
       {planning && standalone && <div className="pd-topic-plan-inline">
         <div className="pd-assignment-title">
           <strong>Plan this topic</strong>
