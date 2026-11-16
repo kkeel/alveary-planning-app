@@ -78,6 +78,13 @@ assert.equal(listRowStatus(whole,people,us9.topicId,false,true).planTone,"inheri
 whole.overrides.push({topicId:ancient.topicId,studentId:"AJ",assigned:false});
 assert.equal(listRowStatus(whole,people,ancient.topicId,false,true).planTone,"none",
   "a negative exception must not look planned even under +All");
+const removedTopic=structuredClone(whole);
+removedTopic.topics.find(t=>t.topicId===ancient.topicId).included=false;
+const excludedStatus=listRowStatus(removedTopic,people,ancient.topicId,false,true);
+assert.equal(excludedStatus.excluded,true);
+assert.equal(excludedStatus.planActive,false);
+assert.equal(excludedStatus.ideaActive,false,
+  "removed topics are neither planned nor an available Think Tank idea until restored");
 const single=catalog.courses.find(c=>c.type==="Single-Topic Course");
 assert.ok(single);
 const singleChoice={courseId:single.id,stage:"planned",studentIds:["AJ"],overrides:[],
