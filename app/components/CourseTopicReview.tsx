@@ -163,7 +163,10 @@ export default function CourseTopicReview({
         <div className="pd-topic-edit-section">
           <SharedTopicStudentEditor topicEditionId={topic.editionId}
             currentCourseId={parent.id}
-            onClose={() => setEditingTopicId(null)}
+            onClose={sourceCourseId => {
+              setEditingTopicId(null);
+              onTopicDone?.(sourceCourseId);
+            }}
             onCancel={() => setEditingTopicId(null)}/>
         </div>}
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
