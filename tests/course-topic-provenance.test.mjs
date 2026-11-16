@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { isTopicAssigned, effectiveTopicCount, remainingTopicCount } from "../app/components/topic-assignment.mjs";
+import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone } from "../app/components/topic-assignment.mjs";
 
 const catalog = JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json", import.meta.url), "utf8"
@@ -37,8 +37,20 @@ assert.ok(ancient9 && world9);
 
 // A topic-first assignment uses the parent course's topic exception, NOT a
 // standalone topic choice and NOT a parent-wide course-student relationship.
-ajParent.stage = "planned";
+// Reproduce a real saved state: after returning a once-planned course to the
+// Think Tank, its student/topic overrides remain selected but its stage is idea.
 ajParent.overrides.push({ topicId:us9.topicId, studentId:"AJ", assigned:true });
+assert.equal(ajParent.stage,"idea");
+assert.equal(shouldPromoteChoiceOnDone(ajParent,us9.topicId,[{id:"AJ"}]),true,
+  "Done must promote an already-checked topic from Think Tank to My Plan");
+assert.equal(shouldPromoteChoiceOnDone(ajParent,ancient9.topicId,[{id:"AJ"}]),false,
+  "Done must not promote a topic with no selected student");
+assert.equal(shouldPromoteChoiceOnDone(ajParent,undefined,[{id:"AJ"}]),false,
+  "+ All does not mistake topic-only assignments for a whole-course choice");
+ajParent.stage = "planned";
+assert.equal(shouldPromoteChoiceOnDone(ajParent,us9.topicId,[{id:"AJ"}]),false,
+  "Done must not resave an already-planned course");
+
 assert.deepEqual(ajParent.studentIds, []);
 assert.equal(isTopicAssigned(ajParent,us9.topicId,"AJ"),true);
 assert.equal(isTopicAssigned(ajParent,ancient9.topicId,"AJ"),false);
@@ -59,8 +71,12 @@ assert.equal(effectiveTopicCount(troyParent,"AJ"),0);
 
 // Reapply whole Grade-9 History for AJ: one parent group link covers every
 // included topic, and the previous topic-only override is discarded.
+ajParent.stage = "idea";
 ajParent.studentIds.push("AJ");
 ajParent.overrides = [];
+assert.equal(shouldPromoteChoiceOnDone(ajParent,undefined,[{id:"AJ"}]),true,
+  "Done on + All also handles an already-selected course assignment");
+ajParent.stage = "planned";
 assert.equal(effectiveTopicCount(ajParent,"AJ"),3);
 assert.equal(remainingTopicCount(ajParent,[{id:"AJ"},{id:"Troy"}]),0,
   "a fully assigned course should no longer be duplicated in Think Tank");
