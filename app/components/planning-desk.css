@@ -847,6 +847,40 @@
   line-height:1.4;
   font-weight:500;
 }
+/* Course-level recommendations live below the existing topic-count /
+   Partial My Plan line, but only while the Think Tank details are open.
+   Topic recommendations appear separately in the topic's own disclosure. */
+.pd-schedule-grade-meta {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:3px 8px;
+  min-width:0;
+  margin-top:4px;
+  color:#77837a;
+  font-size:10px;
+  font-weight:500;
+  line-height:1.45;
+  text-align:left;
+}
+.pd-schedule-grade-lines {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.pd-schedule-grade-item { display:block; white-space:pre-line; overflow-wrap:anywhere; }
+.pd-schedule-grade-range { color:#7f8a82; overflow-wrap:anywhere; }
+.pd-schedule-grade-range.has-schedule {
+  padding-left:8px;
+  border-left:1px solid #dfe5dd;
+}
+/* Override the generic course-title span flex rule within metadata. */
+.pd-idea-review .pd-schedule-grade-meta { width:100%; }
+.pd-idea-review .pd-schedule-grade-meta > span,
+.pd-idea-review .pd-schedule-grade-lines > span { flex:0 1 auto; }
+.pd-think-review .pd-topic-info > .pd-schedule-grade-meta { margin:0 0 8px; }
+
 .pd-think-toolbar-plus {
   flex:0 0 auto;
   min-width:28px;
