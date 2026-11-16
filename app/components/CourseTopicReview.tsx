@@ -40,11 +40,12 @@ type Props = {
   onToggleTopic: (topicId: string, included: boolean) => void;
   onTopicAssigned?: () => void;
   onTopicDone?: () => void;
+  onTopicCancel?: () => void;
 };
 
 export default function CourseTopicReview({
   parent, savedChoice, mode, excludedTopicIds = [], onToggleTopic,
-  onTopicAssigned, onTopicDone,
+  onTopicAssigned, onTopicDone, onTopicCancel,
 }: Props) {
   const demo = useDemoPlan();
   const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
@@ -166,7 +167,7 @@ export default function CourseTopicReview({
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
         <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
           onAssigned={onTopicAssigned}
-          onCancel={() => setPlanningTopicId(null)}
+          onCancel={() => { setPlanningTopicId(null); onTopicCancel?.(); }}
           onClose={() => { setPlanningTopicId(null); onTopicDone?.(); }}/>
       </div>}
     </div>;
