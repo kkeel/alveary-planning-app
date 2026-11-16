@@ -284,3 +284,53 @@
   .cx-grade-panel { margin-top: 4px; }
   .cx-mobile-filter-toggle:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
 }
+
+/* Browse openly by default; member List adds two explicit planning paths. */
+.cx-course-actions {
+  display:flex; align-items:center; gap:5px; flex:none; padding-left:4px;
+}
+.cx-course-actions button {
+  display:inline-flex; align-items:center; justify-content:center; gap:5px;
+  padding:6px 9px; min-height:31px; border-radius:3px;
+  border:1px solid #d4dfce; background:#fff; color:#56715b;
+  font-family:"DM Sans",sans-serif; font-size:11px; font-weight:600;
+  line-height:1.2; white-space:nowrap;
+}
+.cx-course-actions button:hover:not(:disabled) { background:#eff4ed; border-color:#adc3ad; }
+.cx-course-actions button:focus-visible { outline:2px solid #596e5e; outline-offset:2px; }
+.cx-course-actions .cx-idea-action.is-selected {
+  background:#f0f4eb; border-color:#c9d9c4; color:#4f7355;
+}
+.cx-course-actions .cx-idea-action:disabled {
+  cursor:default; opacity:.72;
+}
+.cx-course-actions .cx-direct-plan-action {
+  background:#edf3e9; border-color:#bbcfb9; color:#365b3e;
+}
+.cx-course-actions .cx-direct-plan-action.is-open {
+  background:#57775d; border-color:#57775d; color:#fff;
+}
+.cx-inline-assign {
+  margin:5px 13px 13px; padding:11px 13px;
+  border:1px solid #dce6d8; background:#fbfcf9; border-radius:4px;
+}
+.cx-inline-assign .plan-editor { margin:0; border:0; padding:0; }
+.cx-inline-assign .pd-topic-context-switch { margin:0 0 9px; }
+.cx-assign-loading { color:#657667; font:12px/1.5 "DM Sans",sans-serif; margin:4px 0; }
+.cx-assign-dismiss {
+  margin-left:9px; color:#57775d; border:0; background:none;
+  text-decoration:underline; font:inherit;
+}
+.cx-course--topic .cx-course-actions button { min-height:26px; padding:4px 7px; font-size:10px; }
+.cx-course--topic .cx-inline-assign { margin:5px 6px 9px; padding:8px; }
+.cx-toolbar .pd-detail-switch { margin-right:auto; }
+@media (max-width:760px) {
+  .cx-course-head { flex-wrap:wrap; padding-right:0; }
+  .cx-course-disclosure { flex-basis:100%; }
+  .cx-course-actions { width:100%; padding:0 10px 8px; justify-content:flex-end; flex-wrap:wrap; }
+  .cx-course--topic .cx-course-actions { padding:0 5px 6px; }
+  .cx-inline-assign { margin:4px 8px 12px; padding:10px; }
+}
+@media print {
+  .cx-course-actions, .cx-inline-assign { display:none !important; }
+}
