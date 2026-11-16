@@ -166,6 +166,7 @@ export default function CourseTopicReview({
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
         <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
           onAssigned={onTopicAssigned}
+          onCancel={() => setPlanningTopicId(null)}
           onClose={() => { setPlanningTopicId(null); onTopicDone?.(); }}/>
       </div>}
     </div>;
