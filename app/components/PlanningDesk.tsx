@@ -14,8 +14,8 @@ import MyPlanPanel from "./MyPlanPanel";
 import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import DetailViewSwitch from "./DetailViewSwitch";
-import CourseCustomizationNote from "./CourseCustomizationNote";
-import { pendingIdeaCount } from "../courses/list-row-status.mjs";
+import { selectionTopicCount } from "./planning-topic-sections.mjs";
+import { pendingIdeaCount, topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import CourseTopicReview from "./CourseTopicReview";
@@ -44,6 +44,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   const [reviewOverrides, setReviewOverrides] = useState<Record<string, boolean>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [courseInfoId, setCourseInfoId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
@@ -188,14 +189,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const courseTopics = topicConnections.get(idea.editionId) ?? [];
                     const excludedTopicIds = desk.excludedTopicIdsByCourse[idea.id] ?? [];
                     const savedChoice = cloud.courses.find(course => course.courseId === idea.id);
-                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
-                    // The saved course is authoritative for what remains included,
-                    // just as it is in My Plan. Browser-only ideas use local choices.
-                    const includedCount = savedChoice?.topics.length
-                      ? savedChoice.topics.filter(topic => topic.included).length
-                      : courseTopics.length - excludedCount;
-                    const isCustomized = courseTopics.length > 1 &&
-                      includedCount < courseTopics.length;
+                    const topicCount=selectionTopicCount(
+                      savedChoice,courseTopics,cloud.students,"think",excludedTopicIds);
+                    const showTopicCount=topicCount.total>1 &&
+                      topicCount.selected<topicCount.total;
                     const remainingCount = savedChoice
                       ? pendingIdeaCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
@@ -208,73 +205,88 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             setReviewOverrides(old => ({ ...old,[idea.id]:!reviewOpen }));
                             setJustPlannedId(null);
                           }}>
-                          <Lightbulb size={14}/><span>{idea.title}
-                            {isCustomized && <CourseCustomizationNote included={includedCount} total={courseTopics.length}/>}
-                            {partiallyPlanned &&
-                              <small className="pd-customized-label">
-                                Partly planned · {remainingCount} to consider
-                              </small>}
+                          <Lightbulb size={14} aria-hidden="true"/><span>{idea.title}
+                            {showTopicCount && <small className="pd-topic-count-note">
+                              {topicCount.selected} of {topicCount.total} topics
+                            </small>}
                           </span>
-                          {reviewOpen ? <ChevronDown size={14}/> : <ChevronRight size={14}/>} 
                         </button>
-                        {variant === "portable" && <button type="button"
+                        <button type="button"
                           className="pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
                           aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
                           aria-expanded={reviewOpen}
                           onClick={() => {
-                            setReviewOverrides(old => ({...old,[idea.id]:!reviewOpen}));
+                            const next=!reviewOpen;
+                            setReviewOverrides(old=>({...old,[idea.id]:next}));
+                            setCourseInfoId(next && (idea.description || idea.tips) ? idea.id : null);
                             setJustPlannedId(null);
                           }}>
                           <Info size={15} aria-hidden="true"/>
+                        </button>
+                        <Link className="pd-row-tool pd-think-books"
+                          href={"/books?course=" + encodeURIComponent(idea.id)}
+                          aria-label={"View books for " + idea.title}
+                          title="View books" onClick={closeMobileDrawer}>
+                          <BookOpen size={15} aria-hidden="true"/>
+                        </Link>
+                        {cloud.ready && <button type="button"
+                          className="pd-plan-action pd-think-toolbar-plus"
+                          aria-label={idea.type === "Combined Course"
+                            ? "Add students to all included topics in " + idea.title
+                            : "Add students to " + idea.title}
+                          title={cloud.courses.some(c=>c.courseId===idea.id)
+                            ? "Assign students"
+                            : "Save this browser idea before assigning"}
+                          aria-expanded={assigningId===idea.id}
+                          disabled={!cloud.courses.some(c=>c.courseId===idea.id)}
+                          onClick={() => {
+                            const next=assigningId!==idea.id;
+                            setAssigningId(next?idea.id:null);
+                            setReviewOverrides(old=>({...old,[idea.id]:true}));
+                            setJustPlannedId(null);
+                          }}>
+                          <Plus size={14} aria-hidden="true"/>
+                          {idea.type === "Combined Course" && <span>All</span>}
                         </button>}
                         <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
-                          title={"Organize " + idea.title} aria-expanded={openMenu === itemMenu}
+                          title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
                       </div>
                       {openMenu === itemMenu && <div className="pd-inline-actions">
                         <button type="button" onClick={() => {
-                          desk.removeIdea(idea.id);
+                          // Remove only unscheduled ideas from Think Tank:
+                          // never delete the saved parent or assignments in My Plan.
+                          if (savedChoice && cloud.ready) {
+                            if (savedChoice.ideaAll) cloud.toggleListIdea(idea.id,null);
+                            else for(const topic of savedChoice.topics) {
+                              if (topicIsThinkTankIdea(savedChoice,topic.topicId,cloud.students))
+                                cloud.toggleListIdea(idea.id,topic.topicId);
+                            }
+                          } else desk.removeIdea(idea.id);
                           setReviewOverrides(old => {
                             const next = {...old}; delete next[idea.id]; return next;
                           });
                           setOpenMenu(null);
                         }}><X size={13}/> Remove</button>
                       </div>}
-                      {reviewOpen && <div className="pd-review">
-                        <CourseInfoDisclosure course={idea}/>
-                        <div className="pd-review-actions">
-                          {cloud.ready && <button type="button" className="pd-plan-action"
-                            aria-label={idea.type === "Combined Course"
-                              ? "Add students to all included topics in " + idea.title
-                              : "Add students to " + idea.title}
-                            aria-expanded={assigningId === idea.id}
-                            disabled={!cloud.courses.some(c => c.courseId === idea.id)}
-                            title={!cloud.courses.some(c => c.courseId === idea.id)
-                              ? "Save this browser idea to your Demo plan first"
-                              : idea.type === "Combined Course"
-                                ? "Add students to every included topic" : "Add students to this topic"}
-                            onClick={() => {
-                              if (assigningId === idea.id) {
-                                setAssigningId(null);
-                                setJustPlannedId(null);
-                              } else setAssigningId(idea.id);
-                            }}>
-                            <Plus size={14} aria-hidden="true"/>
-                            {idea.type === "Combined Course" && "All"}
-                          </button>}
-                          {plannedIds.has(idea.id) &&
-                            <span className="pd-plan-added">
-                              {partiallyPlanned ? "Partly in My Plan" : "In My Plan"}
-                            </span>}
-                          <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(idea.id)}
-                            aria-label={"View books for " + idea.title} title="View books"
-                            onClick={closeMobileDrawer}>
-                            <BookOpen size={15} aria-hidden="true"/>
-                          </Link>
-                        </div>
+                      {reviewOpen && <div className="pd-review pd-think-review">
+                        {(idea.description || idea.tips) && <div className="pd-think-description-section">
+                          <button type="button" className="pd-plan-info-disclosure"
+                            aria-expanded={courseInfoId===idea.id}
+                            onClick={() => setCourseInfoId(courseInfoId===idea.id ? null : idea.id)}>
+                            <Info size={14} aria-hidden="true"/> Description &amp; tips
+                            {courseInfoId===idea.id
+                              ? <ChevronDown size={13} aria-hidden="true"/>
+                              : <ChevronRight size={13} aria-hidden="true"/>}
+                          </button>
+                          {courseInfoId===idea.id && <CourseInfoDisclosure course={idea}/>}
+                        </div>}
+                        {plannedIds.has(idea.id) && <span className="pd-plan-added">
+                          {partiallyPlanned ? "Partly in My Plan" : "In My Plan"}
+                        </span>}
                         {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
                           <div className="pd-assign-in-place">
                             <StudentAssignmentEditor
