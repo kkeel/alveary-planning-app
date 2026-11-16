@@ -1013,8 +1013,20 @@
 .pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:focus-visible {
   background:#e9eee7;
 }
-/* Hover on the title button itself, not its .pd-topic-row parent. All
-   selected and Other topics share this renderer and the same styling. */
+/* The status lightbulb/checkmark and the topic text form ONE title target.
+   Static topics keep the same grouped appearance but remain noninteractive. */
+.pd-topic-row .pd-topic-name {
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.pd-topic-row .pd-topic-title-text {
+  flex:1 1 auto;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+/* Hover on the grouped title button itself, not its .pd-topic-row parent.
+   All selected and Other topics share this renderer and the same styling. */
 .pd-think-review .pd-topic-row .pd-topic-title-button:hover,
 .pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible {
   background:#f0f3ee;
@@ -1044,6 +1056,13 @@
 .pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"]:hover,
 .pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"]:focus-visible {
   background:#e9eee7;
+}
+/* Keep the marker's foreground paired with the text on hover and focus.
+   At rest it retains its own subtle status-icon color. */
+.pd-think-review .pd-topic-row .pd-topic-title-button:hover .pd-topic-selection-mark,
+.pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible .pd-topic-selection-mark,
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"] .pd-topic-selection-mark {
+  color:inherit;
 }
 .pd-think-review .pd-topic-title-button,
 .pd-think-review .pd-topic-name {
