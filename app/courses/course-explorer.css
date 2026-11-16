@@ -157,6 +157,10 @@
 .cx-row-action.is-selected { color: #ffffff; background: #596e5e; border-color: #596e5e; }
 .cx-row-action:disabled { opacity: .3; cursor: not-allowed; }
 .cx-course-details { padding: 0 14px 15px; font-family: "DM Sans", sans-serif; }
+/* Without a description the combining/placement tip is the first block.
+   Add a little neutral breathing room so it doesn't visually merge with
+   the tinted course title bar. Leave described and nested topic rows alone. */
+.cx-course-details.cx-details-tip-first { padding-top: 11px; }
 .cx-course-meta { font-size: 11px; line-height: 1.5; color: #8a928b; margin: 0 0 12px; display: flex; align-items: stretch; gap: 11px; flex-wrap: wrap; }
 .cx-schedule-list { display: flex; flex-direction: column; gap: 3px; }
 .cx-schedule-item { display: block; color: #68736c; white-space: pre-line; }
