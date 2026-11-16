@@ -157,6 +157,13 @@
 .cx-row-action.is-selected { color: #ffffff; background: #596e5e; border-color: #596e5e; }
 .cx-row-action:disabled { opacity: .3; cursor: not-allowed; }
 .cx-course-details { padding: 0 14px 15px; font-family: "DM Sans", sans-serif; }
+/* A tiny buffer after ANY selected row's highlighted title, whether the
+   next content is metadata, a description, a combining tip or nested topics.
+   Untouched/uncolored rows keep their original tight vertical rhythm.
+   This also covers topic rows without adding spacing to every course. */
+.cx-course:is(.cx-status-full, .cx-status-partial, .cx-status-inherited, .cx-status-idea, .cx-context-inherited) > .cx-course-details {
+  padding-top: 8px;
+}
 .cx-course-meta { font-size: 11px; line-height: 1.5; color: #8a928b; margin: 0 0 12px; display: flex; align-items: stretch; gap: 11px; flex-wrap: wrap; }
 .cx-schedule-list { display: flex; flex-direction: column; gap: 3px; }
 .cx-schedule-item { display: block; color: #68736c; white-space: pre-line; }
@@ -427,7 +434,10 @@
   border-color:#d3dcd1;
   color:#4d6553;
 }
-.cx-course-actions .cx-info-action.is-open.is-member:hover:not(:disabled),
+/* Both View and Hide use the parent row's subject wash on hover if
+   that row is already selected. Previously only Hide (.is-open) matched,
+   leaving View with the generic green hover on colored rows. */
+.cx-course-actions .cx-info-action.is-member:hover:not(:disabled),
 .cx-course-actions .cx-idea-action.is-tone-partial:hover:not(:disabled),
 .cx-course-actions .cx-idea-action.is-tone-inherited:hover:not(:disabled),
 .cx-course-actions .cx-direct-plan-action.is-tone-partial:hover:not(:disabled),
