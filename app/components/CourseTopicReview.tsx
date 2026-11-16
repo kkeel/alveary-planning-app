@@ -80,7 +80,9 @@ export default function CourseTopicReview({
     Boolean(savedChoice && topicHasAssignedStudent(savedChoice, topic.id, demo.students));
   const included = children.filter(topic => !excluded(topic.id) &&
     (savedChoice?.stage !== "planned" ||
-      (mode === "think" ? !assignedInThisCourse(topic) : assignedInThisCourse(topic))));
+      (mode === "think"
+        ? !assignedInThisCourse(topic) || planningTopicId === topic.id
+        : assignedInThisCourse(topic))));
   const removed = children.filter(topic => excluded(topic.id));
   const totalIncluded = children.length - removed.length;
 
