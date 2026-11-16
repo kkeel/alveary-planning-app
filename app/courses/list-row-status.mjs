@@ -5,7 +5,8 @@ import { topicHasAssignedStudent } from "../components/topic-assignment.mjs";
  * Think Tank selection. All lookups use this exact saved parent course. */
 export function topicIsThinkTankIdea(course, topicId, students) {
   const topic=course.topics.find(t=>t.topicId===topicId && t.included);
-  if (!topic || topicHasAssignedStudent(course,topicId,students)) return false;
+  if (!topic || (course.stage==="planned" &&
+    topicHasAssignedStudent(course,topicId,students))) return false;
   return topic.ideaChoice==="on" ||
     (topic.ideaChoice!=="off" && course.ideaAll!==false);
 }
@@ -19,10 +20,11 @@ export function listRowStatus(choice,students,topicId,combined,localIdea=false) 
   const excluded=Boolean(choice && topicId &&
     choice.topics.some(t=>t.topicId===topicId && !t.included));
   const included=choice?.topics.filter(t=>t.included)??[];
-  const assignedAtCourse=Boolean(choice && eligible.some(s=>choice.studentIds.includes(s.id)));
-  const assignedForTopic=Boolean(choice && topicId &&
+  const assignedAtCourse=Boolean(choice?.stage==="planned" &&
+    eligible.some(s=>choice.studentIds.includes(s.id)));
+  const assignedForTopic=Boolean(choice?.stage==="planned" && topicId &&
     topicHasAssignedStudent(choice,topicId,eligible));
-  const anyAssigned=Boolean(choice && included.some(t=>
+  const anyAssigned=Boolean(choice?.stage==="planned" && included.some(t=>
     topicHasAssignedStudent(choice,t.topicId,eligible)));
   const directForTopic=Boolean(choice && topicId && eligible.some(s=>
     choice.overrides.some(o=>o.topicId===topicId && o.studentId===s.id &&
