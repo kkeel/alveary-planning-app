@@ -865,8 +865,9 @@
   line-height:1;
 }
 .pd-think-toolbar-plus:hover:not(:disabled) {
-  background:#eff3ee;
-  border-color:#bfcfc0;
+  background:#f0f3ee;
+  border-color:#cbd6c9;
+  color:#4e6655;
 }
 .pd-think-toolbar-plus:focus-visible { outline:2px solid #59836a; outline-offset:2px; }
 .pd-think-books { flex:0 0 auto; }
@@ -970,9 +971,15 @@
 .pd-think-review .pd-other-topics-toggle:hover:not(:disabled),
 .pd-think-review .pd-other-topics-toggle:focus-visible,
 .pd-think-review .pd-other-topics-all:hover:not(:disabled) {
-  background:#eef3eb;
-  color:#365a40;
+  background:#f0f3ee;
+  color:#4e6655;
   text-decoration:none;
+}
+/* More is another neutral Think Tank toolbar action, not a subject choice. */
+.pd-idea:not(.myplan-row) .pd-more:hover,
+.pd-idea:not(.myplan-row) .pd-more:focus-visible {
+  background:#f0f3ee;
+  color:#4e6655;
 }
 /* Subject headers already have a subtle subject wash. Hover strengthens
    that same subject hue, as a colored Course List disclosure does. */
@@ -1069,9 +1076,9 @@
 }
 .pd-think-review .pd-topic-menu button:hover:not(:disabled),
 .pd-think-review .pd-topic-menu button:focus-visible {
-  border-color:#c1d2c0;
-  background:#edf3eb;
-  color:#355b40;
+  border-color:#cbd6c9;
+  background:#f0f3ee;
+  color:#4e6655;
   text-decoration:none;
 }
 .pd-think-review .pd-topic-menu button:focus-visible {
