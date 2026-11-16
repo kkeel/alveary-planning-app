@@ -27,3 +27,13 @@ export function remainingTopicCount(course, students) {
   return course.topics.filter(topic => topic.included &&
     !topicHasAssignedStudent(course, topic.topicId, students)).length;
 }
+
+/** A saved Think Tank idea can still contain previously selected students
+ * (for example after "Return to Think Tank"). Done must promote that choice
+ * even if all its checkboxes were already checked when the editor opened.
+ * Never infer a whole-course assignment from topic-only selections. */
+export function shouldPromoteChoiceOnDone(course, topicId, students) {
+  if (course.stage !== "idea") return false;
+  if (topicId) return topicHasAssignedStudent(course, topicId, students);
+  return students.some(student => course.studentIds.includes(student.id));
+}
