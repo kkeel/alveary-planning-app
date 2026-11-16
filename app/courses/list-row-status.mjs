@@ -9,6 +9,8 @@ export function listRowStatus(choice, students, topicId, combined, localIdea=fal
   const eligible = students.filter(student=>student && student.id);
   const isIdea = choice ? choice.stage === "idea" : localIdea;
   const isPlanned = choice?.stage === "planned";
+  const excluded = Boolean(choice && topicId &&
+    choice.topics.some(topic=>topic.topicId===topicId && !topic.included));
   const included = choice?.topics.filter(topic=>topic.included) ?? [];
   const anyAssigned = Boolean(choice && eligible.some(student=>
     effectiveTopicCount(choice,student.id)>0));
@@ -28,10 +30,11 @@ export function listRowStatus(choice, students, topicId, combined, localIdea=fal
     : (!anyAssigned ? "none" : !combined || assignedAtCourse || allIncludedAssigned
       ? "full" : "partial");
   const planActive = planTone !== "none";
-  const ideaActive = saved && !planActive && (!isPlanned || Boolean(topicId));
+  const ideaActive = !excluded && saved && !planActive &&
+    (!isPlanned || Boolean(topicId));
   const contextTone = topicId
     ? (isPlanned && assignedAtCourse ? "inherited" : isIdea ? "inherited" : "none")
     : "none";
-  return { saved, ideaActive, planActive, planTone, contextTone,
+  return { saved, excluded, ideaActive, planActive, planTone, contextTone,
     anyAssigned, isPlanned: Boolean(isPlanned) };
 }
