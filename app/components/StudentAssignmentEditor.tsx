@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { ChevronDown, ChevronRight, UsersRound, X } from "lucide-react";
+import { useId, useState, type FormEvent } from "react";
+import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
-import { effectiveTopicCount } from "./topic-assignment.mjs";
+import { effectiveTopicCount, isTopicAssigned } from "./topic-assignment.mjs";
 
 const details = new Map(catalog.courses.map(c => [c.id, c]));
 const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
@@ -12,10 +12,14 @@ const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
 
 export default function StudentAssignmentEditor({
-  course, onAssigned, onClose,
-}: { course: SavedCourse; onAssigned?: () => void; onClose?: () => void }) {
+  course, topicId, onAssigned, onClose,
+}: { course: SavedCourse; topicId?: string; onAssigned?: () => void; onClose?: () => void }) {
   const demo = useDemoPlan();
-  const grouped = details.get(course.courseId)?.type === "Combined Course";
+  const fieldId = useId();
+  // One editor and one student UI for both scopes. The clicked parent is always
+  // the source of truth; a topic checkbox never creates a standalone choice.
+  const topicChoice = topicId ? course.topics.find(topic =>
+    topic.topicId === topicId && topic.included) : null;
   const [showPreferences, setShowPreferences] = useState(false);
   const [groupEditing, setGroupEditing] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
@@ -26,14 +30,23 @@ export default function StudentAssignmentEditor({
   const [studentGrade, setStudentGrade] = useState("");
   const [studentSaving, setStudentSaving] = useState(false);
   const [studentError, setStudentError] = useState<string | null>(null);
-  const assigned = new Set(course.studentIds);
-  const topicOnlyStudents = demo.students.filter(student =>
+  const assigned = new Set(topicId
+    ? demo.students.filter(student => isTopicAssigned(course, topicId, student.id))
+      .map(student => student.id)
+    : course.studentIds);
+  const topicOnlyStudents = topicId ? [] : demo.students.filter(student =>
     !assigned.has(student.id) && effectiveTopicCount(course, student.id) > 0);
 
+  function setStudentAssignments(ids: string[], checked: boolean) {
+    if (!ids.length || (topicId && !topicChoice)) return;
+    if (topicId) for (const studentId of ids) {
+      demo.assignTopic(course.courseId, topicId, studentId, checked);
+    }
+    else demo.assignStudents(course.courseId, ids, checked);
+    if (checked) onAssigned?.();
+  }
   function assign(ids: string[]) {
-    if (!ids.length) return;
-    demo.assignStudents(course.courseId, ids, true);
-    onAssigned?.();
+    setStudentAssignments(ids, true);
   }
   function openGroup(group?: PlanningGroup) {
     setGroupEditing(true);
@@ -61,25 +74,28 @@ export default function StudentAssignmentEditor({
     } else setStudentError("We couldn't add that student. Your other assignments are unchanged.");
   }
 
+  if (topicId && !topicChoice) return <p className="plan-microcopy" role="status">
+    This topic isn't included in the saved course. Restore it before assigning students.
+  </p>;
+
   return <div className="plan-editor">
     <div className="plan-assign-head">
-      {onClose
-        ? <button type="button" className="plan-students-close"
-            aria-label="Close students editor" title="Close students editor" onClick={onClose}>
-            <UsersRound size={14} aria-hidden="true"/> Students <X size={13} aria-hidden="true"/>
-          </button>
-        : <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>}
-      <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
-        onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
-        {addingStudent ? "Cancel adding" : "+ Add student"}
-      </button>
+      <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>
+      <div className="pd-assignment-quick-actions">
+        <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
+          onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
+          {addingStudent ? "Cancel adding" : "+ Add student"}
+        </button>
+        {onClose && <button type="button" className="pd-done-action"
+          onClick={onClose} title="Close student editing; changes save automatically">Done</button>}
+      </div>
     </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
-      <label htmlFor={"inline-student-"+course.courseId}>Name or nickname</label>
-      <input id={"inline-student-"+course.courseId} value={studentName} maxLength={60} required
+      <label htmlFor={fieldId+"-student"}>Name or nickname</label>
+      <input id={fieldId+"-student"} value={studentName} maxLength={60} required
         placeholder="Student's name" onChange={event => setStudentName(event.target.value)}/>
-      <label htmlFor={"inline-grade-"+course.courseId}>Grade for 2027–28</label>
-      <select id={"inline-grade-"+course.courseId} value={studentGrade}
+      <label htmlFor={fieldId+"-grade"}>Grade for 2027–28</label>
+      <select id={fieldId+"-grade"} value={studentGrade}
         onChange={event => setStudentGrade(event.target.value)}>
         <option value="">Decide later</option>
         <option value="0">Kindergarten</option>
@@ -96,21 +112,20 @@ export default function StudentAssignmentEditor({
       {demo.students.map(student => <label key={student.id}>
         <input type="checkbox" checked={assigned.has(student.id)}
           onChange={event => {
-            demo.assignStudents(course.courseId, [student.id], event.target.checked);
-            if (event.target.checked) onAssigned?.();
+            setStudentAssignments([student.id], event.target.checked);
           }}/>
         {student.displayName}
       </label>)}
     </div>
     {!!topicOnlyStudents.length && <p className="plan-microcopy">
-      <strong>Assigned through individual topics:</strong>{" "}
-      {topicOnlyStudents.map(student => student.displayName).join(", ")}.
-      Checking their box above will assign the entire included course and replace
-      their individual topic exceptions. Other students are unaffected.
+      {topicOnlyStudents.map(student => student.displayName).join(", ")}
+      {" "}{topicOnlyStudents.length === 1 ? "has" : "have"} individual topics selected.
+      Selecting a name above assigns the full included course.
     </p>}
     {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
       <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
-        title="Assign the full included course to every current student">
+        title={topicId ? "Assign this topic to every student" :
+          "Assign the full included course to every current student"}>
         Family <small>{demo.students.length}</small>
       </button>
       {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
@@ -152,12 +167,7 @@ export default function StudentAssignmentEditor({
       </div>
       <p className="plan-microcopy">Groups are shortcuts. Changes to a group never rewrite saved assignments.</p>
     </div>}
-    <p className="plan-microcopy">
-      {grouped ? "A combined-course assignment covers all included topics. Individual topic exceptions are edited within the topic list." :
-        "Assignments are saved to this single-topic course."}
-    </p>
-
-    {!!course.studentIds.length && <>
+    {!topicId && !!course.studentIds.length && <>
       <button type="button" className="plan-text-disclosure"
         aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
         {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
