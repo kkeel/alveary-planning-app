@@ -53,7 +53,6 @@ export default function StudentAssignmentEditor({
     // status, too, rather than only closing the editor.
     if (shouldPromoteChoiceOnDone(course, topicId, demo.students)) {
       demo.setStage(course.courseId, "planned");
-      onAssigned?.();
     }
     onClose?.();
   }
