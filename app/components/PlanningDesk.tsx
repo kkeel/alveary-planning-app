@@ -176,6 +176,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                   style={{
                     "--pd-subject-wash": subjectColor(subject) + "15",
                     "--pd-subject-edge": subjectColor(subject) + "66",
+                    "--pd-subject-color": subjectColor(subject),
                   } as CSSProperties}>
                   <button className="pd-subject-toggle" type="button" aria-expanded={!isCollapsed}
                     onClick={() => desk.toggleSubject(subject)}>
