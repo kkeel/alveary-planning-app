@@ -624,3 +624,20 @@
 .myplan-assign-in-place { margin:9px 0 12px; }
 .myplan-topic-priorities { color:#6c8c72; font-size:10px; }
 .plan-preferences .plan-preference-row { padding:10px 0; }
+
+/* Shared course-level metadata belongs on the name line in both planning views. */
+.pd-idea-review .pd-course-customized-note {
+  display:inline;
+  flex:none;
+  margin-left:7px;
+  color:#6e856d;
+  font-size:10px;
+  line-height:1.35;
+  font-weight:500;
+  white-space:normal;
+  overflow-wrap:normal;
+}
+.pd-idea-review .myplan-summary { display:block; margin-top:3px; }
+@media(max-width:560px) {
+  .pd-idea-review .pd-course-customized-note { margin-left:5px; font-size:9px; }
+}
