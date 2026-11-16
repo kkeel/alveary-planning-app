@@ -6,6 +6,6 @@ export declare function listRowStatus(choice: {
   topics:{topicId:string;included:boolean}[];
 } | undefined, students:readonly {id:string}[],topicId:string|null,
 combined:boolean,localIdea?:boolean):{
-  saved:boolean;ideaActive:boolean;planActive:boolean;planTone:ListRowTone;
+  saved:boolean;excluded:boolean;ideaActive:boolean;planActive:boolean;planTone:ListRowTone;
   contextTone:ListRowTone;anyAssigned:boolean;isPlanned:boolean;
 };
