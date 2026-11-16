@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowUp, BookOpen, ChevronDown, ChevronRight,
-  ClipboardCheck, Lightbulb, NotebookPen, Maximize2, Minimize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
+  ClipboardCheck, Lightbulb, NotebookPen, Maximize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
@@ -34,11 +34,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const desk = usePlanningDesk();
   const cloud = useDemoPlan();
   const pathname = usePathname();
+  const router = useRouter();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [wideDesk, setWideDesk] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
 
@@ -128,6 +128,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     setDrawerOpen(true);
   }
   function closeMobileDrawer() { setDrawerOpen(false); setOpenMenu(null); }
+  function openFullPlanningDesk() {
+    // Same destination as the List | Planning toggle. The Books portable
+    // desk can open it too, by navigating back to Courses after selecting it.
+    desk.setCourseMode("plan");
+    closeMobileDrawer();
+    if (onBooks) router.push("/courses");
+  }
 
   const summaries = <div className="pd-quiet-summary">
     <button type="button" onClick={() => selectTab("think")}>
@@ -333,8 +340,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     </div>
   </section>;
 
-  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "") +
-    (wideDesk ? " is-wide" : "")}>
+  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "")}>
     <button type="button" className="pd-mobile-launcher"
       aria-label={"Open Planning Desk. " + ideas.length + " Think Tank ideas"}
       title="Open Planning Desk" aria-expanded={drawerOpen}
@@ -361,10 +367,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
             aria-live="polite" title={cloud.error ?? undefined}>
             {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
           </span>
-          <button type="button" aria-label={wideDesk ? "Return to regular Planning Desk width" : "Expand Planning Desk"}
-            title={wideDesk ? "Regular desk width" : "Wider planning space"}
-            aria-pressed={wideDesk} onClick={() => setWideDesk(value => !value)}>
-            {wideDesk ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+          <button type="button" aria-label="Open full-page Planning Desk"
+            title="Open full-page Planning Desk"
+            onClick={openFullPlanningDesk}>
+            <Maximize2 size={17} aria-hidden="true"/>
           </button>
           <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
             onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>

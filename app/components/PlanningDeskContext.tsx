@@ -85,7 +85,9 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           orderedIdsBySubject: saved.orderedIdsBySubject && typeof saved.orderedIdsBySubject === "object" ? saved.orderedIdsBySubject : {},
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
           quiet: saved.quiet === true, tab: saved.tab === "plan" ? "plan" : "think",
-          courseMode: saved.courseMode === "plan" || (!saved.courseMode && Array.isArray(saved.thinkTankIds) && saved.thinkTankIds.length > 0) ? "plan" : "browse",
+          // A prior explicit Planning selection wins. Existing Think Tank ideas
+          // alone should not force a first-time member into full-page Planning.
+          courseMode: saved.courseMode === "plan" ? "plan" : "browse",
           grades: normalizeGrades(saved.grades),
           country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
           notes: typeof saved.notes === "string" ? saved.notes : "",

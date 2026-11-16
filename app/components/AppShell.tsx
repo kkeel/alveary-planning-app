@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AuthStatusBar from "./AuthStatusBar";
@@ -69,23 +69,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
-  const { courseMode, setCourseMode } = usePlanningDesk();
+  const { courseMode, ready: deskReady } = usePlanningDesk();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
-  const [modeReadyForStatus, setModeReadyForStatus] = useState<"public" | "signed-in" | null>(null);
-  // Initialize List only when the authenticated account status changes.
-  // setCourseMode has stable identity, so clicking Planning must not trigger
-  // this effect and immediately snap the member back to List.
-  useEffect(() => {
-    if (status === "checking") {
-      setModeReadyForStatus(null);
-      return;
-    }
-    // Members enter List with the portable desk; Planning opens the full workspace.
-    setCourseMode("browse");
-    setModeReadyForStatus(status);
-  }, [status, setCourseMode]);
-  const checking = status === "checking" || modeReadyForStatus !== status;
+  // Wait for saved view preferences and verified sign-in before rendering the
+  // member workspace. Do not reset a previously selected Planning view.
+  const checking = status === "checking" || !deskReady;
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
 
