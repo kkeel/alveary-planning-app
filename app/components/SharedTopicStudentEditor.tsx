@@ -63,7 +63,7 @@ export default function SharedTopicStudentEditor({
       <p>Changes below apply only to this course context. You can switch to
         another saved course above to edit its assignments.</p>
     </div>}
-    <StudentAssignmentEditor key={active.courseId + ":" + active.topicId}
+    <StudentAssignmentEditor
       course={selectedCourse} topicId={active.topicId}
       onAssigned={() => onAssigned?.(active.courseId)}
       onClose={() => onClose?.(active.courseId)}
