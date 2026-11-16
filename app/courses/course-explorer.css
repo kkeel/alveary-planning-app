@@ -313,7 +313,15 @@
   min-width:40px; border-color:transparent; color:#667b6a;
   font-weight:500; gap:4px;
 }
+/* Explore keeps the familiar neutral disclosure. In a member List the
+   open-info chip follows the same subject palette as the row, so it reads as
+   a deliberate details state rather than a competing sage-green button. */
 .cx-course-actions .cx-info-action.is-open { background:#f1f5ed; }
+.cx-course-actions .cx-info-action.is-open.is-member {
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
+  color:color-mix(in srgb, var(--cx-subject) 42%, #263d30);
+}
 .cx-info-word { font-size:10px; }
 .cx-course-actions .cx-idea-action.is-tone-full,
 .cx-course-actions .cx-direct-plan-action.is-tone-full {
