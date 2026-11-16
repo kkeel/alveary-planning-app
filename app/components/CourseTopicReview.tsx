@@ -117,6 +117,11 @@ export default function CourseTopicReview({
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
+        {mode === "think" && isOther && assignedInThisCourse(topic) &&
+          <span className="pd-topic-selection-mark"
+            title="Already in My Plan" aria-label="Already in My Plan">
+            <SquareCheckBig size={13} aria-hidden="true"/>
+          </span>}
         {!isRemoved && !isOther && <span className="pd-topic-selection-mark"
           title={mode === "plan" ? "In My Plan" : "In Think Tank"}
           aria-label={mode === "plan" ? "In My Plan" : "In Think Tank"}>
@@ -220,7 +225,7 @@ export default function CourseTopicReview({
               onTopicEditingChange?.(false);
             }}/>
         </div>}
-      {planning && (linkedTopic || isRemoved) && savedChoice && <div className="pd-topic-plan-inline">
+      {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
         <SharedTopicStudentEditor topicEditionId={topic.editionId}
           currentCourseId={parent.id}
           onAssigned={sourceCourseId => onTopicAssigned?.(sourceCourseId)}
