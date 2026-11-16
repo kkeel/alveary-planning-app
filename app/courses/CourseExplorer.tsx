@@ -5,6 +5,7 @@ import { Check, ChevronDown, Lightbulb, List, NotebookPen, Plus, Printer, Search
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
+import { sourceChoiceForRow } from "./course-list-actions.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 import { usePlannerAuth } from "../components/PlannerAuthProvider";
@@ -147,7 +148,8 @@ function CourseRow({
     children.length || course.description || course.tips ||
     (!isCombined && (course.grades.length || course.schedules.length))
   );
-  const sourceCourseId = parentCourseId ?? course.id;
+  const sourceChoice = sourceChoiceForRow(course.id, parentCourseId);
+  const sourceCourseId = sourceChoice.courseId;
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
   const isSaved = planned.includes(sourceCourseId) || Boolean(parentChoice);
   const isPlanned = parentChoice?.stage === "planned";
@@ -156,7 +158,7 @@ function CourseRow({
     : Boolean(parentChoice && students.some(student =>
         effectiveTopicCount(parentChoice, student.id) > 0));
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
-    planningTarget.topicId === (nested ? course.id : null);
+    planningTarget.topicId === sourceChoice.topicId;
 
   // Keep the clicked row in the same visible place when content above/below
   // shrinks or expands. Browsers can otherwise reanchor the long Course List.
@@ -193,13 +195,14 @@ function CourseRow({
       </button>
       {mode === "plan" && <div className="cx-course-actions">
         <button className={"cx-idea-action" + (isSaved ? " is-selected" : "")}
-          type="button" disabled={isPlanned}
-          aria-label={(isSaved ? "Remove " : "Save ") + (nested ? course.title + " through " : "") +
-            sourceCourseId + (isSaved ? " from Think Tank" : " to Think Tank")}
+          type="button" disabled={isPlanned || (nested && isSaved)}
+          aria-label={(isSaved ? "Saved parent course for " : "Save parent course for ") +
+            course.title + " in Think Tank"}
           aria-pressed={isSaved}
           title={isPlanned ? "Already in My Plan; manage it from the Planning Desk" :
+            nested && isSaved ? "This topic is already saved with its parent course" :
             isSaved ? "Remove this course from Think Tank" :
-              nested ? "Save the parent course to Think Tank" : "Save to Think Tank"}
+              nested ? "Save this topic's parent course to Think Tank" : "Save to Think Tank"}
           onClick={() => onPlannedToggle(sourceCourseId)}>
           {isSaved ? <Check size={14} aria-hidden="true"/> : <Lightbulb size={14} aria-hidden="true"/>}
           <span>{isSaved ? "Saved" : "Think Tank"}</span>
@@ -211,7 +214,7 @@ function CourseRow({
             nested ? "Plan only " : isCombined ? "Plan all topics in " : "Plan ") + course.title}
           title={nested ? "Assign just this topic within its parent course" :
             isCombined ? "Assign all included topics" : "Assign students to this course"}
-          onClick={() => onStartPlan(sourceCourseId, nested ? course.id : null)}>
+          onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
           {isAssignedHere ? <UsersRound size={14} aria-hidden="true"/> :
             <Plus size={14} aria-hidden="true"/>}
           <span>{isAssignedHere ? "Students" : isCombined && !nested ? "Plan all" : "Plan"}</span>
