@@ -10,8 +10,9 @@ const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
 
 export default function StudentAssignmentEditor({
-  course, topicId, onAssigned, onClose,
-}: { course: SavedCourse; topicId?: string; onAssigned?: () => void; onClose?: () => void }) {
+  course, topicId, onAssigned, onClose, onCancel,
+}: { course: SavedCourse; topicId?: string; onAssigned?: () => void;
+  onClose?: () => void; onCancel?: () => void }) {
   const demo = useDemoPlan();
   const fieldId = useId();
   // One editor and one student UI for both scopes. The clicked parent is always
@@ -28,6 +29,10 @@ export default function StudentAssignmentEditor({
   const [studentGrade, setStudentGrade] = useState("");
   const [studentSaving, setStudentSaving] = useState(false);
   const [studentError, setStudentError] = useState<string | null>(null);
+  // Selections save immediately. An untouched editor can be canceled; once
+  // edits have been sent to the save queue, call the exit action "Close" so
+  // it cannot be mistaken for undoing already-saved assignments.
+  const [hasSavedEdits, setHasSavedEdits] = useState(false);
   const assigned = new Set(topicId
     ? demo.students.filter(student => isTopicAssigned(course, topicId, student.id))
       .map(student => student.id)
@@ -37,6 +42,7 @@ export default function StudentAssignmentEditor({
 
   function setStudentAssignments(ids: string[], checked: boolean) {
     if (!ids.length || (topicId && !topicChoice)) return;
+    setHasSavedEdits(true);
     if (topicId) for (const studentId of ids) {
       demo.assignTopic(course.courseId, topicId, studentId, checked);
     }
@@ -65,7 +71,10 @@ export default function StudentAssignmentEditor({
   async function saveGroup() {
     if (!groupName.trim()) return;
     await demo.saveGroup(groupName.trim(), groupStudentIds, editingGroupId ?? undefined);
-    if (!demo.error) setGroupEditing(false);
+    if (!demo.error) {
+      setGroupEditing(false);
+      setHasSavedEdits(true);
+    }
   }
   async function submitStudent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,6 +85,7 @@ export default function StudentAssignmentEditor({
     const ok = await demo.addStudent(studentName, gradeLevel);
     setStudentSaving(false);
     if (ok) {
+      setHasSavedEdits(true);
       setStudentName("");
       setStudentGrade("");
       setAddingStudent(false);
@@ -94,6 +104,13 @@ export default function StudentAssignmentEditor({
           onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
           {addingStudent ? "Cancel adding" : "+ Add student"}
         </button>
+        {(onCancel || onClose) && <button type="button" className="pd-cancel-action"
+          onClick={() => (onCancel ?? onClose)?.()}
+          title={hasSavedEdits
+            ? "Close editing; earlier changes are already saved"
+            : "Cancel editing without changing this assignment"}>
+          {hasSavedEdits ? "Close" : "Cancel"}
+        </button>}
         {onClose && <button type="button" className="pd-done-action"
           onClick={finishEditing} title="Finish student editing and save this selection to My Plan">Done</button>}
       </div>
@@ -169,6 +186,7 @@ export default function StudentAssignmentEditor({
           onClick={() => {
             if (window.confirm("Delete this group shortcut? Existing course assignments remain unchanged.")) {
               void demo.deleteGroup(editingGroupId);
+              setHasSavedEdits(true);
               setGroupEditing(false);
             }
           }}>Delete group</button>}
@@ -191,16 +209,22 @@ export default function StudentAssignmentEditor({
             <strong>{student.displayName}</strong>
             <label>Priority
               <select value={priority ?? ""}
-                onChange={event => demo.setPreference(course.courseId, student.id,
-                  (event.target.value || null) as StudentPreference["priority"], arrangement)}>
+                onChange={event => {
+                  setHasSavedEdits(true);
+                  demo.setPreference(course.courseId, student.id,
+                    (event.target.value || null) as StudentPreference["priority"], arrangement);
+                }}>
                 <option value="">Not set</option>
                 {priorities.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
             </label>
             <label>Arrangement
               <select value={arrangement}
-                onChange={event => demo.setPreference(course.courseId, student.id, priority,
-                  event.target.value as StudentPreference["arrangement"])}>
+                onChange={event => {
+                  setHasSavedEdits(true);
+                  demo.setPreference(course.courseId, student.id, priority,
+                    event.target.value as StudentPreference["arrangement"]);
+                }}>
                 {arrangements.map(item => <option key={item} value={item}>{item}</option>)}
               </select>
             </label>
