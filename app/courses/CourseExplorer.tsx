@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Bookmark, Check, ChevronDown, List, NotebookPen, Printer, Search, SlidersHorizontal } from "lucide-react";
+import { Check, ChevronDown, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal, UsersRound } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
+import { sourceChoiceForRow } from "./course-list-actions.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 import { usePlannerAuth } from "../components/PlannerAuthProvider";
 import PlanningDesk from "../components/PlanningDesk";
+import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitch";
+import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
+import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
+import { useDemoPlan, type PlanningStudent, type SavedCourse } from "../components/DemoPlanContext";
+import { effectiveTopicCount, topicHasAssignedStudent } from "../components/topic-assignment.mjs";
 
 type Plan = {
   id: string;
@@ -56,6 +62,7 @@ type Catalog = {
   choiceGroups: ChoiceGroup[];
 };
 type Mode = "browse" | "plan";
+type PlanTarget = { courseId: string; topicId: string | null };
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
@@ -92,6 +99,14 @@ type CourseRowProps = {
   mode: Mode;
   planned: readonly string[];
   onPlannedToggle: (id: string) => void;
+  parentCourseId?: string;
+  detailMode: DetailMode;
+  detailRevision: number;
+  savedCourses: readonly SavedCourse[];
+  students: readonly PlanningStudent[];
+  planningTarget: PlanTarget | null;
+  onStartPlan: (courseId: string, topicId: string | null) => void;
+  onEndPlan: () => void;
 };
 
 /**
@@ -110,8 +125,20 @@ function CourseRow({
   mode,
   planned,
   onPlannedToggle,
+  parentCourseId,
+  detailMode,
+  detailRevision,
+  savedCourses,
+  students,
+  planningTarget,
+  onStartPlan,
+  onEndPlan,
 }: CourseRowProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [disclosureOverride, setDisclosureOverride] = useState<{
+    revision: number; expanded: boolean;
+  } | null>(null);
+  const isExpanded = disclosureOverride?.revision === detailRevision
+    ? disclosureOverride.expanded : detailMode === "expanded";
   const disclosureRef = useRef<HTMLButtonElement>(null);
   const beforeToggleTop = useRef<number | null>(null);
   const detailsId = useId(); // unique for each occurrence, not the shared curriculum ID
@@ -121,7 +148,17 @@ function CourseRow({
     children.length || course.description || course.tips ||
     (!isCombined && (course.grades.length || course.schedules.length))
   );
-  const isPlanned = planned.includes(course.id);
+  const sourceChoice = sourceChoiceForRow(course.id, parentCourseId);
+  const sourceCourseId = sourceChoice.courseId;
+  const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
+  const isSaved = planned.includes(sourceCourseId) || Boolean(parentChoice);
+  const isPlanned = parentChoice?.stage === "planned";
+  const isAssignedHere = nested
+    ? Boolean(parentChoice && topicHasAssignedStudent(parentChoice, course.id, students))
+    : Boolean(parentChoice && students.some(student =>
+        effectiveTopicCount(parentChoice, student.id) > 0));
+  const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
+    planningTarget.topicId === sourceChoice.topicId;
 
   // Keep the clicked row in the same visible place when content above/below
   // shrinks or expands. Browsers can otherwise reanchor the long Course List.
@@ -136,11 +173,13 @@ function CourseRow({
 
   function toggleDetails() {
     beforeToggleTop.current = disclosureRef.current?.getBoundingClientRect().top ?? null;
-    setIsExpanded(value => !value);
+    setDisclosureOverride({revision:detailRevision,expanded:!isExpanded});
   }
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
-    childTopics, mode, planned, onPlannedToggle,
+    childTopics, mode, planned, onPlannedToggle, parentCourseId: sourceCourseId,
+    detailMode, detailRevision, savedCourses, students, planningTarget,
+    onStartPlan, onEndPlan,
   };
 
   return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")}>
@@ -154,14 +193,50 @@ function CourseRow({
         {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
         {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
       </button>
-      {mode === "plan" && <button className={"cx-row-action" + (isPlanned ? " is-selected" : "")}
-        type="button"
-        aria-label={(isPlanned ? "Remove " : "Save ") + course.title + (isPlanned ? " from " : " to ") + "Think Tank"}
-        aria-pressed={isPlanned} onClick={() => onPlannedToggle(course.id)}>
-        {isPlanned ? <Check size={15} /> : <Bookmark size={15} />}
-      </button>}
+      {mode === "plan" && <div className="cx-course-actions">
+        <button className={"cx-idea-action" + (isSaved ? " is-selected" : "")}
+          type="button" disabled={isPlanned || (nested && isSaved)}
+          aria-label={(isSaved ? "Saved parent course for " : "Save parent course for ") +
+            course.title + " in Think Tank"}
+          aria-pressed={isSaved}
+          title={isPlanned ? "Already in My Plan; manage it from the Planning Desk" :
+            nested && isSaved ? "This topic is already saved with its parent course" :
+            isSaved ? "Remove this course from Think Tank" :
+              nested ? "Save this topic's parent course to Think Tank" : "Save to Think Tank"}
+          onClick={() => onPlannedToggle(sourceCourseId)}>
+          {isSaved ? <Check size={14} aria-hidden="true"/> : <Lightbulb size={14} aria-hidden="true"/>}
+          <span>{isSaved ? "Saved" : "Think Tank"}</span>
+        </button>
+        <button className={"cx-direct-plan-action" + (activePlanEditor ? " is-open" : "")}
+          type="button"
+          aria-expanded={activePlanEditor}
+          aria-label={(isAssignedHere ? "Edit student assignments for " :
+            nested ? "Plan only " : isCombined ? "Plan all topics in " : "Plan ") + course.title}
+          title={nested ? "Assign just this topic within its parent course" :
+            isCombined ? "Assign all included topics" : "Assign students to this course"}
+          onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
+          {isAssignedHere ? <UsersRound size={14} aria-hidden="true"/> :
+            <Plus size={14} aria-hidden="true"/>}
+          <span>{isAssignedHere ? "Students" : isCombined && !nested ? "Plan all" : "Plan"}</span>
+        </button>
+      </div>}
 
     </div>
+    {mode === "plan" && activePlanEditor && <div className="cx-inline-assign" role="region"
+      aria-label={"Assign students for " + course.title}>
+      {!parentChoice || !parentChoice.topics.length ? <p role="status" className="cx-assign-loading">
+        Saving the parent course before opening student choices…
+      </p> : nested && !parentChoice.topics.some(topic => topic.topicId === course.id && topic.included)
+        ? <p className="cx-assign-loading" role="status">
+            This topic was removed from the saved combined course. Restore it in Planning to assign it.
+            <button type="button" className="cx-assign-dismiss" onClick={onEndPlan}>Close</button>
+          </p>
+        : nested ? <SharedTopicStudentEditor
+            topicEditionId={course.editionId} currentCourseId={sourceCourseId}
+            onClose={onEndPlan} onCancel={onEndPlan}/> :
+          <StudentAssignmentEditor course={parentChoice}
+            onClose={onEndPlan} onCancel={onEndPlan}/>}
+    </div>}
     {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
       {!isCombined && <div className="cx-course-meta">
         {course.schedules.length > 0 && <div className="cx-schedule-list">
@@ -182,6 +257,7 @@ function CourseRow({
 
 export default function CourseExplorer() {
   const desk = usePlanningDesk();
+  const cloud = useDemoPlan();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
   const mode: Mode = signedIn ? desk.courseMode : "browse";
@@ -194,9 +270,27 @@ export default function CourseExplorer() {
   const [query, setQuery] = useState("");
   const [gradesOpen, setGradesOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [detailRevision, setDetailRevision] = useState(0);
+  const [planningTarget, setPlanningTarget] = useState<PlanTarget | null>(null);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
   const planned = desk.thinkTankIds;
+  function updateDetailMode(next: DetailMode) {
+    if (desk.listDetails === next) return;
+    desk.setListDetails(next);
+    setDetailRevision(revision => revision + 1);
+  }
+  function startDirectPlan(courseId: string, topicId: string | null) {
+    if (!cloud.ready) return;
+    const same = planningTarget?.courseId === courseId && planningTarget.topicId === topicId;
+    if (same) { setPlanningTarget(null); return; }
+    // The saved parent is essential for provenance. Never save a nested topic
+    // as a separate standalone choice just because the member clicks + Plan.
+    if (!cloud.courses.some(course => course.courseId === courseId) &&
+        !desk.thinkTankIds.includes(courseId)) desk.toggleIdea(courseId);
+    else if (!cloud.courses.some(course => course.courseId === courseId)) cloud.addChoice(courseId);
+    setPlanningTarget({courseId,topicId});
+  }
 
   useEffect(() => {
     if (!gradesOpen) return;
@@ -301,9 +395,20 @@ export default function CourseExplorer() {
 
   const courseRowProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics,
-    mode: signedIn ? "plan" : "browse",
+    mode: signedIn && cloud.ready ? "plan" : "browse",
     planned,
-    onPlannedToggle: desk.toggleIdea,
+    onPlannedToggle: courseId => {
+      if (!cloud.ready) return;
+      if (planningTarget?.courseId === courseId) setPlanningTarget(null);
+      desk.toggleIdea(courseId);
+    },
+    detailMode: desk.listDetails,
+    detailRevision,
+    savedCourses: cloud.courses,
+    students: cloud.students,
+    planningTarget,
+    onStartPlan: startDirectPlan,
+    onEndPlan: () => setPlanningTarget(null),
   };
 
   return <div className="cx-page">
@@ -325,6 +430,8 @@ export default function CourseExplorer() {
         </button>}
       </div>}
       {mode !== "plan" && <>
+      <DetailViewSwitch label={signedIn ? "Course List" : "Explore"}
+        value={desk.listDetails} onChange={updateDetailMode}/>
       <button type="button" className="cx-mobile-filter-toggle"
         aria-controls="cx-toolbar-filter-tools" aria-expanded={mobileFiltersOpen}
         onClick={() => { setMobileFiltersOpen(value => !value); setGradesOpen(false); }}>

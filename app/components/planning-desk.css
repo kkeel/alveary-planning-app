@@ -682,3 +682,32 @@
   outline:2px solid #59836a;
   outline-offset:2px;
 }
+
+/* Consistent density choice: catalog defaults Expanded; planning columns
+   default Compact, and all three choices persist independently per member. */
+.pd-detail-switch {
+  display:inline-flex; align-items:center; flex:none; gap:2px; padding:2px;
+  border:1px solid #d9e2d4; background:#f0f3eb; border-radius:4px;
+}
+.pd-detail-switch button {
+  display:inline-flex; align-items:center; gap:5px; min-height:29px;
+  padding:5px 7px; border:0; background:transparent; border-radius:3px;
+  color:#6a816d; font-family:"DM Sans",sans-serif;
+  font-size:10px; font-weight:550; white-space:nowrap;
+}
+.pd-detail-switch button.is-current {
+  background:#fff; color:#355a3d; box-shadow:0 1px 3px #334b3317;
+}
+.pd-detail-switch button:hover:not(.is-current) { background:#e7eee3; }
+.pd-detail-switch button:focus-visible { outline:2px solid #557961; outline-offset:2px; }
+.pd-details-toolbar {
+  display:flex; gap:10px; justify-content:space-between;
+  align-items:center; flex-wrap:wrap; margin-bottom:11px;
+}
+.pd-details-toolbar .pd-intro {
+  flex:1 1 180px; min-width:0; margin:0;
+}
+@media(max-width:600px) {
+  .pd-detail-switch button { font-size:10px; padding:5px 7px; }
+  .pd-details-toolbar { align-items:flex-start; }
+}

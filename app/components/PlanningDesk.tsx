@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import DetailViewSwitch from "./DetailViewSwitch";
 import CourseCustomizationNote from "./CourseCustomizationNote";
 import { remainingTopicCount } from "./topic-assignment.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
@@ -38,7 +39,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const pathname = usePathname();
   const router = useRouter();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
-  const [reviewId, setReviewId] = useState<string | null>(null);
+  const [reviewOverrides, setReviewOverrides] = useState<Record<string, boolean>>({});
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
@@ -174,7 +175,14 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
         {cloud.error && <div className="pd-save-error-inline" role="alert">{cloud.error}</div>}
   </>;
   const thinkTankContent = <>
-          <p className="pd-intro">Ideas to consider for your school year.</p>
+          <div className="pd-details-toolbar">
+            <p className="pd-intro">Ideas to consider for your school year.</p>
+            <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
+              onChange={mode => {
+                desk.setThinkDetails(mode);
+                setReviewOverrides({});
+              }}/>
+          </div>
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map((subject, index) => {
               const list = orderedIdeas(subject);
@@ -224,11 +232,12 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const remainingCount = savedChoice
                       ? remainingTopicCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
+                    const reviewOpen = reviewOverrides[idea.id] ?? (desk.thinkDetails === "expanded");
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
-                        <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
+                        <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
                           onClick={() => {
-                            setReviewId(reviewId === idea.id ? null : idea.id);
+                            setReviewOverrides(old => ({ ...old,[idea.id]:!reviewOpen }));
                             setJustPlannedId(null);
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
@@ -238,7 +247,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                                 Partly planned · {remainingCount} to consider
                               </small>}
                           </span>
-                          {reviewId === idea.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
+                          {reviewOpen ? <ChevronDown size={14}/> : <ChevronRight size={14}/>} 
                         </button>
                         <button type="button" className="pd-more" aria-label={"Organize " + idea.title}
                           title={"Organize " + idea.title} aria-expanded={openMenu === itemMenu}
@@ -257,11 +266,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         </button>
                         <button type="button" onClick={() => {
                           desk.removeIdea(idea.id);
-                          if (reviewId === idea.id) setReviewId(null);
+                          setReviewOverrides(old => {
+                            const next = {...old}; delete next[idea.id]; return next;
+                          });
                           setOpenMenu(null);
                         }}><X size={13}/> Remove</button>
                       </div>}
-                      {reviewId === idea.id && <div className="pd-review">
+                      {reviewOpen && <div className="pd-review">
                         <CourseInfoDisclosure course={idea}/>
                         <div className="pd-review-actions">
                           {cloud.ready && <button type="button" className="pd-plan-action"

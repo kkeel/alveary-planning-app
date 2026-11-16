@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
+import DetailViewSwitch from "./DetailViewSwitch";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import CourseCustomizationNote from "./CourseCustomizationNote";
@@ -60,6 +61,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openOverrides, setOpenOverrides] = useState<Record<string,boolean>>({});
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
@@ -75,8 +77,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
     [demo.courses, demo.students]);
 
   useEffect(() => {
-    if (focusCourseId && planned.some(c => c.courseId === focusCourseId))
+    if (focusCourseId && planned.some(c => c.courseId === focusCourseId)) {
       setOpenId(focusCourseId);
+      setOpenOverrides(old => ({...old,[focusCourseId]:true}));
+    }
   // Follow explicit Add/Done events, including repeated assignments to the
   // same combined course, without reopening on ordinary server refreshes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,7 +106,17 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
-    <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
+    <div className="pd-details-toolbar">
+      <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
+      <DetailViewSwitch label="My Plan" value={desk.planDetails}
+        onChange={mode => {
+          desk.setPlanDetails(mode);
+          setOpenOverrides({});
+          setOpenId(null);
+          setEditingStudentsId(null);
+          setEditingTopicCourseId(null);
+        }}/>
+    </div>
     {!planned.length && <div className="pd-plan-empty">
       <p>{sideBySide ? "Choose a course or topic from the Think Tank alongside this plan to begin." :
         "Start with one course or topic. The others can stay in Think Tank as long as you like."}</p>
@@ -123,7 +137,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
           {!collapsed && <div className="pd-subject-items">
             {courses.map(course => {
               const item: CatalogCourse | undefined = lookup.get(course.courseId);
-              const open = openId === course.courseId;
+              const open = openOverrides[course.courseId] ??
+                (desk.planDetails === "expanded" || openId === course.courseId);
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
               const includedCount = course.topics.filter(topic => topic.included).length;
@@ -135,6 +150,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                 <div className="pd-idea-heading">
                   <button className="pd-idea-review" type="button" aria-expanded={open}
                     onClick={() => {
+                      setOpenOverrides(old => ({...old,[course.courseId]:!open}));
                       setOpenId(open ? null : course.courseId);
                       // Reopening a course should never reveal a stale edit
                       // form until the member explicitly requests it.
@@ -162,7 +178,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     aria-label={"Edit students and priorities for " + (item?.title ?? "course")}
                     title="Edit students and priorities" aria-expanded={editing}
                     onClick={() => {
-                      if (!open) setOpenId(course.courseId);
+                      if (!open) {
+                        setOpenId(course.courseId);
+                        setOpenOverrides(old => ({...old,[course.courseId]:true}));
+                      }
                       setEditingStudentsId(editing ? null : course.courseId);
                     }}>
                     <UsersRound size={15} aria-hidden="true"/>
@@ -190,7 +209,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       demo.setTopic(course.courseId,topicId,included)}
                     onTopicDone={sourceCourseId => {
                       const source = demo.courses.find(c => c.courseId === sourceCourseId);
-                      setOpenId(source?.stage === "planned" ? sourceCourseId : null);
+                      if (source?.stage === "planned") {
+                        setOpenId(sourceCourseId);
+                        setOpenOverrides(old => ({...old,[sourceCourseId]:true}));
+                      } else setOpenId(null);
                     }}
                     onTopicCancel={() => {
                       if (course.stage === "idea") setOpenId(null);
