@@ -161,6 +161,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     </button>
                     {infoOpen && <CourseInfoDisclosure course={item}/>}
                   </>}
+                  {editing && <div className="pd-assign-in-place myplan-assign-in-place">
+                    <StudentAssignmentEditor course={course}
+                      onClose={() => setEditingStudentsId(null)}/>
+                  </div>}
                   {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}/>}
@@ -170,8 +174,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       setOpenId(null); setEditingStudentsId(null);
                     }}>Return to Think Tank</button>
                   </div>
-                  {editing && <StudentAssignmentEditor course={course}
-                    onClose={() => setEditingStudentsId(null)}/>}
                 </div>}
               </div>;
             })}
