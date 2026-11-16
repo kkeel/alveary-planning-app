@@ -47,7 +47,7 @@ function studentSummary(course: SavedCourse,
   });
 }
 
-export default function MyPlanPanel({ focusCourseId = null, sideBySide = false }: { focusCourseId?: string | null; sideBySide?: boolean }) {
+export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, sideBySide = false }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -62,9 +62,10 @@ export default function MyPlanPanel({ focusCourseId = null, sideBySide = false }
   useEffect(() => {
     if (focusCourseId && planned.some(c => c.courseId === focusCourseId))
       setOpenId(focusCourseId);
-  // Deliberately follow explicit navigation intent, not every server refresh.
+  // Follow explicit Add/Done events, including repeated assignments to the
+  // same combined course, without reopening on ordinary server refreshes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusCourseId]);
+  }, [focusCourseId, focusRevision]);
 
   const groups = useMemo(() => {
     const sections = new Map<string, SavedCourse[]>();
