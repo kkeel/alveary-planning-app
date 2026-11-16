@@ -136,3 +136,33 @@ same CSS.
    drawer, and full Planning page.
 6. Confirm that expanding a description, adding students and opening
    More still work; topic selection lightbulbs/checkmarks stay visible.
+
+## Neutral hover palette parity follow-up (screenshots, November 16)
+
+The Think Tank course-title hover inherited `#eef3eb` / `#365a40`
+while the Course List's **neutral** toolbar hover used `#f0f3ee` /
+`#4e6655`. The first pair is visibly greener and more saturated,
+especially over the wide course-title target. They were not actually
+the same colors even after the separated-hover PR.
+
+The Think Tank now uses the Course List's exact neutral hover background
+and text on course titles, Description & tips, Other topics controls,
+the course More menu, +All, and topic menu buttons. Its topic titles,
+topic toolbar icons, and course info ⓘ already use that neutral hover,
+so they remain as-is. The expanded course info hover continues to use
+the Course List's separate neutral expanded-state hover (`#e9eee7`).
+
+**Do not** recolor subject header toggles: those intentionally strengthen
+the current subject hue. Do not recolor saved lightbulbs, checkmarks,
+or existing My Plan selections. Both portable and full-page Think Tank
+use the same stylesheet.
+
+The automated hover regression now reads the Course List stylesheet
+directly and compares neutral values against Think Tank rules; it will
+catch palette drift rather than merely verifying selectors exist.
+
+### Browser check
+Compare the wide Think Tank course-title hover with the neutral Course
+List View/Hide hover, and compare individual topic buttons and Other
+topics in both mini and full desk. The hover color should match exactly,
+while larger targets may still look more prominent due to the area filled.
