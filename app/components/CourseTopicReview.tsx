@@ -122,28 +122,34 @@ export default function CourseTopicReview({
     const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
     const planning = planningTopicId === topic.id;
     const menuOpen = topicMenuId === topic.id;
+    // The selection marker belongs to the topic title, not the toolbar.
+    // Keep both in the same hover/focus surface without tinting the row.
+    const selectionMark = mode === "think" && isOther && assignedInThisCourse(topic)
+      ? <span className="pd-topic-selection-mark"
+          title="Already in My Plan" aria-label="Already in My Plan">
+          <SquareCheckBig size={13} aria-hidden="true"/>
+        </span>
+      : !isRemoved && !isOther
+        ? <span className="pd-topic-selection-mark"
+            title={mode === "plan" ? "In My Plan" : "In Think Tank"}
+            aria-label={mode === "plan" ? "In My Plan" : "In Think Tank"}>
+            {mode === "plan"
+              ? <SquareCheckBig size={13} aria-hidden="true"/>
+              : <Lightbulb size={13} aria-hidden="true"/>}
+          </span>
+        : null;
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
-        {mode === "think" && isOther && assignedInThisCourse(topic) &&
-          <span className="pd-topic-selection-mark"
-            title="Already in My Plan" aria-label="Already in My Plan">
-            <SquareCheckBig size={13} aria-hidden="true"/>
-          </span>}
-        {!isRemoved && !isOther && <span className="pd-topic-selection-mark"
-          title={mode === "plan" ? "In My Plan" : "In Think Tank"}
-          aria-label={mode === "plan" ? "In My Plan" : "In Think Tank"}>
-          {mode === "plan"
-            ? <SquareCheckBig size={13} aria-hidden="true"/>
-            : <Lightbulb size={13} aria-hidden="true"/>}
-        </span>}
         {hasDetails
           ? <button type="button" className="pd-topic-name pd-topic-title-button"
               aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
               aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
-              {topic.title}
+              {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
             </button>
-          : <span className="pd-topic-name">{topic.title}</span>}
+          : <span className="pd-topic-name">
+              {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
+            </span>}
         {hasDetails && <button type="button" className="pd-topic-icon"
           aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
           title="Description & tips" aria-expanded={infoOpen}
