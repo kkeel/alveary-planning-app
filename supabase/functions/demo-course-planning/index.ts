@@ -150,6 +150,7 @@ Deno.serve(async (req: Request) => {
     const actions = new Set([
       "load", "import", "set_choice", "remove_choice", "set_stage",
       "set_topic", "set_course_student", "set_topic_student",
+      "toggle_idea", "clear_plan", "prepare_plan",
       "set_assignment_priority", "set_assignment_arrangement", ...manageActions,
     ]);
     if (typeof p.action !== "string" || !actions.has(p.action)) {
@@ -189,6 +190,8 @@ Deno.serve(async (req: Request) => {
       (p.action !== "load" && p.action !== "import" &&
         p.action !== "upsert_group" && p.action !== "delete_group" && !courseId) ||
       ((p.action === "set_topic" || p.action === "set_topic_student") && !topicId) ||
+      (["toggle_idea","clear_plan","prepare_plan"].includes(p.action) &&
+        p.topicId != null && !topicId) ||
       ((p.action === "set_course_student" || p.action === "set_topic_student" ||
          p.action === "set_preference" || p.action === "set_assignment_priority" ||
          p.action === "set_assignment_arrangement") && !student) ||
@@ -246,7 +249,18 @@ Deno.serve(async (req: Request) => {
 
     // The trusted service_role client is used ONLY after JWT, Memberstack
     // identity and current membership entitlements were verified above.
-    const { data: plan, error: planError } = (manage || p.action === "set_assignment_priority" ||
+    const listAction = ["toggle_idea","clear_plan","prepare_plan"].includes(p.action);
+    const { data: plan, error: planError } = listAction
+      ? await admin.rpc("demo_plan_list_action", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: p.action,
+        p_course_id: courseId,
+        p_topic_id: topicId,
+      })
+      : (manage || p.action === "set_assignment_priority" ||
           p.action === "set_assignment_arrangement")
       ? await admin.rpc("demo_plan_manage", {
         p_auth_user_id: caller.user.id,
