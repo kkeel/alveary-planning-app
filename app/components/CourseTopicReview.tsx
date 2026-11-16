@@ -9,6 +9,7 @@ import { topicHasAssignedStudent } from "./topic-assignment.mjs";
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
+import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
 
@@ -115,7 +116,8 @@ export default function CourseTopicReview({
 
   function renderTopic(topic: CatalogCourse, isRemoved = false, isOther = false) {
     const infoOpen = infoTopicId === topic.id;
-    const hasDetails = Boolean(topic.description || topic.tips);
+    const hasDetails = Boolean(topic.description || topic.tips ||
+      (mode === "think" && (topic.schedules.length || topic.gradeDisplay || topic.grades.length)));
     const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
     const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
@@ -143,7 +145,7 @@ export default function CourseTopicReview({
       <div className="pd-topic-row">
         {hasDetails
           ? <button type="button" className="pd-topic-name pd-topic-title-button"
-              aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
+              aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
               aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
               {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
             </button>
@@ -151,8 +153,8 @@ export default function CourseTopicReview({
               {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
             </span>}
         {hasDetails && <button type="button" className="pd-topic-icon"
-          aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
-          title="Description & tips" aria-expanded={infoOpen}
+          aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
+          title={mode === "think" ? "Topic details" : "Description & tips"} aria-expanded={infoOpen}
           aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
@@ -225,6 +227,7 @@ export default function CourseTopicReview({
       <TopicOtherUses topicEditionId={topic.editionId}
         parentCourseId={parent.id} index={sharingIndex}/>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
+        {mode === "think" && <PlanningScheduleGradeMeta course={topic}/>}
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <div className="pd-topic-tips">
           <PlacementSymbol size={17}/><p>{topic.tips}</p>
