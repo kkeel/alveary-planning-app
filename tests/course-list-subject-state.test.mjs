@@ -1,103 +1,151 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { subjectColor, subjectColors } from "../app/courses/legacy-subject-colors.mjs";
-import { listRowStatus } from "../app/courses/list-row-status.mjs";
+import {
+  listRowStatus, pendingIdeaCount, topicIsThinkTankIdea,
+} from "../app/courses/list-row-status.mjs";
 import { sourceChoiceForRow } from "../app/courses/course-list-actions.mjs";
 
 const catalog=JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json",import.meta.url),"utf8"));
 const byTitle=new Map(catalog.courses.map(c=>[c.title,c]));
 const byEdition=new Map(catalog.courses.map(c=>[c.editionId,c]));
-const grade9=byTitle.get("History: Grade 9 (U.S.)");
-const grade1012=byTitle.get("History: Grades 10-12 (U.S.)");
-assert.ok(grade9 && grade1012);
+const g9=byTitle.get("History: Grade 9 (U.S.)");
+const g1012=byTitle.get("History: Grades 10-12 (U.S.)");
+assert.ok(g9&&g1012);
 const people=[{id:"AJ"},{id:"Troy"},{id:"Hannah"}];
-const makeCourse=p=>({
-  courseId:p.id,stage:"idea",studentIds:[],overrides:[],
-  topics:catalog.topicLinks.filter(link=>link.parentEditionId===p.editionId)
-    .map(link=>{const child=byEdition.get(link.childEditionId);
-      return {topicId:child.id,topicEditionId:child.editionId,included:true};
-    }),
+const make=p=>({
+ courseId:p.id,stage:"idea",ideaAll:false,studentIds:[],overrides:[],
+ topics:catalog.topicLinks.filter(l=>l.parentEditionId===p.editionId)
+ .map(l=>{const t=byEdition.get(l.childEditionId);
+  return {topicId:t.id,topicEditionId:t.editionId,included:true,ideaChoice:"inherit"};
+ }),
 });
-const p9=makeCourse(grade9),p1012=makeCourse(grade1012);
-const us9=p9.topics.find(t=>byEdition.get(t.topicEditionId).title.startsWith("U.S. History:"));
-const us1012=p1012.topics.find(t=>t.topicEditionId===us9.topicEditionId);
-const ancient=p9.topics.find(t=>byEdition.get(t.topicEditionId).title.startsWith("Ancient History"));
-assert.ok(us9 && us1012 && ancient);
+const grade9=make(g9),older=make(g1012);
+const us=grade9.topics.find(t=>byEdition.get(t.topicEditionId).title.startsWith("U.S. History:"));
+const shared=older.topics.find(t=>t.topicEditionId===us.topicEditionId);
+const ancient=grade9.topics.find(t=>byEdition.get(t.topicEditionId).title.startsWith("Ancient History"));
+assert.ok(us&&shared&&ancient);
 
-const unsaved=listRowStatus(undefined,people,null,true,false);
-assert.equal(unsaved.saved,false);
-assert.equal(unsaved.ideaActive,false);
-assert.equal(unsaved.planActive,false);
-assert.equal(unsaved.planTone,"none");
+const state=(c,t=null)=>listRowStatus(c,people,t,true,true);
+assert.equal(listRowStatus(undefined,people,null,true,false).ideaTone,"none");
+assert.equal(listRowStatus(undefined,people,null,true,false).planTone,"none");
 
-const draft=listRowStatus(p9,people,null,true,true);
-assert.equal(draft.saved,true);
-assert.equal(draft.ideaActive,true,"saved idea colors its lightbulb");
-assert.equal(draft.planTone,"none","a saved idea is not automatically assigned");
-const ideaChild=listRowStatus(p9,people,us9.topicId,false,true);
-assert.equal(ideaChild.ideaActive,true,"topic in an idea remains available in Think Tank");
-assert.equal(ideaChild.contextTone,"inherited","child of a saved idea gets a light tint");
+// Clicking a COURSE bulb is the originating direct choice:
+// parent saturated; ALL child bulbs light, not individually saturated.
+const allIdea=structuredClone(grade9);
+allIdea.ideaAll=true;
+assert.equal(state(allIdea).ideaTone,"full");
+for(const topic of allIdea.topics) {
+ assert.equal(state(allIdea,topic.topicId).ideaTone,"inherited");
+ assert.equal(state(allIdea,topic.topicId).planTone,"none");
+}
+assert.equal(pendingIdeaCount(allIdea,people),allIdea.topics.length);
 
-p9.stage="planned";
-p9.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true});
-const parentPartial=listRowStatus(p9,people,null,true,true);
-const childDirect=listRowStatus(p9,people,us9.topicId,false,true);
-const unchosen=listRowStatus(p9,people,ancient.topicId,false,true);
-assert.equal(parentPartial.planTone,"partial",
-  "a combined parent with only one assigned topic gets the light color");
-assert.equal(parentPartial.ideaActive,false,
-  "planned combined parent no longer appears as a saturated Think Tank idea");
-assert.equal(childDirect.planTone,"full",
-  "directly assigned topic receives saturated subject color");
-assert.equal(childDirect.ideaActive,false,
-  "directly planned topic no longer colors Think Tank bulb");
-assert.equal(unchosen.planActive,false,
-  "other included topics remain unplanned");
-assert.equal(unchosen.ideaActive,true,
-  "unassigned topics remain available in Think Tank");
+// Clicking only a TOPIC bulb creates one direct idea; the course is pale,
+// the chosen topic saturated, and the other topics completely neutral.
+const topicIdea=structuredClone(grade9);
+topicIdea.topics.find(t=>t.topicId===us.topicId).ideaChoice="on";
+assert.equal(state(topicIdea).ideaTone,"partial");
+assert.equal(state(topicIdea,us.topicId).ideaTone,"full");
+for(const topic of topicIdea.topics.filter(t=>t.topicId!==us.topicId))
+ assert.equal(state(topicIdea,topic.topicId).ideaTone,"none");
+assert.equal(pendingIdeaCount(topicIdea,people),1);
+assert.equal(topicIsThinkTankIdea(topicIdea,ancient.topicId,people),false);
 
-p1012.stage="planned";
-p1012.overrides.push({topicId:us1012.topicId,studentId:"Troy",assigned:true});
-const separate=listRowStatus(p1012,people,us1012.topicId,false,true);
-assert.equal(separate.planTone,"full");
-p9.overrides[0].assigned=false;
-assert.equal(listRowStatus(p9,people,us9.topicId,false,true).planActive,false,
-  "removing AJ in Grade 9 never changes Troy's other History parent");
-assert.equal(listRowStatus(p1012,people,us1012.topicId,false,true).planActive,true);
-assert.notDeepEqual(sourceChoiceForRow(us9.topicId,grade9.id),
-  sourceChoiceForRow(us1012.topicId,grade1012.id),
-  "the same source edition is always scoped to the selected combined parent");
+// Toggling the exact same topic off returns it to neutral WITHOUT adding
+// its siblings, and does not require deleting its saved parent.
+topicIdea.topics.find(t=>t.topicId===us.topicId).ideaChoice="inherit";
+assert.equal(state(topicIdea,us.topicId).ideaTone,"none");
+assert.equal(state(topicIdea).ideaTone,"none");
+assert.equal(pendingIdeaCount(topicIdea,people),0);
 
-const whole=makeCourse(grade9);
-whole.stage="planned";whole.studentIds.push("AJ");
-assert.equal(listRowStatus(whole,people,null,true,true).planTone,"full",
-  "+All marks the combined course as a direct, saturated selection");
-assert.equal(listRowStatus(whole,people,us9.topicId,false,true).planTone,"inherited",
-  "a topic included through +All gets a lighter color");
-whole.overrides.push({topicId:ancient.topicId,studentId:"AJ",assigned:false});
-assert.equal(listRowStatus(whole,people,ancient.topicId,false,true).planTone,"none",
-  "a negative exception must not look planned even under +All");
-const removedTopic=structuredClone(whole);
-removedTopic.topics.find(t=>t.topicId===ancient.topicId).included=false;
-const excludedStatus=listRowStatus(removedTopic,people,ancient.topicId,false,true);
-assert.equal(excludedStatus.excluded,true);
-assert.equal(excludedStatus.planActive,false);
-assert.equal(excludedStatus.ideaActive,false,
-  "removed topics are neither planned nor an available Think Tank idea until restored");
+// Starting at TOPIC + creates only one planned topic. The parent +All is
+// light, the directly planned child + is saturated, untouched siblings
+// have no colored bulb or plus whatsoever.
+const topicPlan=structuredClone(grade9);
+topicPlan.stage="planned";
+topicPlan.overrides.push({topicId:us.topicId,studentId:"AJ",assigned:true});
+assert.equal(state(topicPlan).planTone,"partial");
+assert.equal(state(topicPlan).ideaTone,"none");
+assert.equal(state(topicPlan,us.topicId).planTone,"full");
+assert.equal(state(topicPlan,us.topicId).ideaTone,"none");
+for(const topic of topicPlan.topics.filter(t=>t.topicId!==us.topicId)){
+ assert.equal(state(topicPlan,topic.topicId).planTone,"none");
+ assert.equal(state(topicPlan,topic.topicId).ideaTone,"none");
+}
+assert.equal(pendingIdeaCount(topicPlan,people),0,
+ "starting with topic + must not auto-add sibling topics to Think Tank");
+
+// Starting at COURSE +All is the reciprocal: saturated parent +All,
+// lightly-colored + buttons for ALL included children.
+const allPlan=structuredClone(grade9);
+allPlan.stage="planned";
+allPlan.studentIds.push("AJ");
+assert.equal(state(allPlan).planTone,"full");
+assert.equal(state(allPlan).ideaTone,"none");
+for(const topic of allPlan.topics){
+ assert.equal(state(allPlan,topic.topicId).planTone,"inherited");
+ assert.equal(state(allPlan,topic.topicId).ideaTone,"none");
+}
+
+// Direct Think Tank topic and Plan topic can coexist under one parent,
+// without displaying unrelated siblings in either column.
+const mixed=structuredClone(topicPlan);
+mixed.topics.find(t=>t.topicId===ancient.topicId).ideaChoice="on";
+assert.equal(state(mixed).planTone,"partial");
+assert.equal(state(mixed).ideaTone,"partial");
+assert.equal(state(mixed,us.topicId).planTone,"full");
+assert.equal(state(mixed,ancient.topicId).ideaTone,"full");
+assert.equal(pendingIdeaCount(mixed,people),1);
+
+// Removing all students from a topic returns just that child as a direct
+// Think Tank idea, leaving the sibling parent untouched.
+const removed=structuredClone(topicPlan);
+removed.stage="idea";
+removed.overrides[0].assigned=false;
+removed.topics.find(t=>t.topicId===us.topicId).ideaChoice="on";
+assert.equal(state(removed).planTone,"none");
+assert.equal(state(removed).ideaTone,"partial");
+assert.equal(state(removed,us.topicId).ideaTone,"full");
+assert.equal(pendingIdeaCount(removed,people),1);
+
+// Shared U.S. History edition must not borrow status between grade contexts.
+older.stage="planned";
+older.overrides.push({topicId:shared.topicId,studentId:"Troy",assigned:true});
+assert.equal(state(older,shared.topicId).planTone,"full");
+assert.equal(state(topicIdea,us.topicId).planTone,"none");
+assert.notDeepEqual(sourceChoiceForRow(us.topicId,g9.id),
+ sourceChoiceForRow(shared.topicId,g1012.id));
+
+// A topic inherited from a whole-course idea can be explicitly deselected.
+const withException=structuredClone(allIdea);
+withException.topics.find(t=>t.topicId===ancient.topicId).ideaChoice="off";
+assert.equal(state(withException,ancient.topicId).ideaTone,"none");
+assert.equal(state(withException,us.topicId).ideaTone,"inherited");
+assert.equal(pendingIdeaCount(withException,people),allIdea.topics.length-1);
+
+// An excluded topic is not available in either column.
+const excluded=structuredClone(allIdea);
+excluded.topics.find(t=>t.topicId===us.topicId).included=false;
+assert.equal(state(excluded,us.topicId).excluded,true);
+assert.equal(state(excluded,us.topicId).ideaTone,"none");
+assert.equal(state(excluded,us.topicId).planTone,"none");
+
+// A single-topic course still has saturated course-level controls.
 const single=catalog.courses.find(c=>c.type==="Single-Topic Course");
 assert.ok(single);
-const singleChoice={courseId:single.id,stage:"planned",studentIds:["AJ"],overrides:[],
-  topics:[{topicId:single.id,included:true}]};
-assert.equal(listRowStatus(singleChoice,people,null,false,true).planTone,"full");
+const one={courseId:single.id,stage:"planned",ideaAll:false,studentIds:["AJ"],
+ overrides:[],topics:[{topicId:single.id,included:true,ideaChoice:"inherit"}]};
+assert.equal(listRowStatus(one,people,null,false,true).planTone,"full");
 
 for(const [subject,expected] of Object.entries({
-  "History":"#6b6bbf","Literature":"#c07669","Math":"#6d7eaa",
-  "English":"#9b5b7b","Science":"#96a767","Citizenship":"#62765c",
-  "Modern Language":"#6db4b2","Life Skills":"#d1b358",
+ History:"#6b6bbf",Literature:"#c07669",Math:"#6d7eaa",
+ English:"#9b5b7b",Science:"#96a767",Citizenship:"#62765c",
+ "Modern Language":"#6db4b2","Life Skills":"#d1b358",
 })){
-  assert.equal(subjectColor(subject),expected,subject+" original subject palette");
-  assert.equal(subjectColors[subject],expected);
+ assert.equal(subjectColor(subject),expected,subject+" legacy palette");
+ assert.equal(subjectColors[subject],expected);
 }
-assert.equal(subjectColor("LITERATURE"),subjectColors["Literature"]);
-console.log("PASS: quiet List indicators use original subject colors and exact combined parent/topic selection states.");
+assert.equal(subjectColor("LITERATURE"),subjectColors.Literature);
+console.log("PASS: course-origin selections are saturated at parent with light children; topic-origin selections are saturated only at child with light parent and neutral siblings.");
