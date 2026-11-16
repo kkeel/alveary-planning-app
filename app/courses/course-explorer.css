@@ -427,7 +427,10 @@
   border-color:#d3dcd1;
   color:#4d6553;
 }
-.cx-course-actions .cx-info-action.is-open.is-member:hover:not(:disabled),
+/* Both View and Hide use the parent row's subject wash on hover if
+   that row is already selected. Previously only Hide (.is-open) matched,
+   leaving View with the generic green hover on colored rows. */
+.cx-course-actions .cx-info-action.is-member:hover:not(:disabled),
 .cx-course-actions .cx-idea-action.is-tone-partial:hover:not(:disabled),
 .cx-course-actions .cx-idea-action.is-tone-inherited:hover:not(:disabled),
 .cx-course-actions .cx-direct-plan-action.is-tone-partial:hover:not(:disabled),
