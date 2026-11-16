@@ -133,6 +133,24 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
+    {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
+      <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
+        title={topicId ? "Assign this topic to every student" :
+          "Assign the full included course to every current student"}>
+        All <small>{demo.students.length}</small>
+      </button>
+      {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
+        <button type="button" onClick={() => assign(group.studentIds)}
+          disabled={!group.studentIds.length}>
+          {group.name} <small>{group.studentIds.length}</small>
+        </button>
+        <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
+          aria-label={"Edit " + group.name}>Edit</button>
+      </div>)}
+      <button type="button" className="plan-group-create" onClick={() => openGroup()}>
+        + Group
+      </button>
+    </div>}
     <div className="plan-individuals" aria-label="Assign individual students">
       {demo.students.map(student => <label key={student.id}>
         <input type="checkbox" checked={assigned.has(student.id)}
@@ -147,24 +165,6 @@ export default function StudentAssignmentEditor({
       {" "}{topicOnlyStudents.length === 1 ? "has" : "have"} individual topics selected.
       Selecting a name above assigns the full included course.
     </p>}
-    {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
-      <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
-        title={topicId ? "Assign this topic to every student" :
-          "Assign the full included course to every current student"}>
-        Family <small>{demo.students.length}</small>
-      </button>
-      {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
-        <button type="button" onClick={() => assign(group.studentIds)}
-          disabled={!group.studentIds.length}>
-          {group.name} <small>{group.studentIds.length}</small>
-        </button>
-        <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
-          aria-label={"Edit " + group.name}>Edit</button>
-      </div>)}
-      <button type="button" className="plan-group-create" onClick={() => openGroup()}>
-        + Group
-      </button>
-    </div>}
     {groupEditing && <div className="plan-group-form">
       <label htmlFor="planning-group-name">Group name</label>
       <input id="planning-group-name" value={groupName} maxLength={50}
@@ -193,14 +193,28 @@ export default function StudentAssignmentEditor({
       </div>
       <p className="plan-microcopy">Groups are shortcuts. Changes to a group never rewrite saved assignments.</p>
     </div>}
-    {!topicId && !!course.studentIds.length && <>
-      <button type="button" className="plan-text-disclosure"
-        aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
-        {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-        Priorities &amp; arrangements <small>optional</small>
-      </button>
-      {showPreferences && <div className="plan-preferences">
-        {demo.students.filter(student => assigned.has(student.id)).map(student => {
+    <button type="button" className="plan-text-disclosure"
+      aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
+      {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+      Advanced assignment <small>optional</small>
+    </button>
+    {showPreferences && <div className="plan-preferences">
+      {topicId ? <>
+        <p className="plan-microcopy">
+          This editor assigns only the selected topic. Individual topic priority
+          settings need their own saved preferences, which are not available yet.
+          A course priority must not be silently changed from a topic editor.
+        </p>
+      </> : <>
+        {!!topicOnlyStudents.length && <p className="plan-microcopy">
+          Students assigned only selected topics will be able to set those topic
+          priorities when topic-specific preferences are added.
+        </p>}
+        {!course.studentIds.length && <p className="plan-microcopy">
+          Choose a student for the entire included course above to set a course
+          priority and arrangement. Topic-only choices stay separate.
+        </p>}
+        {demo.students.filter(student => course.studentIds.includes(student.id)).map(student => {
           const pref = demo.studentPreferences.find(p =>
             p.courseId === course.courseId && p.studentId === student.id);
           const priority = pref?.priority ?? null;
@@ -230,7 +244,7 @@ export default function StudentAssignmentEditor({
             </label>
           </div>;
         })}
-      </div>}
-    </>}
+      </>}
+    </div>}
   </div>;
 }
