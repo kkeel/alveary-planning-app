@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowUp, BookOpen, BookmarkCheck, ChevronDown, ChevronRight,
-  Lightbulb, Maximize2, Minimize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
+  ArrowDown, ArrowLeft, ArrowUp, BookOpen, ChevronDown, ChevronRight,
+  ClipboardCheck, Lightbulb, NotebookPen, Maximize2, Minimize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,7 +30,7 @@ const sorted = (a: CatalogPlan, b: CatalogPlan) =>
   a.presentationSort.localeCompare(b.presentationSort) ||
   a.sort.localeCompare(b.sort) || a.id.localeCompare(b.id);
 
-export default function PlanningDesk() {
+export default function PlanningDesk({ variant = "portable" }: { variant?: "portable" | "full" }) {
   const desk = usePlanningDesk();
   const cloud = useDemoPlan();
   const pathname = usePathname();
@@ -138,57 +138,10 @@ export default function PlanningDesk() {
     </button>
   </div>;
 
-  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "") +
-    (wideDesk ? " is-wide" : "")}>
-    <button type="button" className="pd-mobile-launcher"
-      aria-label={"Open Planning Desk. " + ideas.length + " Think Tank ideas"}
-      title="Open Planning Desk" aria-expanded={drawerOpen}
-      onClick={() => { desk.setQuiet(false); setDrawerOpen(true); }}>
-      <Lightbulb size={25} aria-hidden="true"/>
-      {ideas.length > 0 && <span className="pd-mobile-count" aria-hidden="true">{ideas.length > 99 ? "99+" : ideas.length}</span>}
-    </button>
-    {drawerOpen && <button type="button" className="pd-mobile-scrim"
-      aria-label="Close Planning Desk" onClick={closeMobileDrawer} />}
 
-    {desk.quiet ? <aside className="pd-quiet" aria-label="Quiet Planning Desk">
-      <div className="pd-quiet-head">
-        <span><Lightbulb size={16} /> Your Planning Desk</span>
-        <button type="button" aria-label="Open Planning Desk" title="Open Planning Desk"
-          onClick={() => desk.setQuiet(false)}><PanelRightOpen size={17}/></button>
-      </div>
-      {summaries}
-    </aside> : <aside className="pd-desk" aria-label="Your Planning Desk">
-      <header className="pd-header">
-        <div className="pd-title"><Lightbulb size={20}/><h2>Your Planning Desk</h2></div>
-        <div className="pd-header-actions">
-          <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
-            role={cloud.error ? "alert" : "status"}
-            aria-live="polite" title={cloud.error ?? undefined}>
-            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
-          </span>
-          <button type="button" aria-label={wideDesk ? "Return to regular Planning Desk width" : "Expand Planning Desk"}
-            title={wideDesk ? "Regular desk width" : "Wider planning space"}
-            aria-pressed={wideDesk} onClick={() => setWideDesk(value => !value)}>
-            {wideDesk ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
-          </button>
-          <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
-            onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
-        </div>
-      </header>
-
-      <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
-        <button role="tab" type="button" aria-selected={desk.tab === "think"}
-          className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
-          Think Tank <span>{ideas.length}</span>
-        </button>
-        <button role="tab" type="button" aria-selected={desk.tab === "plan"}
-          className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
-          My Plan <span>{plannedIds.size}</span>
-        </button>
-      </div>
-
-      <div className="pd-body">
-        {cloud.ready && unsynced.length > 0 && <div className="pd-save-browser">
+  // Render one shared set of planning components in either the compact tabs
+  // or two visible columns. List and Planning never mount both desk variants.
+  const notices = <>        {cloud.ready && unsynced.length > 0 && <div className="pd-save-browser">
           <strong>{unsynced.length} browser-only {unsynced.length === 1 ? "idea" : "ideas"}</strong>
           <p>Bring your existing Think Tank choices and topic customizations into your private Demo plan. This merges without overwriting choices already saved to your account.</p>
           <button type="button" onClick={saveLegacyIdeas} disabled={cloud.saving}>
@@ -196,11 +149,8 @@ export default function PlanningDesk() {
           </button>
         </div>}
         {cloud.error && <div className="pd-save-error-inline" role="alert">{cloud.error}</div>}
-        {onBooks && <Link className="pd-return" href="/courses"
-          onClick={() => {desk.setCourseMode("plan"); closeMobileDrawer();}}>
-          <ArrowLeft size={14}/> Back to Course List · Planning
-        </Link>}
-        {desk.tab === "think" ? <>
+  </>;
+  const thinkTankContent = <>
           <p className="pd-intro">Ideas to consider for your school year.</p>
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map((subject, index) => {
@@ -249,7 +199,7 @@ export default function PlanningDesk() {
                             setReviewId(reviewId === idea.id ? null : idea.id);
                             if (reviewId !== idea.id) setJustPlannedId(null);
                           }}>
-                          <BookmarkCheck size={14}/><span>{idea.title}
+                          <Lightbulb size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
                           </span>
                           {reviewId === idea.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
@@ -350,7 +300,95 @@ export default function PlanningDesk() {
           <textarea id="pd-notes" value={desk.notes} onChange={e => desk.setNotes(e.target.value)}
             rows={3} placeholder="What are you considering?"/>
           <p className="pd-local-note">Notes and display preferences remain in this browser. Course choices are saved to your Demo plan after merging.</p>
-        </> : <MyPlanPanel focusCourseId={justPlannedId} />}
+  </>;
+
+  if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
+    <div className="pd-full-status">
+      <span className="pd-full-status-label"><NotebookPen size={16} aria-hidden="true"/> Your Planning Desk</span>
+      <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
+        role={cloud.error ? "alert" : "status"} aria-live="polite">
+        {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
+      </span>
+    </div>
+    <div className="pd-full-columns">
+      <section className="pd-full-column" aria-label="Think Tank">
+        <header className="pd-full-column-heading">
+          <h2><Lightbulb size={19} aria-hidden="true"/> Think Tank</h2>
+          <span className="pd-full-count">{ideas.length} {ideas.length === 1 ? "idea" : "ideas"}</span>
+        </header>
+        <div className="pd-full-column-body">
+          {notices}
+          {thinkTankContent}
+        </div>
+      </section>
+      <section className="pd-full-column" aria-label="My Plan">
+        <header className="pd-full-column-heading">
+          <h2><ClipboardCheck size={19} aria-hidden="true"/> My Plan</h2>
+          <span className="pd-full-count">{plannedIds.size} {plannedIds.size === 1 ? "selection" : "selections"}</span>
+        </header>
+        <div className="pd-full-column-body">
+          <MyPlanPanel focusCourseId={justPlannedId} sideBySide />
+        </div>
+      </section>
+    </div>
+  </section>;
+
+  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "") +
+    (wideDesk ? " is-wide" : "")}>
+    <button type="button" className="pd-mobile-launcher"
+      aria-label={"Open Planning Desk. " + ideas.length + " Think Tank ideas"}
+      title="Open Planning Desk" aria-expanded={drawerOpen}
+      onClick={() => { desk.setQuiet(false); setDrawerOpen(true); }}>
+      <NotebookPen size={25} aria-hidden="true"/>
+      {ideas.length > 0 && <span className="pd-mobile-count" aria-hidden="true">{ideas.length > 99 ? "99+" : ideas.length}</span>}
+    </button>
+    {drawerOpen && <button type="button" className="pd-mobile-scrim"
+      aria-label="Close Planning Desk" onClick={closeMobileDrawer} />}
+
+    {desk.quiet ? <aside className="pd-quiet" aria-label="Quiet Planning Desk">
+      <div className="pd-quiet-head">
+        <span><NotebookPen size={16} /> Your Planning Desk</span>
+        <button type="button" aria-label="Open Planning Desk" title="Open Planning Desk"
+          onClick={() => desk.setQuiet(false)}><PanelRightOpen size={17}/></button>
+      </div>
+      {summaries}
+    </aside> : <aside className="pd-desk" aria-label="Your Planning Desk">
+      <header className="pd-header">
+        <div className="pd-title"><NotebookPen size={20}/><h2>Your Planning Desk</h2></div>
+        <div className="pd-header-actions">
+          <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
+            role={cloud.error ? "alert" : "status"}
+            aria-live="polite" title={cloud.error ?? undefined}>
+            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
+          </span>
+          <button type="button" aria-label={wideDesk ? "Return to regular Planning Desk width" : "Expand Planning Desk"}
+            title={wideDesk ? "Regular desk width" : "Wider planning space"}
+            aria-pressed={wideDesk} onClick={() => setWideDesk(value => !value)}>
+            {wideDesk ? <Minimize2 size={17}/> : <Maximize2 size={17}/>}
+          </button>
+          <button type="button" aria-label="Quiet the Planning Desk" title="Quiet the Planning Desk"
+            onClick={() => {desk.setQuiet(true); closeMobileDrawer();}}><PanelRightClose size={19}/></button>
+        </div>
+      </header>
+
+      <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
+        <button role="tab" type="button" aria-selected={desk.tab === "think"}
+          className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
+          Think Tank <span>{ideas.length}</span>
+        </button>
+        <button role="tab" type="button" aria-selected={desk.tab === "plan"}
+          className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
+          My Plan <span>{plannedIds.size}</span>
+        </button>
+      </div>
+
+      <div className="pd-body">
+        {notices}
+        {onBooks && <Link className="pd-return" href="/courses"
+          onClick={() => {desk.setCourseMode("browse"); closeMobileDrawer();}}>
+          <ArrowLeft size={14}/> Back to Course List
+        </Link>}
+        {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={justPlannedId} />}
       </div>
     </aside>}
   </div>;

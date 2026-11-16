@@ -534,3 +534,38 @@
 .myplan-student-separator { white-space:pre; }
 .myplan-combined-symbol { display:inline-flex; vertical-align:-3px; margin-left:3px; color:#66856c; }
 .myplan-combined-symbol svg { flex-shrink:0; }
+
+/* Planning full-page view: same saved Think Tank/My Plan as the portable desk. */
+.pd-full-page { min-width:0; margin-top:18px; font-family:"DM Sans", sans-serif; color:#303930; }
+.pd-full-page button { font-family:inherit; }
+.pd-full-status { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  min-height:34px; margin-bottom:12px; }
+.pd-full-status-label { display:inline-flex; align-items:center; gap:8px; color:#596e5e;
+  font-size:12px; font-weight:600; }
+.pd-full-columns { display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:20px; align-items:start; }
+.pd-full-column { min-width:0; background:#fffefa; border:1px solid #d4dbc9;
+  border-radius:4px; box-shadow:0 2px 8px #2631280b; }
+.pd-full-column-heading { display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:8px; padding:16px 17px 13px; border-bottom:1px solid #e3e9df;
+  background:#fafbf7; }
+.pd-full-column-heading h2 { display:flex; align-items:center; gap:9px;
+  font-family:var(--font-plantin),Georgia,serif; font-weight:200;
+  font-size:24px; line-height:1.25; margin:0; color:#2e3f32; }
+.pd-full-column-heading h2 svg { flex:none; color:#6c8c70; }
+.pd-full-count { font-size:11px; color:#728474; white-space:nowrap; }
+.pd-full-column-body { padding:15px 16px 24px; overflow-y:auto; overflow-x:hidden;
+  max-height:calc(100vh - 315px); min-height:330px; overscroll-behavior:contain;
+  scrollbar-gutter:stable; }
+.pd-full-column-body .pd-subject-list { gap:11px; }
+.pd-full-column-body .pd-intro { font-size:12px; }
+.pd-full-column-body .pd-review { padding:14px; }
+.pd-full-column-body .pd-notes-label { display:block; margin-top:14px; }
+@media(max-width:950px) {
+  .pd-full-columns { grid-template-columns:minmax(0,1fr); }
+  .pd-full-column-body { max-height:none; min-height:0; overflow:visible; }
+}
+@media print {
+  .pd-full-column-body { max-height:none; overflow:visible; }
+  .pd-full-column { break-inside:avoid-page; }
+}

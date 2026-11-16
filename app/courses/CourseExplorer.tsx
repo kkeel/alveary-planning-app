@@ -8,6 +8,7 @@ import { matchesCountry } from "./country-filter.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 import { usePlannerAuth } from "../components/PlannerAuthProvider";
+import PlanningDesk from "../components/PlanningDesk";
 
 type Plan = {
   id: string;
@@ -300,27 +301,30 @@ export default function CourseExplorer() {
 
   const courseRowProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics,
-    mode,
+    mode: signedIn ? "plan" : "browse",
     planned,
     onPlannedToggle: desk.toggleIdea,
   };
 
   return <div className="cx-page">
     <header className="cx-heading">
-      <h1>Course List</h1>
-      <p className="cx-lead">Discover courses, explore subjects, and consider possibilities for your school year.</p>
+      <h1>{signedIn && mode === "plan" ? "Planning Desk" : signedIn ? "Course List" : "Explore Courses"}</h1>
+      <p className="cx-lead">{signedIn && mode === "plan"
+        ? "Consider your ideas alongside your chosen courses and organize your family plan."
+        : "Discover courses, explore subjects, and consider possibilities for your school year."}</p>
     </header>
 
     <div className="cx-toolbar-sticky">
     <div className="cx-toolbar" aria-label="Course List tools">
-      <div className="cx-mode-switch" role="group" aria-label="Course browsing mode">
+      {signedIn && <div className="cx-mode-switch" role="group" aria-label="Course views">
         <button type="button" className={mode === "browse" ? "is-current" : ""} onClick={() => setMode("browse")}>
           <List size={14} /> List
         </button>
         {signedIn && <button type="button" className={mode === "plan" ? "is-current" : ""} onClick={() => setMode("plan")}>
           <NotebookPen size={14} /> Planning
         </button>}
-      </div>
+      </div>}
+      {mode !== "plan" && <>
       <button type="button" className="cx-mobile-filter-toggle"
         aria-controls="cx-toolbar-filter-tools" aria-expanded={mobileFiltersOpen}
         onClick={() => { setMobileFiltersOpen(value => !value); setGradesOpen(false); }}>
@@ -349,15 +353,16 @@ export default function CourseExplorer() {
           <Printer size={17} />
         </button>
       </div>
+      </>}
     </div>
-    <div className="cx-mobile-filter-summary" aria-label="Current course filters">
+    {mode !== "plan" && <div className="cx-mobile-filter-summary" aria-label="Current course filters">
       <span>{grades.length ? gradeLabel(grades) : "All grades"}</span>
       {country !== "all" && <span>{country === "us" ? "U.S." : "Canada"}</span>}
       {subject && <span>{subject}</span>}
       {query && <span>Search active</span>}
-    </div>
+    </div>}
 
-    {gradesOpen && <div ref={gradePanelRef} className="cx-grade-panel" id="cx-grade-options">
+    {mode !== "plan" && gradesOpen && <div ref={gradePanelRef} className="cx-grade-panel" id="cx-grade-options">
       <div className="cx-grade-panel-heading">
         <span>Show courses for</span>
         <button type="button" onClick={() => { setGrades([]); setGradesOpen(false); }}>All grades</button>
@@ -388,7 +393,7 @@ export default function CourseExplorer() {
     </div>
 
 
-    <div className="cx-page-columns">
+    {signedIn && mode === "plan" ? <PlanningDesk variant="full" /> : <div className="cx-page-columns">
       <div className="cx-list-column">
         {subjectRows.length > 0 ? subjectRows.map(section =>
           <section className="cx-subject" key={section.name} aria-label={section.name}>
@@ -409,6 +414,6 @@ export default function CourseExplorer() {
           <button type="button" onClick={() => { setGrades([]); setCountry("all"); setSubject(""); setQuery(""); }}>Show all courses</button>
         </div>}
       </div>
-    </div>
+    </div>}
   </div>;
 }
