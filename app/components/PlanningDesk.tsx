@@ -42,6 +42,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
+  // Keep My Plan focus independent from the temporary Think Tank row pin.
+  // Done can release the row while still opening the corresponding right-side
+  // course, including when its student was already checked before editing.
+  const [focusPlanned, setFocusPlanned] = useState<{ courseId: string; revision: number } | null>(null);
+  function focusMyPlan(courseId: string) {
+    setFocusPlanned(previous => ({ courseId, revision: (previous?.revision ?? 0) + 1 }));
+  }
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -284,10 +291,18 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <div className="pd-assign-in-place">
                             <StudentAssignmentEditor
                               course={cloud.courses.find(c => c.courseId === idea.id)!}
-                              onAssigned={() => setJustPlannedId(idea.id)}
+                              onAssigned={() => {
+                                setJustPlannedId(idea.id);
+                                focusMyPlan(idea.id);
+                              }}
+                              onCancel={() => {
+                                setAssigningId(null);
+                                setJustPlannedId(null);
+                              }}
                               onClose={() => {
                                 setAssigningId(null);
                                 setJustPlannedId(null);
+                                focusMyPlan(idea.id);
                               }}
                             />
                           </div>}
@@ -296,8 +311,15 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           excludedTopicIds={excludedTopicIds}
                           onToggleTopic={topicId =>
                             desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
-                          onTopicAssigned={() => setJustPlannedId(idea.id)}
-                          onTopicDone={() => setJustPlannedId(null)}
+                          onTopicAssigned={() => {
+                            setJustPlannedId(idea.id);
+                            focusMyPlan(idea.id);
+                          }}
+                          onTopicDone={() => {
+                            setJustPlannedId(null);
+                            focusMyPlan(idea.id);
+                          }}
+                          onTopicCancel={() => setJustPlannedId(null)}
                         />
 
                       </div>}
@@ -342,7 +364,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <span className="pd-full-count">{plannedIds.size} {plannedIds.size === 1 ? "selection" : "selections"}</span>
         </header>
         <div className="pd-full-column-body">
-          <MyPlanPanel focusCourseId={justPlannedId} sideBySide />
+          <MyPlanPanel focusCourseId={focusPlanned?.courseId}
+            focusRevision={focusPlanned?.revision} sideBySide />
         </div>
       </section>
     </div>
@@ -402,7 +425,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           onClick={() => {desk.setCourseMode("browse"); closeMobileDrawer();}}>
           <ArrowLeft size={14}/> Back to Course List
         </Link>}
-        {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={justPlannedId} />}
+        {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
+          focusRevision={focusPlanned?.revision} />}
       </div>
     </aside>}
   </div>;
