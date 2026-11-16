@@ -13,6 +13,7 @@ import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
 import { coursePriority } from "./priority-inheritance.mjs";
+import { courseArrangement } from "./arrangement-inheritance.mjs";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -24,7 +25,7 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"],
+  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"],
   priorities: ReturnType<typeof useDemoPlan>["assignmentPriorities"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
@@ -32,7 +33,7 @@ function studentSummary(course: SavedCourse,
   const assigned = people.filter(student => effectiveTopicCount(course, student.id) > 0);
   if (!assigned.length) return "Students to be decided";
   return assigned.map((student, index) => {
-    const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === student.id);
+    const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id);
     const topicsAssigned = effectiveTopicCount(course, student.id);
     const defaultPriority = coursePriority(priorities, course.courseId,student.id);
     const hasTopicOverrides = priorities.some(p => p.courseId === course.courseId &&
@@ -44,7 +45,7 @@ function studentSummary(course: SavedCourse,
         <span className="myplan-topic-count" title="Individual topic assignment">
           {" · " + topicsAssigned + " of " + includedCount + " topics"}
         </span>}
-      {pref?.arrangement === "Combined" && <span className="myplan-combined-symbol"
+      {defaultArrangement === "Combined" && <span className="myplan-combined-symbol"
         title="Combined arrangement" aria-label="Combined arrangement">
         <PlacementSymbol size={14}/>
       </span>}
@@ -139,7 +140,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       {customized && <CourseCustomizationNote
                         included={includedCount} total={course.topics.length}/>}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.studentPreferences,demo.assignmentPriorities)}
+                        {studentSummary(course,demo.students,demo.assignmentArrangements,demo.assignmentPriorities)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
