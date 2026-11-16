@@ -411,3 +411,40 @@
 @media print {
   .cx-course-actions, .cx-inline-assign { display:none !important; }
 }
+
+/* Unified List hover logic: only already-colored selections use subject
+   hues. Neutral actions (including View/Hide for unselected rows) remain
+   neutral. Hover never changes the saved selection or its intensity. */
+.cx-course-actions .cx-info-action:not(.is-member):hover:not(:disabled),
+.cx-course-actions .cx-idea-action:not(.is-selected):hover:not(:disabled),
+.cx-course-actions .cx-direct-plan-action:not(.is-selected):hover:not(:disabled) {
+  background:#f0f3ee;
+  border-color:#cbd6c9;
+  color:#4e6655;
+}
+.cx-course-actions .cx-info-action.is-open:not(.is-member):hover:not(:disabled) {
+  background:#e9eee7;
+  border-color:#d3dcd1;
+  color:#4d6553;
+}
+.cx-course-actions .cx-info-action.is-open.is-member:hover:not(:disabled),
+.cx-course-actions .cx-idea-action.is-tone-partial:hover:not(:disabled),
+.cx-course-actions .cx-idea-action.is-tone-inherited:hover:not(:disabled),
+.cx-course-actions .cx-direct-plan-action.is-tone-partial:hover:not(:disabled),
+.cx-course-actions .cx-direct-plan-action.is-tone-inherited:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--cx-subject) 23%,white);
+  border-color:color-mix(in srgb,var(--cx-subject) 48%,white);
+  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c);
+}
+.cx-course-actions .cx-idea-action.is-tone-full:hover:not(:disabled),
+.cx-course-actions .cx-direct-plan-action.is-tone-full:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--cx-subject) 84%,#263a2d);
+  border-color:color-mix(in srgb,var(--cx-subject) 84%,#263a2d);
+  color:#fff;
+}
+.cx-course.cx-status-full > .cx-course-head .cx-course-disclosure:hover:not(:disabled),
+.cx-course.cx-status-partial > .cx-course-head .cx-course-disclosure:hover:not(:disabled),
+.cx-course.cx-status-inherited > .cx-course-head .cx-course-disclosure:hover:not(:disabled),
+.cx-course.cx-status-idea > .cx-course-head .cx-course-disclosure:hover:not(:disabled) {
+  background:var(--cx-subject-soft);
+}
