@@ -4,7 +4,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import type { CountryFilter } from "../courses/country-filter.mjs";
 import { useDemoPlan } from "./DemoPlanContext";
 
+type DetailMode = "expanded" | "compact";
 type PlanningDeskState = {
+  listDetails: DetailMode;
+  thinkDetails: DetailMode;
+  planDetails: DetailMode;
   thinkTankIds: string[];
   // Parent course ID → child edition plan IDs excluded from that course only.
   excludedTopicIdsByCourse: Record<string, string[]>;
@@ -21,6 +25,9 @@ type PlanningDeskState = {
 type PlanningDeskContextValue = PlanningDeskState & {
   ready: boolean;
   setCourseMode: (mode: "browse" | "plan") => void;
+  setListDetails: (mode: DetailMode) => void;
+  setThinkDetails: (mode: DetailMode) => void;
+  setPlanDetails: (mode: DetailMode) => void;
   setGrades: Dispatch<SetStateAction<number[]>>;
   setCountry: (country: CountryFilter) => void;
   toggleIdea: (id: string) => void;
@@ -39,6 +46,8 @@ type PlanningDeskContextValue = PlanningDeskState & {
 
 const keyPrefix = "alveary:shared-planning-desk-preview:2027-28:";
 const defaults: PlanningDeskState = {
+  // Browsing should reveal the curriculum; planning starts with a calm summary.
+  listDetails: "expanded", thinkDetails: "compact", planDetails: "compact",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
   grades: [], country: "all", notes: "",
@@ -79,6 +88,9 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PlanningDeskState>;
         setValue({
+          listDetails: saved.listDetails === "compact" ? "compact" : "expanded",
+          thinkDetails: saved.thinkDetails === "expanded" ? "expanded" : "compact",
+          planDetails: saved.planDetails === "expanded" ? "expanded" : "compact",
           thinkTankIds: Array.isArray(saved.thinkTankIds) ? saved.thinkTankIds.filter((x): x is string => typeof x === "string") : [],
           excludedTopicIdsByCourse: normalizeExcludedTopics(saved.excludedTopicIdsByCourse),
           subjectOrder: Array.isArray(saved.subjectOrder) ? saved.subjectOrder.filter((x): x is string => typeof x === "string") : [],
@@ -145,6 +157,9 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,
     setCourseMode,
+    setListDetails: mode => setValue(v => v.listDetails === mode ? v : {...v,listDetails:mode}),
+    setThinkDetails: mode => setValue(v => v.thinkDetails === mode ? v : {...v,thinkDetails:mode}),
+    setPlanDetails: mode => setValue(v => v.planDetails === mode ? v : {...v,planDetails:mode}),
     setGrades: next => setValue(v => ({
       ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
     })),
