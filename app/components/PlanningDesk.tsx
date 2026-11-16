@@ -317,13 +317,15 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           excludedTopicIds={excludedTopicIds}
                           onToggleTopic={topicId =>
                             desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
-                          onTopicAssigned={() => {
-                            setJustPlannedId(idea.id);
-                            focusMyPlan(idea.id);
+                          onTopicAssigned={sourceCourseId => {
+                            // Editing a shared edition through another parent must
+                            // focus THAT course, never the course used to open it.
+                            if (sourceCourseId === idea.id) setJustPlannedId(idea.id);
+                            focusMyPlan(sourceCourseId);
                           }}
-                          onTopicDone={() => {
+                          onTopicDone={sourceCourseId => {
                             setJustPlannedId(null);
-                            focusMyPlan(idea.id);
+                            focusMyPlan(sourceCourseId);
                           }}
                           onTopicCancel={() => setJustPlannedId(null)}
                         />
