@@ -284,7 +284,10 @@ function CourseRow({
           <StudentAssignmentEditor course={parentChoice}
             onClose={onEndPlan} onCancel={onEndPlan}/>}
     </div>}
-    {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
+    {canExpand && isExpanded && <div
+      className={"cx-course-details" +
+        (isCombined && !course.description && course.tips ? " cx-details-tip-first" : "")}
+      id={detailsId}>
       {!isCombined && <div className="cx-course-meta">
         {course.schedules.length > 0 && <div className="cx-schedule-list">
           {course.schedules.map(schedule => <span key={schedule.id} className="cx-schedule-item">
