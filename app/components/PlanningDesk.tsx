@@ -212,10 +212,15 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const itemMenu = "idea:" + idea.id;
                     const courseTopics = topicConnections.get(idea.editionId) ?? [];
                     const excludedTopicIds = desk.excludedTopicIdsByCourse[idea.id] ?? [];
-                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
-                    const isCustomized = excludedCount > 0;
-                    const includedCount = courseTopics.length - excludedCount;
                     const savedChoice = cloud.courses.find(course => course.courseId === idea.id);
+                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
+                    // The saved course is authoritative for what remains included,
+                    // just as it is in My Plan. Browser-only ideas use local choices.
+                    const includedCount = savedChoice?.topics.length
+                      ? savedChoice.topics.filter(topic => topic.included).length
+                      : courseTopics.length - excludedCount;
+                    const isCustomized = courseTopics.length > 1 &&
+                      includedCount < courseTopics.length;
                     const remainingCount = savedChoice
                       ? remainingTopicCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
