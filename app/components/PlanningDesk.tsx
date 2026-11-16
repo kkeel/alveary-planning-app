@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowUp, BookOpen, ChevronDown, ChevronRight,
-  ClipboardCheck, Lightbulb, NotebookPen, Maximize2, MoreHorizontal, PanelRightClose, PanelRightOpen, RotateCcw, X, Plus,
+  ArrowLeft, BookOpen, ChevronDown, ChevronRight, Info,
+  SquareCheckBig, Lightbulb, NotebookPen, Maximize2, MoreHorizontal,
+  PanelRightClose, PanelRightOpen, X, Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -112,35 +113,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     const br = grouped.get(b)?.[0]?.subjectSort ?? 999;
     return ar - br || a.localeCompare(b);
   });
-  const subjectOrder = desk.subjectOrder.filter(subject => grouped.has(subject));
-  // New subjects arrive beside their curriculum-order neighbors; manually
-  // arranged existing subject stacks retain their relative placement.
-  for (const subject of suggestedSubjects) {
-    if (subjectOrder.includes(subject)) continue;
-    const at = suggestedSubjects.indexOf(subject);
-    const before = suggestedSubjects.slice(0, at).reverse().find(id => subjectOrder.includes(id));
-    const after = suggestedSubjects.slice(at + 1).find(id => subjectOrder.includes(id));
-    if (before) subjectOrder.splice(subjectOrder.indexOf(before) + 1, 0, subject);
-    else if (after) subjectOrder.splice(subjectOrder.indexOf(after), 0, subject);
-    else subjectOrder.push(subject);
-  }
-
+  // Follow published curriculum order; the old move controls are retired.
+  const subjectOrder = suggestedSubjects;
   function orderedIdeas(subject: string) {
-    const items = grouped.get(subject) ?? [];
-    const previous = desk.orderedIdsBySubject[subject] ?? [];
-    if (!previous.length) return items;
-    const arranged = previous.filter(id => items.some(item => item.id === id));
-    const suggested = items.map(item => item.id);
-    for (const id of suggested) {
-      if (arranged.includes(id)) continue;
-      const at = suggested.indexOf(id);
-      const before = suggested.slice(0, at).reverse().find(x => arranged.includes(x));
-      const after = suggested.slice(at + 1).find(x => arranged.includes(x));
-      if (before) arranged.splice(arranged.indexOf(before) + 1, 0, id);
-      else if (after) arranged.splice(arranged.indexOf(after), 0, id);
-      else arranged.push(id);
-    }
-    return arranged.map(id => lookup.get(id)).filter((plan): plan is CatalogPlan => Boolean(plan));
+    return grouped.get(subject) ?? [];
   }
 
   function selectTab(tab: "think" | "plan") {
@@ -163,10 +139,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
   const summaries = <div className="pd-quiet-summary">
     <button type="button" onClick={() => selectTab("think")}>
-      Think Tank · {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
+      <Lightbulb size={14} aria-hidden="true"/> Think Tank · {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
     </button>
     <button type="button" onClick={() => selectTab("plan")}>
-      My Plan · {plannedIds.size} selections
+      <SquareCheckBig size={14} aria-hidden="true"/> My Plan · {plannedIds.size} selections
     </button>
   </div>;
 
@@ -184,17 +160,16 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
-            <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
+            {variant === "full" && <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
               onChange={mode => {
                 desk.setThinkDetails(mode);
                 setReviewOverrides({});
-              }}/>
+              }}/>}
           </div>
           {ideas.length ? <div className="pd-subject-list">
-            {subjectOrder.map((subject, index) => {
+            {subjectOrder.map(subject => {
               const list = orderedIdeas(subject);
               const isCollapsed = desk.collapsedSubjects.includes(subject);
-              const subjectMenu = "subject:" + subject;
               return <section key={subject} className="pd-subject">
                 <div className="pd-subject-heading"
                   style={{
@@ -206,28 +181,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     {isCollapsed ? <ChevronRight size={15}/> : <ChevronDown size={15}/>}
                     <strong>{subject}</strong><span>{list.length}</span>
                   </button>
-                  <button className="pd-more" type="button" aria-expanded={openMenu === subjectMenu}
-                    aria-label={"Organize " + subject} title={"Organize " + subject}
-                    onClick={() => setOpenMenu(openMenu === subjectMenu ? null : subjectMenu)}>
-                    <MoreHorizontal size={17}/>
-                  </button>
                 </div>
-                {openMenu === subjectMenu && <div className="pd-inline-actions">
-                  <button type="button" disabled={index === 0}
-                    onClick={() => {desk.moveSubject(subject, -1, suggestedSubjects); setOpenMenu(null);}}>
-                    <ArrowUp size={13}/> Move up
-                  </button>
-                  <button type="button" disabled={index === subjectOrder.length - 1}
-                    onClick={() => {desk.moveSubject(subject, 1, suggestedSubjects); setOpenMenu(null);}}>
-                    <ArrowDown size={13}/> Move down
-                  </button>
-                  {desk.orderedIdsBySubject[subject]?.length > 0 && <button type="button"
-                    onClick={() => {desk.resetIdeaOrder(subject); setOpenMenu(null);}}>
-                    <RotateCcw size={13}/> Reset ideas
-                  </button>}
-                </div>}
                 {!isCollapsed && <div className="pd-subject-items">
-                  {list.map((idea, i) => {
+                  {list.map(idea => {
                     const itemMenu = "idea:" + idea.id;
                     const courseTopics = topicConnections.get(idea.editionId) ?? [];
                     const excludedTopicIds = desk.excludedTopicIdsByCourse[idea.id] ?? [];
@@ -243,7 +199,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const remainingCount = savedChoice
                       ? pendingIdeaCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
-                    const reviewOpen = reviewOverrides[idea.id] ?? (desk.thinkDetails === "expanded");
+                    const reviewOpen = reviewOverrides[idea.id] ??
+                      (variant === "full" && desk.thinkDetails === "expanded");
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
@@ -260,21 +217,24 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           </span>
                           {reviewOpen ? <ChevronDown size={14}/> : <ChevronRight size={14}/>} 
                         </button>
-                        <button type="button" className="pd-more" aria-label={"Organize " + idea.title}
+                        {variant === "portable" && <button type="button"
+                          className="pd-row-tool pd-mini-info-action"
+                          title={reviewOpen ? "Hide details" : "View details"}
+                          aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
+                          aria-expanded={reviewOpen}
+                          onClick={() => {
+                            setReviewOverrides(old => ({...old,[idea.id]:!reviewOpen}));
+                            setJustPlannedId(null);
+                          }}>
+                          <Info size={15} aria-hidden="true"/>
+                        </button>}
+                        <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
                           title={"Organize " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
                       </div>
                       {openMenu === itemMenu && <div className="pd-inline-actions">
-                        <button type="button" disabled={i === 0}
-                          onClick={() => {desk.moveIdea(subject, idea.id, -1, list.map(x => x.id)); setOpenMenu(null);}}>
-                          <ArrowUp size={13}/> Up
-                        </button>
-                        <button type="button" disabled={i === list.length - 1}
-                          onClick={() => {desk.moveIdea(subject, idea.id, 1, list.map(x => x.id)); setOpenMenu(null);}}>
-                          <ArrowDown size={13}/> Down
-                        </button>
                         <button type="button" onClick={() => {
                           desk.removeIdea(idea.id);
                           setReviewOverrides(old => {
@@ -359,14 +319,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
               </section>;
             })}
           </div> : <p className="pd-empty">Save a course or topic with its bookmark to begin your Think Tank.</p>}
-          <div className="pd-actions">
-            {desk.subjectOrder.length > 0 && <button type="button"
-              onClick={desk.resetSubjectOrder}><RotateCcw size={13}/> Restore subject order</button>}
-          </div>
-          <label className="pd-notes-label" htmlFor="pd-notes">Notes and ideas</label>
-          <textarea id="pd-notes" value={desk.notes} onChange={e => desk.setNotes(e.target.value)}
-            rows={3} placeholder="What are you considering?"/>
-          <p className="pd-local-note">Notes and display preferences remain in this browser. Course choices are saved to your Demo plan after merging.</p>
   </>;
 
   if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
@@ -386,7 +338,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
       </section>
       <section className="pd-full-column" aria-label="My Plan">
         <header className="pd-full-column-heading">
-          <h2><ClipboardCheck size={19} aria-hidden="true"/> My Plan</h2>
+          <h2><SquareCheckBig size={19} aria-hidden="true"/> My Plan</h2>
           <span className="pd-full-count">{plannedIds.size} {plannedIds.size === 1 ? "selection" : "selections"}</span>
         </header>
         <div className="pd-full-column-body">
@@ -432,11 +384,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
       <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
         <button role="tab" type="button" aria-selected={desk.tab === "think"}
           className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
-          Think Tank <span>{ideas.length}</span>
+          <Lightbulb size={14} aria-hidden="true"/> Think Tank <span>{ideas.length}</span>
         </button>
         <button role="tab" type="button" aria-selected={desk.tab === "plan"}
           className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
-          My Plan <span>{plannedIds.size}</span>
+          <SquareCheckBig size={14} aria-hidden="true"/> My Plan <span>{plannedIds.size}</span>
         </button>
       </div>
 
