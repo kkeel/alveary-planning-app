@@ -4,7 +4,7 @@ import { courseArrangement, topicArrangementOverride, effectiveArrangement } fro
 import { savedTopicContexts } from "../app/components/shared-topic-contexts.mjs";
 
 import { readFileSync } from "node:fs";
-import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone } from "../app/components/topic-assignment.mjs";
+import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone, demoteIfNoAssignedTopics } from "../app/components/topic-assignment.mjs";
 
 const catalog = JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json", import.meta.url), "utf8"
@@ -102,6 +102,69 @@ assert.deepEqual(savedTopicContexts([ajParent,excludedOther],us9.topicEditionId)
 const differentEdition = savedTopicContexts([ajParent,troyParent],ancient9.topicEditionId);
 assert.deepEqual(differentEdition.map(c=>c.courseId),[g9.id],
   "matching parent-course family names do not imply the same exact edition");
+
+// Removing the final student in one combined-course source demotes ONLY
+// that parent. The same exact U.S. History edition in another parent stays
+// planned with its original student and its own settings.
+const grade9Last = makeChoice(g9);
+grade9Last.stage = "planned";
+grade9Last.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true});
+const grade1012Still = makeChoice(g1012);
+grade1012Still.stage = "planned";
+grade1012Still.overrides.push({topicId:us1012.topicId,studentId:"Troy",assigned:true});
+grade9Last.overrides[0] = {...grade9Last.overrides[0],assigned:false};
+const returned = demoteIfNoAssignedTopics(grade9Last,[{id:"AJ"},{id:"Troy"}]);
+assert.equal(returned.stage,"idea","last positive assignment returns Grade 9 to Think Tank");
+assert.equal(grade1012Still.stage,"planned","other parent remains in My Plan");
+assert.equal(isTopicAssigned(grade1012Still,us1012.topicId,"Troy"),true);
+assert.equal(remainingTopicCount(returned,[{id:"AJ"},{id:"Troy"}]),3);
+assert.equal(returned.topics.length,grade9Last.topics.length,"topic customization stays saved");
+
+// When one student is removed from only one topic, the *other* assigned
+// topic in this same combined parent must keep the course partly planned.
+const partial = makeChoice(g9);
+partial.stage = "planned";
+partial.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true});
+partial.overrides.push({topicId:ancient9.topicId,studentId:"Troy",assigned:true});
+partial.overrides[0].assigned=false;
+assert.equal(demoteIfNoAssignedTopics(partial,[{id:"AJ"},{id:"Troy"}]).stage,"planned");
+assert.equal(isTopicAssigned(partial,us9.topicId,"AJ"),false);
+assert.equal(isTopicAssigned(partial,ancient9.topicId,"Troy"),true);
+assert.equal(remainingTopicCount(partial,[{id:"AJ"},{id:"Troy"}]),2,
+  "unassigned U.S. History is available in Think Tank alongside World History");
+
+// Same topic with multiple students: only removing the LAST student demotes.
+const sharedStudents=makeChoice(g9);
+sharedStudents.stage="planned";
+sharedStudents.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true},
+  {topicId:us9.topicId,studentId:"Hannah",assigned:true});
+sharedStudents.overrides[0].assigned=false;
+assert.equal(demoteIfNoAssignedTopics(sharedStudents,[{id:"AJ"},{id:"Hannah"}]).stage,"planned");
+sharedStudents.overrides[1].assigned=false;
+assert.equal(demoteIfNoAssignedTopics(sharedStudents,[{id:"AJ"},{id:"Hannah"}]).stage,"idea");
+
+// Removing whole-course students (including All/group batch operations)
+// follows identical rules and respects explicit topic exclusions.
+const whole = makeChoice(g9);
+whole.stage="planned";
+whole.studentIds=["AJ","Troy"];
+whole.studentIds=["Troy"];
+assert.equal(demoteIfNoAssignedTopics(whole,[{id:"AJ"},{id:"Troy"}]).stage,"planned");
+whole.studentIds=[];
+assert.equal(demoteIfNoAssignedTopics(whole,[{id:"AJ"},{id:"Troy"}]).stage,"idea");
+const excludedLast=makeChoice(g9);
+excludedLast.stage="planned";
+excludedLast.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true});
+excludedLast.topics.find(t=>t.topicId===us9.topicId).included=false;
+assert.equal(demoteIfNoAssignedTopics(excludedLast,[{id:"AJ"}]).stage,"idea");
+assert.equal(excludedLast.overrides.length,1,
+  "excluded-topic assignments and preferences are not deleted by demotion");
+
+// Manual Return to Think Tank may retain checked assignments as drafts;
+// an unassignment must never forcibly promote an intentional draft.
+const intentionalIdea=makeChoice(g9);
+intentionalIdea.overrides.push({topicId:us9.topicId,studentId:"AJ",assigned:true});
+assert.equal(demoteIfNoAssignedTopics(intentionalIdea,[{id:"AJ"}]).stage,"idea");
 
 // Each student has an independent course default, with optional topic
 // overrides within the SAME parent. Sharing the U.S. History edition across
