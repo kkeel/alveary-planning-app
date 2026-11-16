@@ -82,7 +82,7 @@ export default function CourseTopicReview({
     (savedChoice?.stage !== "planned" ||
       (mode === "think"
         ? !assignedInThisCourse(topic) || planningTopicId === topic.id
-        : assignedInThisCourse(topic) || editingTopicId === topic.id))));
+        : assignedInThisCourse(topic) || editingTopicId === topic.id)));
   const removed = children.filter(topic => excluded(topic.id));
   const totalIncluded = children.length - removed.length;
 
