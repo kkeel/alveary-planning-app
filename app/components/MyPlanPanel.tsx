@@ -11,6 +11,7 @@ import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
+import { coursePriority } from "./priority-inheritance.mjs";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -22,7 +23,8 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]) {
+  preferences: ReturnType<typeof useDemoPlan>["studentPreferences"],
+  priorities: ReturnType<typeof useDemoPlan>["assignmentPriorities"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const includedCount = course.topics.filter(topic => topic.included).length;
@@ -31,6 +33,9 @@ function studentSummary(course: SavedCourse,
   return assigned.map((student, index) => {
     const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === student.id);
     const topicsAssigned = effectiveTopicCount(course, student.id);
+    const defaultPriority = coursePriority(priorities, course.courseId,student.id);
+    const hasTopicOverrides = priorities.some(p => p.courseId === course.courseId &&
+      p.studentId === student.id && p.topicId !== null);
     return <span className="myplan-student-summary" key={student.id}>
       {index > 0 && <span className="myplan-student-separator"> / </span>}
       {student.displayName}
@@ -42,7 +47,9 @@ function studentSummary(course: SavedCourse,
         title="Combined arrangement" aria-label="Combined arrangement">
         <PlacementSymbol size={14}/>
       </span>}
-      {pref?.priority && <span> · {pref.priority}</span>}
+      {defaultPriority && <span> · {defaultPriority}</span>}
+      {hasTopicOverrides && <span className="myplan-topic-priorities"
+        title="Some topics have individual priority settings"> · Customized priorities</span>}
     </span>;
   });
 }
@@ -129,7 +136,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     <span>
                       {item?.title ?? "Saved course"}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.studentPreferences)}
+                        {studentSummary(course,demo.students,demo.studentPreferences,demo.assignmentPriorities)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
@@ -161,6 +168,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     </button>
                     {infoOpen && <CourseInfoDisclosure course={item}/>}
                   </>}
+                  {editing && <div className="pd-assign-in-place myplan-assign-in-place">
+                    <StudentAssignmentEditor course={course}
+                      onClose={() => setEditingStudentsId(null)}/>
+                  </div>}
                   {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}/>}
@@ -170,8 +181,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       setOpenId(null); setEditingStudentsId(null);
                     }}>Return to Think Tank</button>
                   </div>
-                  {editing && <StudentAssignmentEditor course={course}
-                    onClose={() => setEditingStudentsId(null)}/>}
                 </div>}
               </div>;
             })}

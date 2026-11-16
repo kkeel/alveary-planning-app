@@ -4,6 +4,7 @@ import { useId, useState, type FormEvent } from "react";
 import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
+import { coursePriority, topicPriorityOverride } from "./priority-inheritance.mjs";
 
 const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
@@ -133,6 +134,24 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
+    {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
+      <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
+        title={topicId ? "Assign this topic to every student" :
+          "Assign the full included course to every current student"}>
+        All <small>{demo.students.length}</small>
+      </button>
+      {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
+        <button type="button" onClick={() => assign(group.studentIds)}
+          disabled={!group.studentIds.length}>
+          {group.name} <small>{group.studentIds.length}</small>
+        </button>
+        <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
+          aria-label={"Edit " + group.name}>Edit</button>
+      </div>)}
+      <button type="button" className="plan-group-create" onClick={() => openGroup()}>
+        + Group
+      </button>
+    </div>}
     <div className="plan-individuals" aria-label="Assign individual students">
       {demo.students.map(student => <label key={student.id}>
         <input type="checkbox" checked={assigned.has(student.id)}
@@ -147,24 +166,6 @@ export default function StudentAssignmentEditor({
       {" "}{topicOnlyStudents.length === 1 ? "has" : "have"} individual topics selected.
       Selecting a name above assigns the full included course.
     </p>}
-    {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
-      <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
-        title={topicId ? "Assign this topic to every student" :
-          "Assign the full included course to every current student"}>
-        Family <small>{demo.students.length}</small>
-      </button>
-      {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
-        <button type="button" onClick={() => assign(group.studentIds)}
-          disabled={!group.studentIds.length}>
-          {group.name} <small>{group.studentIds.length}</small>
-        </button>
-        <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
-          aria-label={"Edit " + group.name}>Edit</button>
-      </div>)}
-      <button type="button" className="plan-group-create" onClick={() => openGroup()}>
-        + Group
-      </button>
-    </div>}
     {groupEditing && <div className="plan-group-form">
       <label htmlFor="planning-group-name">Group name</label>
       <input id="planning-group-name" value={groupName} maxLength={50}
@@ -193,44 +194,79 @@ export default function StudentAssignmentEditor({
       </div>
       <p className="plan-microcopy">Groups are shortcuts. Changes to a group never rewrite saved assignments.</p>
     </div>}
-    {!topicId && !!course.studentIds.length && <>
-      <button type="button" className="plan-text-disclosure"
-        aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
-        {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-        Priorities &amp; arrangements <small>optional</small>
-      </button>
-      {showPreferences && <div className="plan-preferences">
-        {demo.students.filter(student => assigned.has(student.id)).map(student => {
-          const pref = demo.studentPreferences.find(p =>
-            p.courseId === course.courseId && p.studentId === student.id);
-          const priority = pref?.priority ?? null;
-          const arrangement = pref?.arrangement ?? "Later";
-          return <div className="plan-preference-row" key={student.id}>
-            <strong>{student.displayName}</strong>
-            <label>Priority
-              <select value={priority ?? ""}
-                onChange={event => {
-                  setHasSavedEdits(true);
-                  demo.setPreference(course.courseId, student.id,
-                    (event.target.value || null) as StudentPreference["priority"], arrangement);
-                }}>
-                <option value="">Not set</option>
-                {priorities.map(item => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-            <label>Arrangement
-              <select value={arrangement}
-                onChange={event => {
-                  setHasSavedEdits(true);
-                  demo.setPreference(course.courseId, student.id, priority,
-                    event.target.value as StudentPreference["arrangement"]);
-                }}>
-                {arrangements.map(item => <option key={item} value={item}>{item}</option>)}
-              </select>
-            </label>
-          </div>;
-        })}
-      </div>}
-    </>}
+    <button type="button" className="plan-text-disclosure"
+      aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
+      {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+      Advanced assignment <small>optional</small>
+    </button>
+    {showPreferences && <div className="plan-preferences">
+      <p className="plan-microcopy">
+        Course priority is the default for this student. Individual topics can
+        inherit it or use a different priority without affecting other topics.
+      </p>
+      {demo.students.filter(student => assigned.has(student.id) ||
+        (!topicId && effectiveTopicCount(course, student.id) > 0)).map(student => {
+        const courseDefault = coursePriority(demo.assignmentPriorities,
+          course.courseId, student.id);
+        const topicSelection = topicId
+          ? topicPriorityOverride(demo.assignmentPriorities,course.courseId,student.id,topicId)
+          : "inherit";
+        const arrangement = demo.studentPreferences.find(p =>
+          p.courseId === course.courseId && p.studentId === student.id)?.arrangement ?? "Later";
+        const wholeCourseAssigned = course.studentIds.includes(student.id);
+        return <div className="plan-preference-row" key={student.id}>
+          <strong>{student.displayName}</strong>
+          <label>Course default priority
+            <select value={courseDefault ?? ""}
+              onChange={event => {
+                setHasSavedEdits(true);
+                demo.setAssignmentPriority(course.courseId, student.id, null,
+                  (event.target.value || null) as
+                    ReturnType<typeof coursePriority>);
+              }}>
+              <option value="">Not set</option>
+              {priorities.map(item => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          {topicId ? <label>Priority for this topic
+            <select value={topicSelection}
+              onChange={event => {
+                setHasSavedEdits(true);
+                demo.setAssignmentPriority(course.courseId, student.id, topicId,
+                  event.target.value === "inherit" ? null :
+                    event.target.value as "Core" | "High Interest" | "Additional" | "Not set");
+              }}>
+              <option value="inherit">
+                {"Use course default" + (courseDefault ? " (" + courseDefault + ")" : "")}
+              </option>
+              <option value="Not set">Not set (override)</option>
+              {priorities.map(item => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label> : wholeCourseAssigned ? <label>Arrangement
+            <select value={arrangement}
+              onChange={event => {
+                setHasSavedEdits(true);
+                // Arrangement remains a whole-course preference. Its legacy
+                // priority field is retained for backwards compatibility;
+                // the dedicated assignment priority table is authoritative.
+                const legacyPriority = demo.studentPreferences.find(p =>
+                  p.courseId === course.courseId && p.studentId === student.id)?.priority ?? null;
+                demo.setPreference(course.courseId, student.id,legacyPriority,
+                  event.target.value as StudentPreference["arrangement"]);
+              }}>
+              {arrangements.map(item => <option key={item} value={item}>{item}</option>)}
+              {arrangement === "Both" && <option value="Both">Both (previous selection)</option>}
+            </select>
+          </label> : <small className="plan-partial-pref-note">
+            Topic-only selection; arrangement can be chosen after assigning the full course.
+          </small>}
+        </div>;
+      })}
+      {!demo.students.some(student => assigned.has(student.id) ||
+        (!topicId && effectiveTopicCount(course,student.id) > 0)) &&
+        <p className="plan-microcopy">
+          Select a student above to set that student's priority.
+        </p>}
+    </div>}
   </div>;
 }

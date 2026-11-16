@@ -615,3 +615,12 @@
 .pd-topic-menu a:hover,.pd-topic-menu button:hover {
   color:#33543d; text-decoration:underline; text-underline-offset:2px; }
 .pd-topic-menu button span[aria-hidden="true"] { font-size:16px; line-height:12px; }
+
+/* Shared Quick Add: All and group shortcuts precede individual student chips. */
+.plan-editor > .plan-group-shortcuts { margin:12px 0 9px; }
+.plan-editor > .plan-individuals { margin:8px 0 13px; }
+.plan-partial-pref-note { display:block; grid-column:1/-1; color:#829080;
+  font-size:10px; line-height:1.4; padding:3px 0 6px; }
+.myplan-assign-in-place { margin:9px 0 12px; }
+.myplan-topic-priorities { color:#6c8c72; font-size:10px; }
+.plan-preferences .plan-preference-row { padding:10px 0; }

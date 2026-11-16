@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { coursePriority, topicPriorityOverride, effectivePriority } from "../app/components/priority-inheritance.mjs";
+
 import { readFileSync } from "node:fs";
 import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone } from "../app/components/topic-assignment.mjs";
 
@@ -69,6 +71,31 @@ assert.equal(remainingTopicCount(troyParent,[{id:"AJ"},{id:"Troy"}]),2,
 assert.equal(effectiveTopicCount(ajParent,"Troy"),0);
 assert.equal(effectiveTopicCount(troyParent,"AJ"),0);
 
+// Each student has an independent course default, with optional topic
+// overrides within the SAME parent. Sharing the U.S. History edition across
+// different History parents must not leak priorities.
+const priorities = [
+  {courseId:g9.id,studentId:"AJ",topicId:null,priority:"Core"},
+  {courseId:g9.id,studentId:"AJ",topicId:ancient9.topicId,priority:"Additional"},
+  {courseId:g9.id,studentId:"AJ",topicId:world9.topicId,priority:"Not set"},
+  {courseId:g1012.id,studentId:"Troy",topicId:null,priority:"High Interest"},
+];
+assert.equal(coursePriority(priorities,g9.id,"AJ"),"Core");
+assert.equal(effectivePriority(priorities,g9.id,"AJ",us9.topicId),"Core",
+  "a topic without an override inherits the student's course priority");
+assert.equal(effectivePriority(priorities,g9.id,"AJ",ancient9.topicId),"Additional");
+assert.equal(effectivePriority(priorities,g9.id,"AJ",world9.topicId),null,
+  "Not set overrides Core rather than inheriting it");
+assert.equal(topicPriorityOverride(priorities,g9.id,"AJ",us9.topicId),"inherit");
+assert.equal(effectivePriority(priorities,g9.id,"Troy",ancient9.topicId),null,
+  "other students must not inherit AJ's priorities");
+assert.equal(effectivePriority(priorities,g1012.id,"Troy",us1012.topicId),"High Interest",
+  "another parent with the same edition retains its own priority");
+const withoutAncientOverride = priorities.filter(p =>
+  !(p.courseId===g9.id && p.studentId==="AJ" && p.topicId===ancient9.topicId));
+assert.equal(effectivePriority(withoutAncientOverride,g9.id,"AJ",ancient9.topicId),"Core",
+  "Use course default removes the override and restores inheritance");
+// Priority rows remain independent of the membership changes tested below.
 // Reapply whole Grade-9 History for AJ: one parent group link covers every
 // included topic, and the previous topic-only override is discarded.
 ajParent.stage = "idea";
