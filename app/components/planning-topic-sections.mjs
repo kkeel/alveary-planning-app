@@ -35,3 +35,25 @@ export function selectionTopicCount(choice, children, students, mode, excludedLo
   ).length;
   return {selected,total:children.length};
 }
+
+/**
+ * Student selections save optimistically, but a topic under edit must remain
+ * in the section in which its editor was opened until Done or Cancel/Close.
+ * Pin only the displayed section; never delay or rewrite real assignments.
+ */
+export function pinTopicWhileEditing(children, sections, topicId, origin) {
+  if (!topicId || !["selected","other"].includes(origin)) return sections;
+  const original = [...sections.selected,...sections.other]
+    .find(topic => topic.id === topicId);
+  if (!original) return sections;
+  const selectedIds=new Set(sections.selected.map(topic=>topic.id));
+  const selected=[],other=[];
+  for (const child of children) {
+    const isSelected=child.id===topicId ? origin==="selected" :
+      selectedIds.has(child.id);
+    const current=[...sections.selected,...sections.other].find(t=>t.id===child.id);
+    if (!current) continue;
+    (isSelected ? selected : other).push(current);
+  }
+  return {selected,other};
+}
