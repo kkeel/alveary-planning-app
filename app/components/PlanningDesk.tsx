@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import CourseCustomizationNote from "./CourseCustomizationNote";
 import { remainingTopicCount } from "./topic-assignment.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -211,10 +212,15 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const itemMenu = "idea:" + idea.id;
                     const courseTopics = topicConnections.get(idea.editionId) ?? [];
                     const excludedTopicIds = desk.excludedTopicIdsByCourse[idea.id] ?? [];
-                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
-                    const isCustomized = excludedCount > 0;
-                    const includedCount = courseTopics.length - excludedCount;
                     const savedChoice = cloud.courses.find(course => course.courseId === idea.id);
+                    const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
+                    // The saved course is authoritative for what remains included,
+                    // just as it is in My Plan. Browser-only ideas use local choices.
+                    const includedCount = savedChoice?.topics.length
+                      ? savedChoice.topics.filter(topic => topic.included).length
+                      : courseTopics.length - excludedCount;
+                    const isCustomized = courseTopics.length > 1 &&
+                      includedCount < courseTopics.length;
                     const remainingCount = savedChoice
                       ? remainingTopicCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
@@ -226,7 +232,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             setJustPlannedId(null);
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
-                            {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
+                            {isCustomized && <CourseCustomizationNote included={includedCount} total={courseTopics.length}/>}
                             {partiallyPlanned &&
                               <small className="pd-customized-label">
                                 Partly planned · {remainingCount} to consider

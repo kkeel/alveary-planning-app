@@ -150,7 +150,7 @@ Deno.serve(async (req: Request) => {
     const actions = new Set([
       "load", "import", "set_choice", "remove_choice", "set_stage",
       "set_topic", "set_course_student", "set_topic_student",
-      "set_assignment_priority", ...manageActions,
+      "set_assignment_priority", "set_assignment_arrangement", ...manageActions,
     ]);
     if (typeof p.action !== "string" || !actions.has(p.action)) {
       return response(req, 400, { error: "invalid_action" });
@@ -179,12 +179,19 @@ Deno.serve(async (req: Request) => {
     const arrangement = typeof p.arrangement === "string" &&
       ["Combined", "Separate", "Both", "Later"].includes(p.arrangement)
       ? p.arrangement : null;
+    // A null arrangement removes a topic override (Use course default).
+    // Both is kept readable in legacy preferences, not offered as a new value.
+    const assignmentArrangement = p.arrangement === null || p.arrangement === undefined
+      ? null : typeof p.arrangement === "string" &&
+        ["Combined", "Separate", "Later"].includes(p.arrangement)
+        ? p.arrangement : undefined;
     if (
       (p.action !== "load" && p.action !== "import" &&
         p.action !== "upsert_group" && p.action !== "delete_group" && !courseId) ||
       ((p.action === "set_topic" || p.action === "set_topic_student") && !topicId) ||
       ((p.action === "set_course_student" || p.action === "set_topic_student" ||
-         p.action === "set_preference" || p.action === "set_assignment_priority") && !student) ||
+         p.action === "set_preference" || p.action === "set_assignment_priority" ||
+         p.action === "set_assignment_arrangement") && !student) ||
       ((p.action === "set_choice" || p.action === "set_stage") && !stage) ||
       (p.action === "set_topic" && include === null) ||
       ((p.action === "set_course_student" || p.action === "set_topic_student" ||
@@ -197,7 +204,9 @@ Deno.serve(async (req: Request) => {
       (p.action === "set_preference" && (priority === undefined || !arrangement)) ||
       (p.action === "set_assignment_priority" &&
         (priority === undefined || (priority === "Not set" && !topicId) ||
-         (p.topicId != null && !topicId)))
+         (p.topicId != null && !topicId))) ||
+      (p.action === "set_assignment_arrangement" &&
+        (assignmentArrangement === undefined || (p.topicId != null && !topicId)))
     ) return response(req, 400, { error: "invalid_request" });
 
     // Only the same fully verified, entitled service-role path may write
@@ -218,15 +227,34 @@ Deno.serve(async (req: Request) => {
       assertDatabase(savePriorityError, "priority_save_failed");
     }
 
+    // A private course default or child-topic arrangement is keyed to the
+    // entitled member's saved parent course, active student and exact edition.
+    if (p.action === "set_assignment_arrangement") {
+      const { error: arrangementWriteError } = await admin.rpc("demo_plan_arrangements", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "set",
+        p_course_id: courseId,
+        p_student_id: student,
+        p_topic_id: topicId,
+        p_arrangement: assignmentArrangement,
+      });
+      assertDatabase(arrangementWriteError, "arrangement_save_failed");
+    }
+
     // The trusted service_role client is used ONLY after JWT, Memberstack
     // identity and current membership entitlements were verified above.
-    const { data: plan, error: planError } = (manage || p.action === "set_assignment_priority")
+    const { data: plan, error: planError } = (manage || p.action === "set_assignment_priority" ||
+          p.action === "set_assignment_arrangement")
       ? await admin.rpc("demo_plan_manage", {
         p_auth_user_id: caller.user.id,
         p_member_id: memberId,
         p_workspace_id: workspaceId,
         p_school_year: year,
-        p_action: p.action === "set_assignment_priority" ? "load" : p.action,
+        p_action: p.action === "set_assignment_priority" ||
+          p.action === "set_assignment_arrangement" ? "load" : p.action,
         p_course_id: courseId,
         p_student_ids: studentIds,
         p_student_id: student,
@@ -271,9 +299,22 @@ Deno.serve(async (req: Request) => {
       });
     assertDatabase(prioritiesError, "priority_read_failed");
     if (!Array.isArray(assignmentPriorities)) throw new Error("priority_response_unrecognized");
+    const { data: assignmentArrangements, error: arrangementsError } =
+      await admin.rpc("demo_plan_arrangements", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "load",
+      });
+    assertDatabase(arrangementsError, "arrangement_read_failed");
+    if (!Array.isArray(assignmentArrangements)) {
+      throw new Error("arrangement_response_unrecognized");
+    }
     return response(req, 200, {
       ...(plan as object),
       assignmentPriorities,
+      assignmentArrangements,
     });
   } catch (error) {
     const stage = error instanceof Error ? error.message : "unexpected_error";

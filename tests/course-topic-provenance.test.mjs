@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { coursePriority, topicPriorityOverride, effectivePriority } from "../app/components/priority-inheritance.mjs";
+import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "../app/components/arrangement-inheritance.mjs";
 
 import { readFileSync } from "node:fs";
 import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone } from "../app/components/topic-assignment.mjs";
@@ -96,6 +97,33 @@ const withoutAncientOverride = priorities.filter(p =>
 assert.equal(effectivePriority(withoutAncientOverride,g9.id,"AJ",ancient9.topicId),"Core",
   "Use course default removes the override and restores inheritance");
 // Priority rows remain independent of the membership changes tested below.
+// Arrangement inheritance follows the same independent parent/student/topic
+// scope as priorities; topic Later explicitly overrides a Combined course.
+const placements = [
+  {courseId:g9.id,studentId:"AJ",topicId:null,arrangement:"Combined"},
+  {courseId:g9.id,studentId:"AJ",topicId:ancient9.topicId,arrangement:"Separate"},
+  {courseId:g9.id,studentId:"AJ",topicId:world9.topicId,arrangement:"Later"},
+  {courseId:g1012.id,studentId:"Troy",topicId:null,arrangement:"Separate"},
+];
+assert.equal(courseArrangement(placements,g9.id,"AJ"),"Combined");
+assert.equal(effectiveArrangement(placements,g9.id,"AJ",us9.topicId),"Combined");
+assert.equal(effectiveArrangement(placements,g9.id,"AJ",ancient9.topicId),"Separate");
+assert.equal(effectiveArrangement(placements,g9.id,"AJ",world9.topicId),"Later");
+assert.equal(topicArrangementOverride(placements,g9.id,"AJ",us9.topicId),"inherit");
+assert.equal(effectiveArrangement(placements,g1012.id,"Troy",us1012.topicId),"Separate");
+assert.equal(effectiveArrangement(placements,g9.id,"Troy",us9.topicId),"Later");
+const inheritedAncient = placements.filter(p =>
+  !(p.courseId === g9.id && p.studentId === "AJ" &&
+    p.topicId === ancient9.topicId));
+assert.equal(effectiveArrangement(inheritedAncient,g9.id,"AJ",ancient9.topicId),"Combined",
+  "removing a topic override restores the course arrangement");
+const changedCourseDefault = placements.map(p =>
+  p.courseId === g9.id && p.studentId === "AJ" && p.topicId === null
+    ? {...p,arrangement:"Separate"} : p);
+assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",us9.topicId),"Separate");
+assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",ancient9.topicId),"Separate");
+assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",world9.topicId),"Later");
+
 // Reapply whole Grade-9 History for AJ: one parent group link covers every
 // included topic, and the previous topic-only override is discarded.
 ajParent.stage = "idea";
