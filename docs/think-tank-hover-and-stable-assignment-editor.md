@@ -94,3 +94,45 @@ view-only state; no special backend write or artificial delay.
 
 Automated regression in `tests/think-tank-editor-stability.test.mjs`,
 run during prebuild. Browser verification remains necessary.
+
+
+## Follow-up: scoped hover surfaces after PR #77
+
+The first hover pass highlighted the **entire** nested `.pd-topic-row` on
+hover or focus-within, so a hover over the toolbar accidentally colored the
+title and its surrounding row. The updated shared Think Tank CSS removes
+both row-level pseudo-classes and assigns independent hover/focus styles to:
+
+- each clickable **topic title** (only when it has description/tips);
+- each **topic toolbar icon** (info, books, bookmark, assignment, and more);
+- the course-level **ⓘ** button, which stays neutral when open;
+- the **subject header toggle**, which alone uses its subject's color.
+
+The neutral Think Tank info hover uses the same Course List tokens:
+`#f0f3ee` background, `#cbd6c9` border and `#4e6655` text.
+Its expanded state remains neutral (`#f1f5ed`); hovering the expanded
+button darkens it to `#e9eee7`. Subject toggles get a stronger wash of
+their existing subject hue, not generic green. No curriculum/assignment
+logic changed, and both the mini desk and full Planning page inherit the
+same CSS.
+
+### Additional visual checks
+
+1. Hover the main course info ⓘ while closed, then click it, hover again,
+   and close it. Compare with the unselected Course List View/Hide
+   button: states should be neutral, not bright green/subject-colored.
+2. Hover the Literature, History, and Geography subject headings. The
+   highlight should follow **each heading's own** subject color, including
+   on the text/chevron, instead of the same sage hover for all subjects.
+3. In a selected topic, hover the title (when clickable), then hover
+   info, books, + and ... independently: **only the hovered control**
+   gains a pale neutral background, never the entire topic row.
+4. Repeat in **Other topics**, including excluded entries and long,
+   wrapping topic titles; verify neighboring controls do not highlight.
+   A topic with no description/tips has a static title and should not
+   falsely advertise a clickable title.
+5. Tab across the title and icons to verify independent focus outlines
+   and focus backgrounds. Recheck desktop mini desk, narrow-screen
+   drawer, and full Planning page.
+6. Confirm that expanding a description, adding students and opening
+   More still work; topic selection lightbulbs/checkmarks stay visible.
