@@ -641,3 +641,44 @@
 @media(max-width:560px) {
   .pd-idea-review .pd-course-customized-note { margin-left:5px; font-size:9px; }
 }
+
+/* Shared edition: one assignment editor, with an explicit saved parent source.
+   Switching contexts changes only which parent the existing student picker edits. */
+.pd-topic-context-switch {
+  margin:5px 0 9px;
+  padding:9px 10px;
+  border:1px solid #dce6d9;
+  border-radius:4px;
+  background:#f3f7f0;
+}
+.pd-topic-context-switch label {
+  display:block;
+  margin-bottom:5px;
+  color:#46684e;
+  font-size:11px;
+  font-weight:650;
+}
+.pd-topic-context-switch select {
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding:7px 9px;
+  border:1px solid #c7d8c4;
+  border-radius:3px;
+  background:#fff;
+  color:#405747;
+  font-family:inherit;
+  font-size:11px;
+  text-overflow:ellipsis;
+}
+.pd-topic-context-switch p {
+  margin:7px 0 0;
+  color:#748872;
+  font-size:10px;
+  line-height:1.4;
+}
+.pd-topic-context-switch select:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+}
