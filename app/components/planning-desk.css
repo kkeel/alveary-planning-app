@@ -561,3 +561,9 @@
   .pd-full-column-body { max-height:none; overflow:visible; }
   .pd-full-column { break-inside:avoid-page; }
 }
+
+/* Contextual topic-first planning does not imply whole-course assignment. */
+.pd-topic-plan-inline .pd-topic-shared-editor { margin:10px 0 6px; }
+.pd-topic-plan-inline .pd-topic-source-choices label { min-height:32px; }
+.pd-topic-add:disabled { opacity:.42; cursor:not-allowed; }
+.myplan-topic-count { color:#617f65; white-space:nowrap; }
