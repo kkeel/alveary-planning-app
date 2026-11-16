@@ -424,16 +424,8 @@
 .pd-plan-info-disclosure svg { flex:none; }
 .pd-review-actions .pd-plan-action { min-height:30px; }
 .myplan-review .pd-plan-action { display:inline-flex; align-items:center; gap:5px; }
-/* A wider docked overlay rather than a full-page takeover. */
-@media (min-width:1281px) {
-  .pd-wrapper.is-wide > .pd-desk { position:fixed; top:64px; right:22px;
-    bottom:18px; z-index:80; width:min(690px,calc(100vw - 115px));
-    max-height:none; box-shadow:-8px 8px 30px #20332228; }
-}
-@media (max-width:1280px) {
-  .pd-wrapper.is-mobile-open.is-wide > .pd-desk {
-    width:min(690px,calc(100vw - 20px)); }
-}
+/* The mini desk's expand icon now opens the full Planning view.
+   The former temporary wide-overlay styling is no longer needed. */
 
 
 /* Topic titles are static labels; the adjacent actions own all disclosure. */
