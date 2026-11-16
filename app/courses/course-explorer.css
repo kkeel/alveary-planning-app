@@ -285,31 +285,93 @@
   .cx-mobile-filter-toggle:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
 }
 
-/* Browse openly by default; member List adds two explicit planning paths. */
+/* Quiet Course List toolbar: exact 2026–27 subject colors are injected as
+   per-row CSS variables; the public catalog remains neutral/read-only. */
 .cx-course-actions {
-  display:flex; align-items:center; gap:5px; flex:none; padding-left:4px;
+  display:flex; align-items:center; flex:none; justify-content:flex-end;
+  gap:5px; padding:0 10px 0 4px;
 }
 .cx-course-actions button {
-  display:inline-flex; align-items:center; justify-content:center; gap:5px;
-  padding:6px 9px; min-height:31px; border-radius:3px;
-  border:1px solid #d4dfce; background:#fff; color:#56715b;
-  font-family:"DM Sans",sans-serif; font-size:11px; font-weight:600;
-  line-height:1.2; white-space:nowrap;
+  display:inline-flex; align-items:center; justify-content:center; gap:2px;
+  flex:none; min-width:33px; height:33px; padding:5px 7px;
+  border:1px solid #e0e6dc; border-radius:4px; background:transparent;
+  color:#6c806f; font-family:"DM Sans",sans-serif;
+  font-size:11px; font-weight:600; line-height:1; white-space:nowrap;
+  transition:background-color .12s,border-color .12s;
 }
-.cx-course-actions button:hover:not(:disabled) { background:#eff4ed; border-color:#adc3ad; }
-.cx-course-actions button:focus-visible { outline:2px solid #596e5e; outline-offset:2px; }
-.cx-course-actions .cx-idea-action.is-selected {
-  background:#f0f4eb; border-color:#c9d9c4; color:#4f7355;
+.cx-course-actions button:not(:disabled):hover {
+  border-color:#b3c5af; background:#f3f7f0;
 }
-.cx-course-actions .cx-idea-action:disabled {
-  cursor:default; opacity:.72;
+.cx-course-actions button:focus-visible {
+  outline:2px solid #557961; outline-offset:2px;
 }
-.cx-course-actions .cx-direct-plan-action {
-  background:#edf3e9; border-color:#bbcfb9; color:#365b3e;
+.cx-course-actions button:disabled {
+  /* Selected tools remain legible: disabled prevents editing in the long List. */
+  opacity:1; cursor:default;
 }
-.cx-course-actions .cx-direct-plan-action.is-open {
-  background:#57775d; border-color:#57775d; color:#fff;
+.cx-course-actions .cx-info-action {
+  min-width:40px; border-color:transparent; color:#667b6a;
+  font-weight:500; gap:4px;
 }
+.cx-course-actions .cx-info-action.is-open { background:#f1f5ed; }
+.cx-info-word { font-size:10px; }
+.cx-course-actions .cx-idea-action.is-selected,
+.cx-course-actions .cx-direct-plan-action.is-tone-full {
+  border-color:var(--cx-subject);
+  background:var(--cx-subject); color:#fff;
+}
+.cx-course-actions .cx-direct-plan-action.is-tone-partial,
+.cx-course-actions .cx-direct-plan-action.is-tone-inherited {
+  border-color:var(--cx-subject-medium);
+  background:var(--cx-subject-soft); color:var(--cx-subject);
+}
+.cx-course-actions .cx-direct-plan-action.is-open:not(.is-selected) {
+  border-color:var(--cx-subject-medium);
+  background:var(--cx-subject-pale); color:var(--cx-subject);
+}
+.cx-course-actions .cx-direct-plan-action:not(.is-selected) {
+  background:#fff; color:#607663;
+}
+.cx-course-actions .cx-direct-plan-action.is-tone-partial,
+.cx-course-actions .cx-direct-plan-action.is-tone-inherited {
+  background:var(--cx-subject-soft); color:var(--cx-subject);
+}
+.cx-plus-all { font-size:10px; letter-spacing:-.01em; }
+.cx-course.cx-status-full {
+  box-shadow:inset 3px 0 0 var(--cx-subject);
+}
+.cx-course.cx-status-partial {
+  box-shadow:inset 3px 0 0 var(--cx-subject-medium);
+}
+.cx-course.cx-status-inherited,
+.cx-course.cx-context-inherited {
+  box-shadow:inset 2px 0 0 var(--cx-subject-soft);
+}
+.cx-course.cx-status-full > .cx-course-head,
+.cx-course.cx-status-partial > .cx-course-head {
+  background:var(--cx-subject-pale);
+}
+.cx-course.cx-status-inherited > .cx-course-head,
+.cx-course.cx-context-inherited > .cx-course-head {
+  background:color-mix(in srgb, var(--cx-subject-pale) 65%, white);
+}
+.cx-course.cx-status-idea:not(.cx-course--topic) > .cx-course-head {
+  box-shadow:inset 2px 0 0 var(--cx-subject-medium);
+}
+.cx-topic-list { margin-top:14px; padding-top:0; }
+.cx-topic-heading {
+  display:block; padding:8px 9px 6px;
+  border-bottom:1px solid #e0e7dd; color:#566a5b;
+  font-family:"DM Sans",sans-serif; font-size:11px; font-weight:650;
+  line-height:1.35;
+}
+.cx-course--topic .cx-course-actions { gap:3px; padding-right:5px; }
+.cx-course--topic .cx-course-actions button {
+  min-width:28px; height:28px; padding:4px 5px;
+}
+.cx-course--topic .cx-course-actions .cx-info-action { min-width:35px; }
+.cx-course--topic .cx-info-word { font-size:9px; }
+.cx-course-head .cx-course-disclosure { scroll-margin-top:150px; }
 .cx-inline-assign {
   margin:5px 13px 13px; padding:11px 13px;
   border:1px solid #dce6d8; background:#fbfcf9; border-radius:4px;
@@ -321,14 +383,17 @@
   margin-left:9px; color:#57775d; border:0; background:none;
   text-decoration:underline; font:inherit;
 }
-.cx-course--topic .cx-course-actions button { min-height:26px; padding:4px 7px; font-size:10px; }
 .cx-course--topic .cx-inline-assign { margin:5px 6px 9px; padding:8px; }
 .cx-toolbar .pd-detail-switch { margin-right:auto; }
 @media (max-width:760px) {
-  .cx-course-head { flex-wrap:wrap; padding-right:0; }
-  .cx-course-disclosure { flex-basis:100%; }
-  .cx-course-actions { width:100%; padding:0 10px 8px; justify-content:flex-end; flex-wrap:wrap; }
-  .cx-course--topic .cx-course-actions { padding:0 5px 6px; }
+  .cx-course-head { flex-wrap:nowrap; padding-right:0; }
+  .cx-course-disclosure { flex:1 1 auto; min-width:0; padding-right:5px; }
+  .cx-course-actions { flex:none; width:auto; padding:0 5px 0 1px; gap:3px; }
+  .cx-course-actions button { width:31px; min-width:31px; height:31px; padding:3px; }
+  .cx-course-actions .cx-info-action { width:31px; min-width:31px; }
+  .cx-info-word { display:none; }
+  .cx-course--topic .cx-course-actions button { width:26px; min-width:26px; height:26px; padding:3px; }
+  .cx-course--topic .cx-course-actions .cx-info-action { width:26px; min-width:26px; }
   .cx-inline-assign { margin:4px 8px 12px; padding:10px; }
 }
 @media print {
