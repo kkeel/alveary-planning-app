@@ -3,10 +3,8 @@
 import { useId, useState, type FormEvent } from "react";
 import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
-import catalog from "../courses/catalog-preview.json";
 import { effectiveTopicCount, isTopicAssigned } from "./topic-assignment.mjs";
 
-const details = new Map(catalog.courses.map(c => [c.id, c]));
 const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
