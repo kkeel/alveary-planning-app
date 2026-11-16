@@ -57,7 +57,7 @@ assert.deepEqual(selectionTopicCount(customized,topics,people,"think"),
 // than offering a second Think Tank toggle for something already assigned.
 const mixed=choice(g9,false);
 mixed.stage="planned";
-mixed.topics[0].ideaChoice="on";
+mixed.topics.find(t=>t.topicId!==shared.id).ideaChoice="on";
 mixed.overrides.push({topicId:shared.id,studentId:"AJ",assigned:true});
 parts=thinkTankTopicSections(topics,mixed,people);
 assert.equal(parts.selected.length,1);
