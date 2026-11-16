@@ -1,5 +1,6 @@
 import type { SavedCourse, PlanningStudent } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
+import { isTopicAssigned } from "./topic-assignment.mjs";
 
 const titles = new Map(catalog.courses.map(course => [course.id, course.title]));
 
@@ -23,11 +24,9 @@ export function buildTopicSharingIndex(
     if (course.stage !== "planned") continue;
     for (const topic of course.topics) {
       if (!topic.included) continue;
-      const studentNames = students.filter(student => {
-        const override = course.overrides.find(value =>
-          value.topicId === topic.topicId && value.studentId === student.id);
-        return override ? override.assigned : course.studentIds.includes(student.id);
-      }).map(student => student.displayName);
+      const studentNames = students.filter(student =>
+        isTopicAssigned(course, topic.topicId, student.id)
+      ).map(student => student.displayName);
       if (!studentNames.length) continue;
       const existing = index.get(topic.topicEditionId) ?? [];
       existing.push({
