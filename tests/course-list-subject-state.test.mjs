@@ -132,6 +132,17 @@ assert.equal(state(excluded,us.topicId).excluded,true);
 assert.equal(state(excluded,us.topicId).ideaTone,"none");
 assert.equal(state(excluded,us.topicId).planTone,"none");
 
+// Explicit Return to Think Tank may retain historical student checkboxes.
+// The stored stage, not the mere existence of an inactive student link,
+// decides whether the selected topic is presented in Think Tank.
+const parked=structuredClone(allPlan);
+parked.stage="idea";
+parked.ideaAll=true;
+assert.equal(state(parked).planTone,"none");
+assert.equal(state(parked).ideaTone,"full");
+assert.equal(state(parked,us.topicId).ideaTone,"inherited");
+assert.equal(pendingIdeaCount(parked,people),parked.topics.length);
+
 // A single-topic course still has saturated course-level controls.
 const single=catalog.courses.find(c=>c.type==="Single-Topic Course");
 assert.ok(single);
