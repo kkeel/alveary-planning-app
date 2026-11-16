@@ -16,3 +16,14 @@ export function effectiveTopicCount(course, studentId) {
   return course.topics.reduce((total, topic) =>
     total + (isTopicAssigned(course, topic.topicId, studentId) ? 1 : 0), 0);
 }
+
+/** A topic enters My Plan when at least one student is assigned to it in
+ * this parent; the remaining topics are still available in Think Tank. */
+export function topicHasAssignedStudent(course, topicId, students) {
+  return students.some(student => isTopicAssigned(course, topicId, student.id));
+}
+
+export function remainingTopicCount(course, students) {
+  return course.topics.filter(topic => topic.included &&
+    !topicHasAssignedStudent(course, topic.topicId, students)).length;
+}

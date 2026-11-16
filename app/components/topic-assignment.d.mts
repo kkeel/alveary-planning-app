@@ -9,3 +9,10 @@ export declare function isTopicAssigned(
 export declare function effectiveTopicCount(
   course: CourseTopicMembership, studentId: string
 ): number;
+
+export declare function topicHasAssignedStudent(
+  course: CourseTopicMembership, topicId: string, students: readonly { id: string }[]
+): boolean;
+export declare function remainingTopicCount(
+  course: CourseTopicMembership, students: readonly { id: string }[]
+): number;
