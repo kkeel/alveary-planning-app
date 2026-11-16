@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
+import { demoteIfNoAssignedTopics } from "./topic-assignment.mjs";
 
 export type SavedTopic = { topicId: string; topicEditionId: string; included: boolean; order: number };
 export type SavedOverride = { topicId: string; studentId: string; assigned: boolean };
@@ -268,27 +269,38 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   }, [snapshot.courses, addChoice, mutate]);
   const setTopic = useCallback((courseId: string, topicId: string, include: boolean) => {
     void mutate("set_topic", { courseId, topicId, include }, current => ({
-      ...current, courses: current.courses.map(c => c.courseId !== courseId ? c : {
-        ...c, topics: c.topics.map(t => t.topicId === topicId ? { ...t, included: include } : t),
+      ...current, courses: current.courses.map(c => {
+        if (c.courseId !== courseId) return c;
+        const next = { ...c,
+          topics: c.topics.map(t => t.topicId === topicId ? { ...t, included: include } : t) };
+        return include ? next : demoteIfNoAssignedTopics(next, current.students);
       }),
     }));
   }, [mutate]);
   const assignCourse = useCallback((courseId: string, studentId: string, assign: boolean) => {
     void mutate("set_course_student", { courseId, studentId, assign }, current => ({
-      ...current, courses: current.courses.map(c => c.courseId !== courseId ? c : {
-        ...c, stage: assign ? "planned" : c.stage,
-        studentIds: assign ? [...new Set([...c.studentIds, studentId])] :
-          c.studentIds.filter(id => id !== studentId),
-        overrides: c.overrides.filter(x => x.studentId !== studentId),
+      ...current, courses: current.courses.map(c => {
+        if (c.courseId !== courseId) return c;
+        const next: SavedCourse = {
+          ...c, stage: assign ? "planned" : c.stage,
+          studentIds: assign ? [...new Set([...c.studentIds, studentId])] :
+            c.studentIds.filter(id => id !== studentId),
+          overrides: c.overrides.filter(x => x.studentId !== studentId),
+        };
+        return assign ? next : demoteIfNoAssignedTopics(next, current.students);
       }),
     }));
   }, [mutate]);
   const assignTopic = useCallback((courseId: string, topicId: string, studentId: string, assign: boolean) => {
     void mutate("set_topic_student", { courseId, topicId, studentId, assign }, current => ({
-      ...current, courses: current.courses.map(c => c.courseId !== courseId ? c : {
-        ...c, stage: assign ? "planned" : c.stage,
-        overrides: [...c.overrides.filter(o => o.topicId !== topicId || o.studentId !== studentId),
-          { topicId, studentId, assigned: assign }],
+      ...current, courses: current.courses.map(c => {
+        if (c.courseId !== courseId) return c;
+        const next: SavedCourse = {
+          ...c, stage: assign ? "planned" : c.stage,
+          overrides: [...c.overrides.filter(o => o.topicId !== topicId || o.studentId !== studentId),
+            { topicId, studentId, assigned: assign }],
+        };
+        return assign ? next : demoteIfNoAssignedTopics(next, current.students);
       }),
     }));
   }, [mutate]);
@@ -298,12 +310,16 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     if (!unique.length) return;
     void mutate("batch_assign", { courseId, studentIds: unique, assign: assigned }, current => ({
       ...current,
-      courses: current.courses.map(c => c.courseId !== courseId ? c : {
-        ...c, stage: assigned ? "planned" : c.stage,
-        studentIds: assigned
-          ? [...new Set([...c.studentIds, ...unique])]
-          : c.studentIds.filter(id => !unique.includes(id)),
-        overrides: c.overrides.filter(o => !unique.includes(o.studentId)),
+      courses: current.courses.map(c => {
+        if (c.courseId !== courseId) return c;
+        const next: SavedCourse = {
+          ...c, stage: assigned ? "planned" : c.stage,
+          studentIds: assigned
+            ? [...new Set([...c.studentIds, ...unique])]
+            : c.studentIds.filter(id => !unique.includes(id)),
+          overrides: c.overrides.filter(o => !unique.includes(o.studentId)),
+        };
+        return assigned ? next : demoteIfNoAssignedTopics(next, current.students);
       }),
       studentPreferences: assigned ? current.studentPreferences : current.studentPreferences.filter(p =>
         p.courseId !== courseId || !unique.includes(p.studentId)),

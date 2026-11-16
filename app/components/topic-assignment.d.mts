@@ -22,3 +22,7 @@ export declare function shouldPromoteChoiceOnDone(
   topicId: string | undefined,
   students: readonly { id: string }[]
 ): boolean;
+
+export declare function demoteIfNoAssignedTopics<T extends CourseTopicMembership & {
+  stage: "idea" | "planned";
+}>(course:T, students:readonly {id:string}[]):T;

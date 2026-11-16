@@ -37,3 +37,14 @@ export function shouldPromoteChoiceOnDone(course, topicId, students) {
   if (topicId) return topicHasAssignedStudent(course, topicId, students);
   return students.some(student => course.studentIds.includes(student.id));
 }
+
+/** A saved course stays in My Plan while ANY included topic has at least one
+ * effective student through this exact parent. When none remain, demote only
+ * that parent choice; do not erase its topics, students' options or preferences.
+ * Called only after an actual unassignment or topic exclusion. */
+export function demoteIfNoAssignedTopics(course, students) {
+  if (course.stage !== "planned") return course;
+  return course.topics.some(topic => topic.included &&
+    topicHasAssignedStudent(course, topic.topicId, students))
+    ? course : { ...course, stage: "idea" };
+}

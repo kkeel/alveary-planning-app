@@ -41,11 +41,12 @@ type Props = {
   onTopicAssigned?: (sourceCourseId: string) => void;
   onTopicDone?: (sourceCourseId: string) => void;
   onTopicCancel?: () => void;
+  onTopicEditingChange?: (editing: boolean) => void;
 };
 
 export default function CourseTopicReview({
   parent, savedChoice, mode, excludedTopicIds = [], onToggleTopic,
-  onTopicAssigned, onTopicDone, onTopicCancel,
+  onTopicAssigned, onTopicDone, onTopicCancel, onTopicEditingChange,
 }: Props) {
   const demo = useDemoPlan();
   const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
@@ -80,10 +81,10 @@ export default function CourseTopicReview({
   const assignedInThisCourse = (topic: CatalogCourse) =>
     Boolean(savedChoice && topicHasAssignedStudent(savedChoice, topic.id, demo.students));
   const included = children.filter(topic => !excluded(topic.id) &&
-    (savedChoice?.stage !== "planned" ||
-      (mode === "think"
-        ? !assignedInThisCourse(topic) || planningTopicId === topic.id
-        : assignedInThisCourse(topic) || editingTopicId === topic.id)));
+    (mode === "think"
+      ? savedChoice?.stage !== "planned" ||
+        !assignedInThisCourse(topic) || planningTopicId === topic.id
+      : assignedInThisCourse(topic) || editingTopicId === topic.id));
   const removed = children.filter(topic => excluded(topic.id));
   const totalIncluded = children.length - removed.length;
 
@@ -116,7 +117,10 @@ export default function CourseTopicReview({
           <button type="button" className="pd-topic-icon pd-topic-edit"
             aria-label={"Edit students for " + topic.title} title="Edit students"
             aria-expanded={editing}
-            onClick={() => setEditingTopicId(editing ? null : topic.id)}>
+            onClick={() => {
+              setEditingTopicId(editing ? null : topic.id);
+              onTopicEditingChange?.(!editing);
+            }}>
             <UsersRound size={15} aria-hidden="true"/>
           </button>}
         {mode === "think" && !isRemoved && demo.ready &&
@@ -165,9 +169,13 @@ export default function CourseTopicReview({
             currentCourseId={parent.id}
             onClose={sourceCourseId => {
               setEditingTopicId(null);
+              onTopicEditingChange?.(false);
               onTopicDone?.(sourceCourseId);
             }}
-            onCancel={() => setEditingTopicId(null)}/>
+            onCancel={() => {
+              setEditingTopicId(null);
+              onTopicEditingChange?.(false);
+            }}/>
         </div>}
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
         <SharedTopicStudentEditor topicEditionId={topic.editionId}
