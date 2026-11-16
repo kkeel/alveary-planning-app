@@ -8,6 +8,7 @@ import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
+import CourseCustomizationNote from "./CourseCustomizationNote";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
@@ -135,13 +136,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
                       {item?.title ?? "Saved course"}
+                      {customized && <CourseCustomizationNote
+                        included={includedCount} total={course.topics.length}/>}
                       <small className="myplan-summary">
                         {studentSummary(course,demo.students,demo.studentPreferences,demo.assignmentPriorities)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
-                        {customized && " · Customized: " + includedCount +
-                          " of " + course.topics.length + " topics"}
+
                       </small>
                     </span>
                   </button>
