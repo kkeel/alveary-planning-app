@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, UsersRound } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, SquareCheckBig, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
@@ -110,14 +110,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   return <section className="myplan-panel" aria-label="My Plan">
     <div className="pd-details-toolbar">
       <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
-      <DetailViewSwitch label="My Plan" value={desk.planDetails}
+      {sideBySide && <DetailViewSwitch label="My Plan" value={desk.planDetails}
         onChange={mode => {
           desk.setPlanDetails(mode);
           setOpenOverrides({});
           setOpenId(null);
           setEditingStudentsId(null);
           setEditingTopicCourseId(null);
-        }}/>
+        }}/>} 
     </div>
     {!planned.length && <div className="pd-plan-empty">
       <p>{sideBySide ? "Choose a course or topic from the Think Tank alongside this plan to begin." :
@@ -144,7 +144,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
             {courses.map(course => {
               const item: CatalogCourse | undefined = lookup.get(course.courseId);
               const open = openOverrides[course.courseId] ??
-                (desk.planDetails === "expanded" || openId === course.courseId);
+                ((sideBySide && desk.planDetails === "expanded") ||
+                  openId === course.courseId);
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
               const includedCount = course.topics.filter(topic => topic.included).length;
@@ -163,7 +164,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       setEditingStudentsId(null);
                       setEditingTopicCourseId(null);
                     }}>
-                    {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
+                    <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>
                       {item?.title ?? "Saved course"}
                       {customized && <CourseCustomizationNote
@@ -176,7 +177,27 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
 
                       </small>
                     </span>
+                    {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                   </button>
+                  {!sideBySide && <button type="button"
+                    className="pd-row-tool pd-mini-info-action"
+                    aria-label={(open && infoOpen ? "Hide" : "View") +
+                      " details for " + (item?.title ?? "course")}
+                    title={open && infoOpen ? "Hide details" : "View details"}
+                    aria-expanded={open && infoOpen}
+                    onClick={() => {
+                      if (open && infoOpen) {
+                        setInfoId(null);
+                        setOpenId(null);
+                        setOpenOverrides(old => ({...old,[course.courseId]:false}));
+                      } else {
+                        setInfoId(course.courseId);
+                        setOpenId(course.courseId);
+                        setOpenOverrides(old => ({...old,[course.courseId]:true}));
+                      }
+                    }}>
+                    <Info size={15} aria-hidden="true"/>
+                  </button>}
                   <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(course.courseId)}
                     aria-label={"View books for " + (item?.title ?? "course")}
                     title="View Books"><BookOpen size={15}/></Link>
