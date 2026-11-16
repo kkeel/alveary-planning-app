@@ -1,40 +1,57 @@
-import { topicHasAssignedStudent, effectiveTopicCount } from "../components/topic-assignment.mjs";
-/** Subject-colored selection state for the member catalog. Selection in
- * another combined course must never bleed into this parent context.
- * 'full' denotes the direct +All course assignment; 'partial' denotes a
- * parent planned through some but not all child topics.
- * 'inherited' is a child effectively assigned through +All. */
-export function listRowStatus(choice, students, topicId, combined, localIdea=false) {
-  const saved = Boolean(choice) || localIdea;
-  const eligible = students.filter(student=>student && student.id);
-  const isIdea = choice ? choice.stage === "idea" : localIdea;
-  const isPlanned = choice?.stage === "planned";
-  const excluded = Boolean(choice && topicId &&
-    choice.topics.some(topic=>topic.topicId===topicId && !topic.included));
-  const included = choice?.topics.filter(topic=>topic.included) ?? [];
-  const anyAssigned = Boolean(choice && eligible.some(student=>
-    effectiveTopicCount(choice,student.id)>0));
-  const assignedForTopic = Boolean(choice && topicId &&
+import { topicHasAssignedStudent } from "../components/topic-assignment.mjs";
+
+/** An included topic may be considered in Think Tank, planned for a student,
+ * or untouched. These are different concepts: inclusion alone is NOT a
+ * Think Tank selection. All lookups use this exact saved parent course. */
+export function topicIsThinkTankIdea(course, topicId, students) {
+  const topic=course.topics.find(t=>t.topicId===topicId && t.included);
+  if (!topic || topicHasAssignedStudent(course,topicId,students)) return false;
+  return topic.ideaChoice==="on" ||
+    (topic.ideaChoice!=="off" && course.ideaAll!==false);
+}
+export function pendingIdeaCount(course,students) {
+  return course.topics.filter(t=>t.included &&
+    topicIsThinkTankIdea(course,t.topicId,students)).length;
+}
+export function listRowStatus(choice,students,topicId,combined,localIdea=false) {
+  const eligible=students.filter(s=>s && s.id);
+  const saved=Boolean(choice)||localIdea;
+  const excluded=Boolean(choice && topicId &&
+    choice.topics.some(t=>t.topicId===topicId && !t.included));
+  const included=choice?.topics.filter(t=>t.included)??[];
+  const assignedAtCourse=Boolean(choice && eligible.some(s=>choice.studentIds.includes(s.id)));
+  const assignedForTopic=Boolean(choice && topicId &&
     topicHasAssignedStudent(choice,topicId,eligible));
-  const assignedAtCourse = Boolean(choice && eligible.some(student=>
-    choice.studentIds.includes(student.id)));
-  const directForTopic = Boolean(choice && topicId && eligible.some(student=>
-    choice.overrides.some(o=>o.topicId===topicId &&
-      o.studentId===student.id && o.assigned) &&
-    topicHasAssignedStudent(choice,topicId,[student])));
-  const allIncludedAssigned = Boolean(choice && included.length &&
-    included.every(topic=>eligible.some(student=>
-      topicHasAssignedStudent(choice,topic.topicId,[student]))));
-  const planTone = !isPlanned ? "none" : topicId
-    ? (!assignedForTopic ? "none" : directForTopic ? "full" : "inherited")
-    : (!anyAssigned ? "none" : !combined || assignedAtCourse || allIncludedAssigned
-      ? "full" : "partial");
-  const planActive = planTone !== "none";
-  const ideaActive = !excluded && saved && !planActive &&
-    (!isPlanned || Boolean(topicId));
-  const contextTone = topicId
-    ? (isPlanned && assignedAtCourse ? "inherited" : isIdea ? "inherited" : "none")
-    : "none";
-  return { saved, excluded, ideaActive, planActive, planTone, contextTone,
-    anyAssigned, isPlanned: Boolean(isPlanned) };
+  const anyAssigned=Boolean(choice && included.some(t=>
+    topicHasAssignedStudent(choice,t.topicId,eligible)));
+  const directForTopic=Boolean(choice && topicId && eligible.some(s=>
+    choice.overrides.some(o=>o.topicId===topicId && o.studentId===s.id &&
+      o.assigned) && topicHasAssignedStudent(choice,topicId,[s])));
+
+  // Saturation records origin of selection, NOT how many topics happen to
+  // be assigned. A +All course stays saturated; its included topics are pale.
+  const planTone=choice?.stage!=="planned"?"none":topicId
+    ? (!assignedForTopic?"none":assignedAtCourse?"inherited":
+        directForTopic?"full":"inherited")
+    : (!anyAssigned?"none":!combined||assignedAtCourse?"full":"partial");
+
+  let ideaTone="none";
+  if (!excluded && saved) {
+    if (topicId) {
+      if (!assignedForTopic) {
+        const topic=choice?.topics.find(t=>t.topicId===topicId && t.included);
+        if (topic?.ideaChoice==="on") ideaTone="full";
+        else if ((choice?.ideaAll!==false || !choice && localIdea) &&
+          topic?.ideaChoice!=="off") ideaTone="inherited";
+      }
+    } else if (!choice && localIdea) ideaTone="full";
+    else if (choice && pendingIdeaCount(choice,eligible)>0)
+      ideaTone=choice.ideaAll!==false?"full":"partial";
+  }
+  const planActive=planTone!=="none";
+  const ideaActive=ideaTone!=="none";
+  return {
+    saved,excluded,ideaActive,ideaTone,planActive,planTone,
+    contextTone:"none",anyAssigned,isPlanned:Boolean(choice?.stage==="planned"),
+  };
 }
