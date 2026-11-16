@@ -1,6 +1,7 @@
 export type ListPlanType = "Topic" | "Single-Topic Course" | "Combined Course";
-export declare function canOpenListStudentEditor(
-  choice: { topics: readonly unknown[] } | null | undefined,
+/** Type guard: a true result guarantees the parent course exists. */
+export declare function canOpenListStudentEditor<T extends {topics: readonly unknown[]}>(
+  choice: T | null | undefined,
   courseType: ListPlanType,
   nested?: boolean,
-): boolean;
+): choice is T;
