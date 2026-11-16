@@ -16,3 +16,9 @@ export declare function topicHasAssignedStudent(
 export declare function remainingTopicCount(
   course: CourseTopicMembership, students: readonly { id: string }[]
 ): number;
+
+export declare function shouldPromoteChoiceOnDone(
+  course: CourseTopicMembership & { stage: "idea" | "planned" },
+  topicId: string | undefined,
+  students: readonly { id: string }[]
+): boolean;
