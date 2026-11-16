@@ -319,6 +319,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             setJustPlannedId(null);
                             focusMyPlan(idea.id);
                           }}
+                          onTopicCancel={() => setJustPlannedId(null)}
                         />
 
                       </div>}
