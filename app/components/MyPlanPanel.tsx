@@ -177,7 +177,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                   </div>}
                   {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
                     onToggleTopic={(topicId,included) =>
-                      demo.setTopic(course.courseId,topicId,included)}/>}
+                      demo.setTopic(course.courseId,topicId,included)}
+                    onTopicDone={sourceCourseId => setOpenId(sourceCourseId)}/>
                   <div className="pd-review-actions">
                     <button type="button" className="myplan-return" onClick={() => {
                       demo.setStage(course.courseId, "idea");
