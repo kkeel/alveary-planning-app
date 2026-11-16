@@ -80,12 +80,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
       setModeReadyForStatus(null);
       return;
     }
-    setCourseMode(signedIn ? "plan" : "browse");
+    // Members enter List with the portable desk; Planning opens the full workspace.
+    setCourseMode("browse");
     setModeReadyForStatus(status);
   }, [status, signedIn, setCourseMode]);
   const checking = status === "checking" || modeReadyForStatus !== status;
   const showDesk = signedIn && (activePath === "/books" ||
-    (activePath === "/courses" && courseMode === "plan"));
+    (activePath === "/courses" && courseMode === "browse"));
 
   const allRoutes = [...navigation, ...planningItems]
     .filter(item => signedIn || !memberOnlyPaths.has(item.href));

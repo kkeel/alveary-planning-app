@@ -43,7 +43,7 @@ function studentSummary(course: SavedCourse,
   });
 }
 
-export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: string | null }) {
+export default function MyPlanPanel({ focusCourseId = null, sideBySide = false }: { focusCourseId?: string | null; sideBySide?: boolean }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -84,8 +84,9 @@ export default function MyPlanPanel({ focusCourseId = null }: { focusCourseId?: 
   return <section className="myplan-panel" aria-label="My Plan">
     <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
     {!planned.length && <div className="pd-plan-empty">
-      <p>Start with one course or topic. The others can stay in Think Tank as long as you like.</p>
-      <button type="button" onClick={() => desk.setTab("think")}>Open Think Tank</button>
+      <p>{sideBySide ? "Choose a course or topic from the Think Tank alongside this plan to begin." :
+        "Start with one course or topic. The others can stay in Think Tank as long as you like."}</p>
+      {!sideBySide && <button type="button" onClick={() => desk.setTab("think")}>Open Think Tank</button>}
     </div>}
     <div className="pd-subject-list">
       {groups.map(([subject, courses]) => {
