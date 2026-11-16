@@ -567,3 +567,27 @@
 .pd-topic-plan-inline .pd-topic-source-choices label { min-height:32px; }
 .pd-topic-add:disabled { opacity:.42; cursor:not-allowed; }
 .myplan-topic-count { color:#617f65; white-space:nowrap; }
+
+/* One student assignment experience in single-topic, parent and nested views. */
+.plan-assign-head { align-items:center; flex-wrap:wrap; gap:7px 10px; }
+.plan-assign-head .pd-assignment-quick-actions { margin-left:auto; }
+.plan-assign-head .pd-done-action { flex:none; }
+.pd-assign-in-place { margin:10px 0 14px; }
+.pd-assign-in-place .plan-editor,
+.pd-topic-plan-inline .plan-editor { border-top:0; padding-top:0; margin-top:0; }
+.pd-topic-plan-inline { margin:6px 0 10px 0; background:#fbfcfa; }
+
+/* Preserve title/info disclosure while shifting secondary row tools into More. */
+.pd-topic-row { align-items:center; gap:2px; }
+.pd-topic-row .pd-topic-icon { flex:0 0 25px; width:25px; min-height:27px; }
+.pd-topic-row .pd-topic-add { border:0; background:transparent; }
+.pd-topic-row .pd-topic-more { color:#829583; }
+.pd-topic-menu { display:flex; align-items:center; flex-wrap:wrap;
+  gap:7px 15px; padding:7px 9px; margin:2px 0 7px;
+  border:1px solid #e1e9de; border-radius:3px; background:#f7f9f5; }
+.pd-topic-menu a,.pd-topic-menu button { display:inline-flex; align-items:center;
+  gap:6px; color:#58735d; font-size:11px; border:0;
+  padding:4px 3px; background:transparent; text-decoration:none; }
+.pd-topic-menu a:hover,.pd-topic-menu button:hover {
+  color:#33543d; text-decoration:underline; text-underline-offset:2px; }
+.pd-topic-menu button span[aria-hidden="true"] { font-size:16px; line-height:12px; }
