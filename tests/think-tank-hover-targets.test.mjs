@@ -36,6 +36,19 @@ assert.ok(desk.includes('"--pd-subject-color": subjectColor(subject)'),
   "Each subject needs its own color variable");
 assert.ok(review.includes("other.map(topic=>renderTopic(topic,topic.excluded,true))"),
   "Other topics must reuse the same row renderer and hover styling");
+assert.match(review,
+  /const selectionMark = mode === "think" && isOther && assignedInThisCourse\(topic\)/,
+  "My Plan checkmarks in Other topics must remain supported");
+assert.equal(
+  (review.match(/\{selectionMark\}<span className="pd-topic-title-text">\{topic.title\}<\/span>/g) ?? []).length,
+  2,
+  "Both clickable and static topic titles must contain their own status marker");
+assert.match(css, /\.pd-topic-row \.pd-topic-name\s*\{\s*display:flex;/,
+  "Title and status marker must share one visual surface");
+assert.ok(css.includes(".pd-topic-title-button:hover .pd-topic-selection-mark"),
+  "Hovering a topic title must also color the status marker");
+assert.ok(css.includes(".pd-topic-title-button:focus-visible .pd-topic-selection-mark"),
+  "Keyboard focus must also color the status marker");
 
 const listCss = readFileSync(
   new URL("../app/courses/course-explorer.css", import.meta.url), "utf8");
