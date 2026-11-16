@@ -355,6 +355,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
         if (c.courseId !== courseId) return c;
         const next: SavedCourse = {
           ...c, stage: assign ? "planned" : c.stage,
+          ideaAll:assign ? c.ideaAll : true,
           studentIds: assign ? [...new Set([...c.studentIds, studentId])] :
             c.studentIds.filter(id => id !== studentId),
           overrides: c.overrides.filter(x => x.studentId !== studentId),
@@ -367,11 +368,17 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     void mutate("set_topic_student", { courseId, topicId, studentId, assign }, current => ({
       ...current, courses: current.courses.map(c => {
         if (c.courseId !== courseId) return c;
-        const next: SavedCourse = {
+        let next: SavedCourse = {
           ...c, stage: assign ? "planned" : c.stage,
           overrides: [...c.overrides.filter(o => o.topicId !== topicId || o.studentId !== studentId),
             { topicId, studentId, assigned: assign }],
         };
+        if (!assign && !current.students.some(student =>
+          isTopicAssigned(next,topicId,student.id))) {
+          next={...next,topics:next.topics.map(t=>t.topicId===topicId
+            ? {...t,ideaChoice:t.ideaChoice==="on"?"on" :
+                c.ideaAll?"inherit":"on"}:t)};
+        }
         return assign ? next : demoteIfNoAssignedTopics(next, current.students);
       }),
     }));
@@ -386,6 +393,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
         if (c.courseId !== courseId) return c;
         const next: SavedCourse = {
           ...c, stage: assigned ? "planned" : c.stage,
+          ideaAll: assigned ? c.ideaAll : true,
           studentIds: assigned
             ? [...new Set([...c.studentIds, ...unique])]
             : c.studentIds.filter(id => !unique.includes(id)),
