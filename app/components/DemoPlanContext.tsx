@@ -2,12 +2,15 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
-import { demoteIfNoAssignedTopics } from "./topic-assignment.mjs";
+import { demoteIfNoAssignedTopics, isTopicAssigned } from "./topic-assignment.mjs";
 
-export type SavedTopic = { topicId: string; topicEditionId: string; included: boolean; order: number };
+export type SavedTopic = {
+  topicId:string; topicEditionId:string; included:boolean; order:number;
+  ideaChoice:"inherit"|"on"|"off";
+};
 export type SavedOverride = { topicId: string; studentId: string; assigned: boolean };
 export type SavedCourse = {
-  courseId: string; stage: "idea" | "planned";
+  courseId: string; stage: "idea" | "planned"; ideaAll:boolean;
   topics: SavedTopic[]; studentIds: string[]; overrides: SavedOverride[];
 };
 export type PlanningStudent = { id: string; displayName: string; gradeLevel: number | null };
@@ -34,6 +37,7 @@ export type DemoPlanSnapshot = {
 };
 export type LegacyIdea = { courseId: string; excludedTopicIds: string[] };
 type Action = "load" | "import" | "set_choice" | "remove_choice" | "set_stage" |
+  "toggle_idea" | "clear_plan" | "prepare_plan" |
   "set_topic" | "set_course_student" | "set_topic_student" |
   "batch_assign" | "set_preference" | "set_assignment_priority" |
   "set_assignment_arrangement" |
@@ -46,6 +50,9 @@ type DemoPlanContextValue = {
   assignmentArrangements: AssignmentArrangement[];
   importIdeas: (ideas: LegacyIdea[]) => Promise<void>;
   addChoice: (courseId: string) => void;
+  toggleListIdea: (courseId:string,topicId:string|null) => void;
+  clearListPlan: (courseId:string,topicId:string|null) => void;
+  prepareListPlan: (courseId:string,topicId:string|null) => void;
   addStudent: (displayName: string, gradeLevel: number | null) => Promise<boolean>;
   removeChoice: (courseId: string) => void;
   setStage: (courseId: string, stage: "idea" | "planned") => void;
@@ -77,7 +84,9 @@ function isSnapshot(value: unknown): value is DemoPlanSnapshot {
     Array.isArray(v.assignmentArrangements) &&
     v.courses.every(c => typeof c.courseId === "string" &&
       (c.stage === "idea" || c.stage === "planned") &&
-      Array.isArray(c.topics) && Array.isArray(c.studentIds) &&
+      typeof c.ideaAll === "boolean" &&
+      Array.isArray(c.topics) && c.topics.every(t =>
+        t.ideaChoice==="inherit"||t.ideaChoice==="on"||t.ideaChoice==="off") && Array.isArray(c.studentIds) &&
       Array.isArray(c.overrides));
 }
 const blank: DemoPlanSnapshot = { schoolYear: "2027-28", planKind: "demo",
@@ -188,9 +197,72 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     void mutate("set_choice", { courseId, stage: "idea" }, current =>
       current.courses.some(c => c.courseId === courseId) ? current : {
         ...current, courses: [...current.courses,
-          { courseId, stage: "idea", topics: [], studentIds: [], overrides: [] }],
+          { courseId, stage: "idea", ideaAll: true,
+             topics: [], studentIds: [], overrides: [] }],
       });
   }, [mutate]);
+  /** List controls are reversible per exact saved parent/topic context.
+   * The API prepares a missing parent with NO other Think Tank topics when
+   * starting at a nested +. No deletion of unrelated parent assignments. */
+  const prepareListPlan = useCallback((courseId:string,topicId:string|null) => {
+    void mutate("prepare_plan",{courseId,topicId},current =>
+      current.courses.some(c=>c.courseId===courseId) ? current : {
+        ...current,courses:[...current.courses,
+          {courseId,stage:"idea",ideaAll:false,
+           topics:[],studentIds:[],overrides:[]}],
+      });
+  },[mutate]);
+
+  const toggleListIdea = useCallback((courseId:string,topicId:string|null) => {
+    void mutate("toggle_idea",{courseId,topicId},current => {
+      const existing=current.courses.find(c=>c.courseId===courseId);
+      if (!existing) {
+        return {...current,courses:[...current.courses,{
+          courseId,stage:"idea",ideaAll:topicId===null,topics:[],
+          studentIds:[],overrides:[],
+        }]};
+      }
+      return {...current,courses:current.courses.map(c=>{
+        if (c.courseId!==courseId) return c;
+        if (topicId===null) return {...c,ideaAll:!c.ideaAll,
+          topics:c.topics.map(t=>({...t,ideaChoice:"inherit" as const}))};
+        return {...c,topics:c.topics.map(t=>{
+          if (t.topicId!==topicId) return t;
+          const selected=t.ideaChoice==="on"||
+            (t.ideaChoice==="inherit"&&c.ideaAll);
+          const ideaChoice:SavedTopic["ideaChoice"]=selected
+            ? c.ideaAll ? "off":"inherit"
+            : c.ideaAll ? "inherit":"on";
+          return {...t,ideaChoice};
+        })};
+      })};
+    });
+  },[mutate]);
+
+  const clearListPlan = useCallback((courseId:string,topicId:string|null) => {
+    void mutate("clear_plan",{courseId,topicId},current => ({
+      ...current,courses:current.courses.map(c=>{
+        if (c.courseId!==courseId) return c;
+        if (topicId===null) return {...c,stage:"idea" as const,ideaAll:true,
+          studentIds:[],overrides:[],
+          topics:c.topics.map(t=>({...t,ideaChoice:"inherit" as const}))};
+        const impacted=current.students.filter(student=>
+          isTopicAssigned(c,topicId,student.id));
+        const next:SavedCourse={...c,
+          topics:c.topics.map(t=>t.topicId===topicId
+            ? {...t,ideaChoice:"on" as const}:t),
+          overrides:[
+            ...c.overrides.filter(o=>o.topicId!==topicId),
+            ...impacted.map(student=>({
+              topicId,studentId:student.id,assigned:false,
+            })),
+          ],
+        };
+        return demoteIfNoAssignedTopics(next,current.students);
+      }),
+    }));
+  },[mutate]);
+
   // Reuse the SAME secure student API as the Students page. The private
   // planning snapshot is then refreshed in the serialized mutation queue,
   // so both screens immediately agree after the save completes.
@@ -369,7 +441,8 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     studentGroups: snapshot.studentGroups, studentPreferences: snapshot.studentPreferences,
     assignmentPriorities: snapshot.assignmentPriorities,
     assignmentArrangements: snapshot.assignmentArrangements,
-    importIdeas, addChoice, addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
+    importIdeas, addChoice, toggleListIdea, clearListPlan, prepareListPlan,
+    addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
     assignStudents, setPreference, setAssignmentPriority, setAssignmentArrangement,
     saveGroup, deleteGroup, refresh,
   }}>{children}</Context.Provider>;
