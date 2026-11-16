@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AuthStatusBar from "./AuthStatusBar";
+import AppSaveStatus from "./AppSaveStatus";
 import { PlannerAuthProvider, usePlannerAuth } from "./PlannerAuthProvider";
 import PlanningDesk from "./PlanningDesk";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
@@ -195,6 +196,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div>
 
           <div className="shell-top-actions">
+            <AppSaveStatus />
             <form
               className="page-search"
               role="search"
