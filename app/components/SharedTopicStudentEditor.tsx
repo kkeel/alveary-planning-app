@@ -1,117 +1,72 @@
 "use client";
 
-import { useId, useMemo, useState, type FormEvent } from "react";
+import { useId, useMemo, useState } from "react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { isTopicAssigned } from "./topic-assignment.mjs";
+import { savedTopicContexts } from "./shared-topic-contexts.mjs";
+import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import catalog from "../courses/catalog-preview.json";
 
-const names = new Map(catalog.courses.map(course => [course.id, course.title]));
+const names = new Map(catalog.courses.map(item => [item.id, item.title]));
 
 /**
- * Edit an edition through its SAVED PARENT course choice. An edition may
- * appear under multiple parents; editing one source must not alter another.
- * When planning from Think Tank, show only the clicked parent, even before
- * that parent has any effectively assigned students.
+ * A topic edition can belong to more than one saved parent course. Let a
+ * member switch that source explicitly without leaving the student editor.
+ * Every checkbox, priority and arrangement still uses exactly the chosen
+ * parent course and its child topic; no cross-parent writes or bulk syncing.
  */
 export default function SharedTopicStudentEditor({
-  topicEditionId, currentCourseId, currentCourseOnly = false, onAssigned,
+  topicEditionId, currentCourseId, onAssigned, onClose, onCancel,
 }: {
   topicEditionId: string;
   currentCourseId: string;
-  currentCourseOnly?: boolean;
-  onAssigned?: () => void;
+  onAssigned?: (courseId: string) => void;
+  onClose?: (courseId: string) => void;
+  onCancel?: () => void;
 }) {
   const demo = useDemoPlan();
-  const inputId = useId();
-  const [addingStudent, setAddingStudent] = useState(false);
-  const [studentName, setStudentName] = useState("");
-  const [studentGrade, setStudentGrade] = useState("");
-  const [studentSaving, setStudentSaving] = useState(false);
-  const [studentError, setStudentError] = useState<string | null>(null);
-  const groups = useMemo(() => demo.courses.filter(course =>
-    (currentCourseOnly
-      ? course.courseId === currentCourseId
-      : course.stage === "planned") &&
-    course.topics.some(topic => topic.topicEditionId === topicEditionId && topic.included)
-  ).sort((a,b) => (a.courseId === currentCourseId ? -1 : b.courseId === currentCourseId ? 1 : 0)),
-  [demo.courses, topicEditionId, currentCourseId, currentCourseOnly]);
+  const selectId = useId();
+  const [activeCourseId, setActiveCourseId] = useState(currentCourseId);
+  const contexts = useMemo(() =>
+    savedTopicContexts(demo.courses, topicEditionId).sort((a,b) =>
+      Number(b.courseId === currentCourseId) -
+      Number(a.courseId === currentCourseId)),
+    [demo.courses, topicEditionId, currentCourseId]);
 
-  async function addStudent(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (studentSaving || !studentName.trim()) return;
-    setStudentSaving(true);
-    setStudentError(null);
-    const ok = await demo.addStudent(studentName, studentGrade === "" ? null : Number(studentGrade));
-    setStudentSaving(false);
-    if (ok) {
-      setAddingStudent(false);
-      setStudentName("");
-      setStudentGrade("");
-    } else {
-      setStudentError("The student couldn't be added. Existing assignments are unchanged.");
-    }
-  }
+  const active = contexts.find(context => context.courseId === activeCourseId) ??
+    contexts.find(context => context.courseId === currentCourseId);
+  const selectedCourse = active &&
+    demo.courses.find(course => course.courseId === active.courseId);
 
-  if (!groups.length) return <p className="plan-microcopy">
-    {currentCourseOnly ? "Save this parent course to your Demo Think Tank before assigning a topic." :
-      "No included planned course uses this topic yet."}
+  if (!active || !selectedCourse) return <p className="plan-microcopy" role="status">
+    This topic is not currently included in a saved course. Restore or save
+    its course before editing the student assignment.
   </p>;
 
-  return <div className="pd-topic-shared-editor">
-    <p className="plan-microcopy">
-      {currentCourseOnly
-        ? <>Assign this topic through <strong>{names.get(currentCourseId) ?? "the selected course"}</strong>.
-          No other topics will be added for these students.</>
-        : "Edit every student using this topic. The course beneath each checkbox shows where that assignment comes from."}
-    </p>
-    {demo.students.map(student => <div className="pd-topic-student-sources" key={student.id}>
-      <strong>{student.displayName}</strong>
-      <div className="pd-topic-source-choices">
-        {groups.map(group => {
-          const topic = group.topics.find(item => item.topicEditionId === topicEditionId)!;
-          const checked = isTopicAssigned(group, topic.topicId, student.id);
-          return <label key={group.courseId} className={checked ? "is-assigned" : ""}>
-            <input type="checkbox" checked={checked}
-              onChange={event => {
-                demo.assignTopic(group.courseId, topic.topicId, student.id, event.target.checked);
-                if (event.target.checked) onAssigned?.();
-              }}/>
-            <span>{currentCourseOnly ? "This topic only" :
-              names.get(group.courseId) ?? "Course grouping"}</span>
-          </label>;
+  return <div className="pd-topic-context-editor">
+    {contexts.length > 1 && <div className="pd-topic-context-switch">
+      <label htmlFor={selectId}>Edit students in course context</label>
+      <select id={selectId} value={active.courseId}
+        onChange={event => setActiveCourseId(event.target.value)}>
+        {contexts.map(context => {
+          const group = demo.courses.find(course => course.courseId === context.courseId);
+          const studentNames = group ? demo.students.filter(student =>
+            isTopicAssigned(group, context.topicId, student.id)
+          ).map(student => student.displayName) : [];
+          return <option key={context.courseId} value={context.courseId}>
+            {names.get(context.courseId) ?? "Saved course"} — {studentNames.length
+              ? studentNames.join(", ") : "no students yet"}
+            {context.stage === "idea" ? " (Think Tank)" : ""}
+          </option>;
         })}
-      </div>
-    </div>)}
-    {currentCourseOnly && <>
-      <button className="pd-inline-edit" type="button"
-        aria-expanded={addingStudent}
-        onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
-        {addingStudent ? "Cancel adding" : "+ Add student"}
-      </button>
-      {addingStudent && <form className="pd-student-inline-form"
-        onSubmit={event => void addStudent(event)}>
-        <label htmlFor={inputId+"-name"}>Name or nickname</label>
-        <input id={inputId+"-name"} value={studentName} required maxLength={60}
-          onChange={event => setStudentName(event.target.value)}/>
-        <label htmlFor={inputId+"-grade"}>Grade for 2027–28</label>
-        <select id={inputId+"-grade"} value={studentGrade}
-          onChange={event => setStudentGrade(event.target.value)}>
-          <option value="">Decide later</option>
-          <option value="0">Kindergarten</option>
-          {Array.from({length:12},(_,index) => index+1).map(grade =>
-            <option value={grade} key={grade}>Grade {grade}</option>)}
-        </select>
-        <button type="submit" disabled={!studentName.trim() || studentSaving}>
-          {studentSaving ? "Adding…" : "Save student"}
-        </button>
-        {studentError && <span role="alert" className="pd-inline-student-error">
-          {studentError}
-        </span>}
-      </form>}
-    </>}
-    {!demo.students.length && <p className="plan-microcopy">
-      {currentCourseOnly ? "Add a student above, then choose this topic." :
-        "Add a student to begin assigning this topic."}
-    </p>}
+      </select>
+      <p>Changes below apply only to this course context. You can switch to
+        another saved course above to edit its assignments.</p>
+    </div>}
+    <StudentAssignmentEditor
+      course={selectedCourse} topicId={active.topicId}
+      onAssigned={() => onAssigned?.(active.courseId)}
+      onClose={() => onClose?.(active.courseId)}
+      onCancel={onCancel}/>
   </div>;
 }

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import { topicHasAssignedStudent } from "./topic-assignment.mjs";
-import StudentAssignmentEditor from "./StudentAssignmentEditor";
+import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
@@ -38,8 +38,8 @@ type Props = {
   mode: "think" | "plan";
   excludedTopicIds?: string[];
   onToggleTopic: (topicId: string, included: boolean) => void;
-  onTopicAssigned?: () => void;
-  onTopicDone?: () => void;
+  onTopicAssigned?: (sourceCourseId: string) => void;
+  onTopicDone?: (sourceCourseId: string) => void;
   onTopicCancel?: () => void;
 };
 
@@ -161,14 +161,22 @@ export default function CourseTopicReview({
       </div>}
       {editing && mode === "plan" && savedChoice && !isRemoved &&
         <div className="pd-topic-edit-section">
-          <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
-            onClose={() => setEditingTopicId(null)}/>
+          <SharedTopicStudentEditor topicEditionId={topic.editionId}
+            currentCourseId={parent.id}
+            onClose={sourceCourseId => {
+              setEditingTopicId(null);
+              onTopicDone?.(sourceCourseId);
+            }}
+            onCancel={() => setEditingTopicId(null)}/>
         </div>}
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
-        <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
-          onAssigned={onTopicAssigned}
+        <SharedTopicStudentEditor topicEditionId={topic.editionId}
+          currentCourseId={parent.id}
+          onAssigned={sourceCourseId => onTopicAssigned?.(sourceCourseId)}
           onCancel={() => { setPlanningTopicId(null); onTopicCancel?.(); }}
-          onClose={() => { setPlanningTopicId(null); onTopicDone?.(); }}/>
+          onClose={sourceCourseId => {
+            setPlanningTopicId(null); onTopicDone?.(sourceCourseId);
+          }}/>
       </div>}
     </div>;
   }
