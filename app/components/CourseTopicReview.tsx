@@ -202,14 +202,18 @@ export default function CourseTopicReview({
             if (savedChoice) demo.toggleListIdea(parent.id,topic.id);
             else onToggleTopic(topic.id,false);
             setTopicMenuId(null);
-          }}><Lightbulb size={14} aria-hidden="true"/> Remove from Think Tank</button>}
-        <button type="button" onClick={() => {
+          }} aria-label={"Remove " + topic.title + " from Think Tank"}
+             title="Remove this idea"><Lightbulb size={14} aria-hidden="true"/> Remove idea</button>}
+        <button type="button"
+          aria-label={(isRemoved ? "Include " : "Exclude ") + topic.title +
+            (isRemoved ? " in " : " from ") + parent.title}
+          onClick={() => {
           onToggleTopic(topic.id,isRemoved);
           setTopicMenuId(null);
         }}>
           {isRemoved ? <Plus size={14} aria-hidden="true"/> :
             <span aria-hidden="true">−</span>}
-          {isRemoved ? "Include in course" : "Exclude from course"}
+          {isRemoved ? "Include topic" : "Exclude topic"}
         </button>
       </div>}
       <TopicOtherUses topicEditionId={topic.editionId}
