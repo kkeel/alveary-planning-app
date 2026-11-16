@@ -6,6 +6,7 @@ import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
 import { sourceChoiceForRow } from "./course-list-actions.mjs";
+import { canOpenListStudentEditor } from "./list-editor-readiness.mjs";
 import { subjectColor } from "./legacy-subject-colors.mjs";
 import { listRowStatus } from "./list-row-status.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
@@ -267,7 +268,8 @@ function CourseRow({
     </div>
     {mode === "plan" && activePlanEditor && <div className="cx-inline-assign" role="region"
       aria-label={"Assign students for " + course.title}>
-      {!parentChoice || !parentChoice.topics.length ? <p role="status" className="cx-assign-loading">
+      {!canOpenListStudentEditor(parentChoice, course.type, nested) ?
+        <p role="status" className="cx-assign-loading">
         Saving the parent course before opening student choices…
       </p> : nested && !parentChoice.topics.some(topic => topic.topicId === course.id && topic.included)
         ? <p className="cx-assign-loading" role="status">
