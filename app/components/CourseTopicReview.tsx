@@ -5,7 +5,7 @@ import { BookOpen, ChevronDown, ChevronRight, Info, Minus, Plus, RotateCcw, User
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
-import StudentAssignmentEditor from "./StudentAssignmentEditor";
+import { isTopicAssigned } from "./topic-assignment.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -38,10 +38,13 @@ type Props = {
   mode: "think" | "plan";
   excludedTopicIds?: string[];
   onToggleTopic: (topicId: string, included: boolean) => void;
+  onTopicAssigned?: () => void;
+  onTopicDone?: () => void;
 };
 
 export default function CourseTopicReview({
   parent, savedChoice, mode, excludedTopicIds = [], onToggleTopic,
+  onTopicAssigned, onTopicDone,
 }: Props) {
   const demo = useDemoPlan();
   const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
@@ -79,10 +82,10 @@ export default function CourseTopicReview({
     const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
     const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
-    const standalone = demo.courses.find(course => course.courseId === topic.id);
+    const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
     const planning = planningTopicId === topic.id;
-    const hasAssignedStudent = Boolean(standalone && standalone.stage === "planned" &&
-      (standalone.studentIds.length || standalone.overrides.some(o => o.assigned)));
+    const hasAssignedStudent = Boolean(savedChoice?.stage === "planned" &&
+      demo.students.some(student => isTopicAssigned(savedChoice, topic.id, student.id)));
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
@@ -112,11 +115,12 @@ export default function CourseTopicReview({
           </button>}
         {mode === "think" && !isRemoved && demo.ready &&
           <button type="button" className="pd-topic-icon pd-topic-add"
-            aria-label={"Plan only " + topic.title} title="Plan only this topic"
-            onClick={() => {
-              if (standalone?.stage !== "planned") demo.planTopic(topic.id);
-              setPlanningTopicId(topic.id);
-            }}>
+            aria-label={"Assign " + topic.title + " within " + parent.title}
+            title={linkedTopic ? "Assign this topic within the combined course" :
+              "Save this course to your Demo Think Tank before assigning its topics"}
+            aria-expanded={planning}
+            disabled={!linkedTopic}
+            onClick={() => setPlanningTopicId(planning ? null : topic.id)}>
             <Plus size={15} aria-hidden="true"/>
           </button>}
         <button type="button" className="pd-topic-icon pd-topic-remove"
@@ -139,22 +143,25 @@ export default function CourseTopicReview({
           <SharedTopicStudentEditor
             topicEditionId={topic.editionId} currentCourseId={parent.id}/>
         </div>}
-      {planning && standalone && <div className="pd-topic-plan-inline">
+      {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
         <div className="pd-assignment-title">
-          <strong>Plan this topic</strong>
+          <strong>Assign {topic.title}</strong>
           <div className="pd-assignment-quick-actions">
             <button type="button" className="pd-inline-edit"
               onClick={() => setPlanningTopicId(null)}>Hide</button>
             <button type="button" className="pd-done-action"
               disabled={!hasAssignedStudent}
               style={{ visibility: hasAssignedStudent ? "visible" : "hidden" }}
-              title="Finish this topic; the change will keep saving in the background"
-              onClick={() => setPlanningTopicId(null)}>Done</button>
+              title="Finish assigning this topic; the change will keep saving in the background"
+              onClick={() => { setPlanningTopicId(null); onTopicDone?.(); }}>Done</button>
           </div>
         </div>
-        <StudentAssignmentEditor course={standalone}/>
+        <SharedTopicStudentEditor
+          topicEditionId={topic.editionId} currentCourseId={parent.id}
+          currentCourseOnly onAssigned={onTopicAssigned}/>
         <p className="plan-microcopy">
-          This topic can be planned separately; the rest of the combined course stays in Think Tank.
+          Only this topic is assigned through {parent.title}. Other topic
+          assignments stay as they are. The parent course will appear in My Plan.
         </p>
       </div>}
     </div>;

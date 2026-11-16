@@ -10,6 +10,7 @@ import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
+import { effectiveTopicCount } from "./topic-assignment.mjs";
 import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
@@ -24,16 +25,19 @@ function studentSummary(course: SavedCourse,
   preferences: ReturnType<typeof useDemoPlan>["studentPreferences"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
-  const assigned = people.filter(student =>
-    course.studentIds.includes(student.id) ||
-    course.topics.some(t => t.included && course.overrides.some(o =>
-      o.topicId === t.topicId && o.studentId === student.id && o.assigned)));
+  const includedCount = course.topics.filter(topic => topic.included).length;
+  const assigned = people.filter(student => effectiveTopicCount(course, student.id) > 0);
   if (!assigned.length) return "Students to be decided";
   return assigned.map((student, index) => {
     const pref = preferences.find(p => p.courseId === course.courseId && p.studentId === student.id);
+    const topicsAssigned = effectiveTopicCount(course, student.id);
     return <span className="myplan-student-summary" key={student.id}>
       {index > 0 && <span className="myplan-student-separator"> / </span>}
       {student.displayName}
+      {includedCount > 1 && topicsAssigned < includedCount &&
+        <span className="myplan-topic-count" title="Individual topic assignment">
+          {" · " + topicsAssigned + " of " + includedCount + " topics"}
+        </span>}
       {pref?.arrangement === "Combined" && <span className="myplan-combined-symbol"
         title="Combined arrangement" aria-label="Combined arrangement">
         <PlacementSymbol size={14}/>

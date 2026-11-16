@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { ChevronDown, ChevronRight, UsersRound, X } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
+import { effectiveTopicCount } from "./topic-assignment.mjs";
 
 const details = new Map(catalog.courses.map(c => [c.id, c]));
 const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
@@ -26,6 +27,8 @@ export default function StudentAssignmentEditor({
   const [studentSaving, setStudentSaving] = useState(false);
   const [studentError, setStudentError] = useState<string | null>(null);
   const assigned = new Set(course.studentIds);
+  const topicOnlyStudents = demo.students.filter(student =>
+    !assigned.has(student.id) && effectiveTopicCount(course, student.id) > 0);
 
   function assign(ids: string[]) {
     if (!ids.length) return;
@@ -99,6 +102,12 @@ export default function StudentAssignmentEditor({
         {student.displayName}
       </label>)}
     </div>
+    {!!topicOnlyStudents.length && <p className="plan-microcopy">
+      <strong>Assigned through individual topics:</strong>{" "}
+      {topicOnlyStudents.map(student => student.displayName).join(", ")}.
+      Checking their box above will assign the entire included course and replace
+      their individual topic exceptions. Other students are unaffected.
+    </p>}
     {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
       <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
         title="Assign the full included course to every current student">

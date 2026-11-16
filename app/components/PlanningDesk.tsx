@@ -204,7 +204,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
                           onClick={() => {
                             setReviewId(reviewId === idea.id ? null : idea.id);
-                            if (reviewId !== idea.id) setJustPlannedId(null);
+                            setJustPlannedId(null);
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
@@ -260,6 +260,12 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           excludedTopicIds={excludedTopicIds}
                           onToggleTopic={topicId =>
                             desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
+                          onTopicAssigned={() => setJustPlannedId(idea.id)}
+                          onTopicDone={() => {
+                            setReviewId(null);
+                            setJustPlannedId(null);
+                            setAssigningId(null);
+                          }}
                         />
                         {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
                           <div className="pd-assign-in-place">
