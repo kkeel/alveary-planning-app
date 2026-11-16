@@ -16,7 +16,6 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import { useDemoPlan, type PlanningStudent, type SavedCourse } from "../components/DemoPlanContext";
-import { effectiveTopicCount, topicHasAssignedStudent } from "../components/topic-assignment.mjs";
 
 type Plan = {
   id: string;
