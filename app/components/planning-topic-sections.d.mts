@@ -18,9 +18,9 @@ export declare function selectionTopicCount(
  mode:"think"|"plan",excludedLocal?:readonly string[]
 ):{selected:number;total:number};
 
-export declare function pinTopicWhileEditing<T extends {id:string}>(
-  children:readonly T[],
-  sections:{selected:T[];other:T[]},
+export declare function pinTopicWhileEditing<C extends {id:string}, E extends C>(
+  children:readonly C[],
+  sections:{selected:readonly E[];other:readonly E[]},
   topicId:string|null,
   origin:"selected"|"other"|null,
-):{selected:T[];other:T[]};
+):{selected:E[];other:E[]};
