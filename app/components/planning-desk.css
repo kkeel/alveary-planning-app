@@ -717,3 +717,67 @@
   .pd-detail-switch button { font-size:10px; padding:5px 7px; }
   .pd-details-toolbar { align-items:flex-start; }
 }
+
+/* Portable desk mirrors the Course List's compact identity markers:
+   a lightbulb means a Think Tank idea, a checked square means My Plan.
+   The info action expands a record only when the member requests it. */
+.pd-tabs button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+}
+.pd-tabs button > svg,
+.pd-quiet-summary button > svg {
+  flex:none;
+  color:#719375;
+}
+.pd-tabs button.is-active > svg { color:#50735a; }
+.pd-tabs button span { margin-left:1px; }
+.pd-quiet-summary button {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.pd-mini-info-action {
+  box-sizing:border-box;
+  flex:0 0 auto;
+  min-width:27px;
+  min-height:27px;
+  margin-top:0;
+  color:#6b886e;
+}
+.pd-mini-info-action:hover,
+.pd-mini-info-action[aria-expanded="true"] {
+  background:#edf4eb;
+  color:#446a4d;
+}
+.pd-mini-info-action:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+}
+.myplan-row .pd-idea-review > .pd-plan-choice-mark {
+  flex:none;
+  margin-top:3px;
+  color:#648567;
+}
+.myplan-row .pd-idea-review > svg:last-child {
+  margin-top:3px;
+  color:#879c8c;
+}
+.pd-topic-selection-mark {
+  display:inline-flex;
+  flex:0 0 14px;
+  justify-content:center;
+  align-items:center;
+  margin:0 1px 0 0;
+  color:#77917a;
+}
+.pd-topic-selection-mark svg { flex:none; }
+.pd-topic-row .pd-topic-name { padding-right:3px; }
+.pd-full-column-heading h2 svg { flex:none; }
+@media(max-width:520px) {
+  .pd-tabs button { gap:4px; font-size:11px; }
+  .pd-tabs button > svg { width:13px; height:13px; }
+  .pd-idea-heading > .pd-mini-info-action { margin-top:2px; }
+}
