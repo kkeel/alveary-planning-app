@@ -10,6 +10,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import type { CSSProperties } from "react";
+import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import DetailViewSwitch from "./DetailViewSwitch";
 import CourseCustomizationNote from "./CourseCustomizationNote";
 import { pendingIdeaCount } from "../courses/list-row-status.mjs";
@@ -188,7 +190,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
               const isCollapsed = desk.collapsedSubjects.includes(subject);
               const subjectMenu = "subject:" + subject;
               return <section key={subject} className="pd-subject">
-                <div className="pd-subject-heading">
+                <div className="pd-subject-heading"
+                  style={{
+                    "--pd-subject-wash": subjectColor(subject) + "15",
+                    "--pd-subject-edge": subjectColor(subject) + "66",
+                  } as CSSProperties}>
                   <button className="pd-subject-toggle" type="button" aria-expanded={!isCollapsed}
                     onClick={() => desk.toggleSubject(subject)}>
                     {isCollapsed ? <ChevronRight size={15}/> : <ChevronDown size={15}/>}
