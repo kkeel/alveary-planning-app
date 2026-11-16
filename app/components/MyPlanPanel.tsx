@@ -7,6 +7,8 @@ import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import DetailViewSwitch from "./DetailViewSwitch";
+import type { CSSProperties } from "react";
+import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import CourseCustomizationNote from "./CourseCustomizationNote";
@@ -126,7 +128,11 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
       {groups.map(([subject, courses]) => {
         const collapsed = collapsedSubjects.includes(subject);
         return <section className="pd-subject" key={subject}>
-          <div className="pd-subject-heading">
+          <div className="pd-subject-heading"
+            style={{
+              "--pd-subject-wash": subjectColor(subject) + "15",
+              "--pd-subject-edge": subjectColor(subject) + "66",
+            } as CSSProperties}>
             <button type="button" className="pd-subject-toggle" aria-expanded={!collapsed}
               onClick={() => setCollapsedSubjects(previous => collapsed
                 ? previous.filter(value => value !== subject) : [...previous,subject])}>
