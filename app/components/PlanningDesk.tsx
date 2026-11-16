@@ -12,7 +12,7 @@ import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
 import DetailViewSwitch from "./DetailViewSwitch";
 import CourseCustomizationNote from "./CourseCustomizationNote";
-import { remainingTopicCount } from "./topic-assignment.mjs";
+import { pendingIdeaCount } from "../courses/list-row-status.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import CourseTopicReview from "./CourseTopicReview";
@@ -76,8 +76,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const ideas = useMemo(() => desk.thinkTankIds
     .filter(id => {
       const choice = cloud.courses.find(course => course.courseId === id);
-      return !choice || choice.stage !== "planned" ||
-        remainingTopicCount(choice, cloud.students) > 0 ||
+      return !choice || pendingIdeaCount(choice,cloud.students) > 0 ||
         justPlannedId === id || assigningId === id;
     })
     .map(id => lookup.get(id))
@@ -230,7 +229,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const isCustomized = courseTopics.length > 1 &&
                       includedCount < courseTopics.length;
                     const remainingCount = savedChoice
-                      ? remainingTopicCount(savedChoice,cloud.students) : 0;
+                      ? pendingIdeaCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
                     const reviewOpen = reviewOverrides[idea.id] ?? (desk.thinkDetails === "expanded");
                     return <div className="pd-idea" key={idea.id}>
