@@ -27,9 +27,12 @@ student editor.
 - Student checkboxes, course defaults and topic overrides write through the
   existing secure serialized Demo operations using the selected parent
   course, its own topic link and the chosen student. No cross-parent write.
-- Done in the Think Tank can promote an already-checked idea in the
+- Done in Think Tank can promote an already-checked idea in the
   *selected* source parent, and focus My Plan on that parent, even if it is
-  not the one the editor was originally opened from.
+  not the one the editor was originally opened from. Done from My Plan
+  likewise opens the selected parent course.
+- A change autosaves. Switching the selector does not reset the editor's
+  Close label back to Cancel or imply that an earlier selection was undone.
 - A topic excluded from another parent is not offered for cross-context
   editing; restore it inside its own course first.
 - An unsaved catalog-only parent is not offered. Save that course to Think
