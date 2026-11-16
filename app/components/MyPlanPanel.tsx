@@ -170,8 +170,7 @@ export default function MyPlanPanel({ focusCourseId = null, sideBySide = false }
                     }}>Return to Think Tank</button>
                   </div>
                   {editing && <StudentAssignmentEditor course={course}
-                    onClose={item?.type === "Combined Course"
-                      ? () => setEditingStudentsId(null) : undefined}/>}
+                    onClose={() => setEditingStudentsId(null)}/>}
                 </div>}
               </div>;
             })}
