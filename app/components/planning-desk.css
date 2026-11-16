@@ -948,39 +948,95 @@
 }
 
 
-/* Think Tank's single, consistent hover language. Nothing gains an
-   underlined "link" effect solely because the record has details; hover is
-   a quiet highlight for title, topic row, disclosures and Other topics.
-   All topic identity lightbulbs/checkmarks remain present. */
+/* Separate Think Tank hover targets: the topic row is only a layout wrapper,
+   never a hover surface. These are the same neutral states used by the
+   Course List's unselected toolbar controls. Subject headings alone retain
+   their subject palette. */
 .pd-idea:not(.myplan-row) .pd-idea-review,
-.pd-think-review .pd-topic-row,
 .pd-think-review .pd-plan-info-disclosure,
 .pd-think-review .pd-other-topics-toggle,
 .pd-think-review .pd-other-topics-all,
-.pd-subject-toggle {
+.pd-subject-toggle,
+.pd-idea:not(.myplan-row) .pd-mini-info-action,
+.pd-think-review .pd-topic-row .pd-topic-title-button,
+.pd-think-review .pd-topic-row .pd-topic-icon {
   border-radius:3px;
-  transition:background-color 110ms ease,color 110ms ease;
+  transition:background-color 110ms ease,color 110ms ease,border-color 110ms ease;
 }
 .pd-idea:not(.myplan-row) .pd-idea-review:hover,
 .pd-idea:not(.myplan-row) .pd-idea-review:focus-visible,
-.pd-think-review .pd-topic-row:hover,
-.pd-think-review .pd-topic-row:focus-within,
 .pd-think-review .pd-plan-info-disclosure:hover,
 .pd-think-review .pd-plan-info-disclosure:focus-visible,
 .pd-think-review .pd-other-topics-toggle:hover:not(:disabled),
 .pd-think-review .pd-other-topics-toggle:focus-visible,
-.pd-think-review .pd-other-topics-all:hover:not(:disabled),
-.pd-subject-toggle:hover,
-.pd-subject-toggle:focus-visible {
+.pd-think-review .pd-other-topics-all:hover:not(:disabled) {
   background:#eef3eb;
   color:#365a40;
   text-decoration:none;
 }
-.pd-think-review .pd-topic-row .pd-topic-title-button:hover,
-.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"],
-.pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible {
+/* Subject headers already have a subtle subject wash. Hover strengthens
+   that same subject hue, as a colored Course List disclosure does. */
+.pd-subject-toggle:hover,
+.pd-subject-toggle:focus-visible {
+  background:color-mix(in srgb,var(--pd-subject-color,#6c866e) 23%,white);
+  color:color-mix(in srgb,var(--pd-subject-color,#6c866e) 75%,#25372c);
   text-decoration:none;
-  color:#365a40;
+}
+.pd-subject-toggle:hover > span,
+.pd-subject-toggle:focus-visible > span {
+  color:inherit;
+}
+/* The Think Tank course info button deliberately stays NEUTRAL even when
+   expanded; it is a details disclosure, not a subject-colored selection. */
+.pd-idea:not(.myplan-row) .pd-mini-info-action {
+  border:1px solid transparent;
+}
+.pd-idea:not(.myplan-row) .pd-mini-info-action:hover,
+.pd-idea:not(.myplan-row) .pd-mini-info-action:focus-visible {
+  background:#f0f3ee;
+  border-color:#cbd6c9;
+  color:#4e6655;
+}
+.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"] {
+  background:#f1f5ed;
+  border-color:#d3dcd1;
+  color:#4d6553;
+}
+.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:hover,
+.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:focus-visible {
+  background:#e9eee7;
+}
+/* Hover on the title button itself, not its .pd-topic-row parent. All
+   selected and Other topics share this renderer and the same styling. */
+.pd-think-review .pd-topic-row .pd-topic-title-button:hover,
+.pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible {
+  background:#f0f3ee;
+  color:#4e6655;
+  text-decoration:none;
+}
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"] {
+  background:#f1f5ed;
+  color:#4d6553;
+  text-decoration:none;
+}
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"]:hover,
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"]:focus-visible {
+  background:#e9eee7;
+}
+/* Each toolbar icon has its own hover and keyboard-focus target; hovering
+   an icon never tints the adjacent title or the full row. */
+.pd-think-review .pd-topic-row .pd-topic-icon:hover:not(:disabled),
+.pd-think-review .pd-topic-row .pd-topic-icon:focus-visible {
+  background:#f0f3ee;
+  color:#4e6655;
+}
+.pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"] {
+  background:#f1f5ed;
+  color:#4d6553;
+}
+.pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"]:hover,
+.pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"]:focus-visible {
+  background:#e9eee7;
 }
 .pd-think-review .pd-topic-title-button,
 .pd-think-review .pd-topic-name {
@@ -1027,11 +1083,13 @@
 .pd-idea-review .pd-meta-divider { color:#94a393; white-space:pre; }
 @media (prefers-reduced-motion:reduce) {
   .pd-idea:not(.myplan-row) .pd-idea-review,
-  .pd-think-review .pd-topic-row,
   .pd-think-review .pd-plan-info-disclosure,
   .pd-think-review .pd-other-topics-toggle,
   .pd-think-review .pd-other-topics-all,
   .pd-subject-toggle,
+  .pd-idea:not(.myplan-row) .pd-mini-info-action,
+  .pd-think-review .pd-topic-row .pd-topic-title-button,
+  .pd-think-review .pd-topic-row .pd-topic-icon,
   .pd-think-review .pd-topic-menu button {
     transition:none;
   }
