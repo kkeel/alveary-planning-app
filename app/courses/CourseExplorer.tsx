@@ -221,13 +221,18 @@ function CourseRow({
     </div>
     {mode === "plan" && activePlanEditor && <div className="cx-inline-assign" role="region"
       aria-label={"Assign students for " + course.title}>
-      {!parentChoice ? <p role="status" className="cx-assign-loading">
-        Saving to your Think Tank before opening student choices…
-      </p> : nested ? <SharedTopicStudentEditor
-        topicEditionId={course.editionId} currentCourseId={sourceCourseId}
-        onClose={onEndPlan} onCancel={onEndPlan}/> :
-        <StudentAssignmentEditor course={parentChoice}
-          onClose={onEndPlan} onCancel={onEndPlan}/>}
+      {!parentChoice || !parentChoice.topics.length ? <p role="status" className="cx-assign-loading">
+        Saving the parent course before opening student choices…
+      </p> : nested && !parentChoice.topics.some(topic => topic.topicId === course.id && topic.included)
+        ? <p className="cx-assign-loading" role="status">
+            This topic was removed from the saved combined course. Restore it in Planning to assign it.
+            <button type="button" className="cx-assign-dismiss" onClick={onEndPlan}>Close</button>
+          </p>
+        : nested ? <SharedTopicStudentEditor
+            topicEditionId={course.editionId} currentCourseId={sourceCourseId}
+            onClose={onEndPlan} onCancel={onEndPlan}/> :
+          <StudentAssignmentEditor course={parentChoice}
+            onClose={onEndPlan} onCancel={onEndPlan}/>}
     </div>}
     {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
       {!isCombined && <div className="cx-course-meta">
