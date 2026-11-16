@@ -31,7 +31,6 @@ type DemoPlanContextValue = {
   studentGroups: PlanningGroup[]; studentPreferences: StudentPreference[];
   importIdeas: (ideas: LegacyIdea[]) => Promise<void>;
   addChoice: (courseId: string) => void;
-  planTopic: (topicId: string) => void;
   addStudent: (displayName: string, gradeLevel: number | null) => Promise<boolean>;
   removeChoice: (courseId: string) => void;
   setStage: (courseId: string, stage: "idea" | "planned") => void;
@@ -170,23 +169,6 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
           { courseId, stage: "idea", topics: [], studentIds: [], overrides: [] }],
       });
   }, [mutate]);
-  // A topic selected from a combined course becomes its own independent
-  // course choice. The parent group and its other topics stay in Think Tank.
-  const planTopic = useCallback((topicId: string) => {
-    // Opening the editor must NOT plan an unassigned topic. Assignment
-    // changes the choice to planned only when a student is selected.
-    void mutate("set_choice", { courseId: topicId, stage: "idea" }, current => {
-      const existing = current.courses.find(c => c.courseId === topicId);
-      return {
-        ...current,
-        courses: existing
-          ? current.courses
-          : [...current.courses, { courseId: topicId, stage: "idea",
-            topics: [], studentIds: [], overrides: [] }],
-      };
-    });
-  }, [mutate]);
-
   // Reuse the SAME secure student API as the Students page. The private
   // planning snapshot is then refreshed in the serialized mutation queue,
   // so both screens immediately agree after the save completes.
@@ -327,7 +309,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   return <Context.Provider value={{
     ready, saving, error, courses: snapshot.courses, students: snapshot.students,
     studentGroups: snapshot.studentGroups, studentPreferences: snapshot.studentPreferences,
-    importIdeas, addChoice, planTopic, addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
+    importIdeas, addChoice, addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
     assignStudents, setPreference, saveGroup, deleteGroup, refresh,
   }}>{children}</Context.Provider>;
 }
