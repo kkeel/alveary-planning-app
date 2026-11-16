@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, MoreHorizontal, Plus, RotateCcw, UsersRound } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
@@ -102,6 +102,13 @@ export default function CourseTopicReview({
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
+        {!isRemoved && <span className="pd-topic-selection-mark"
+          title={mode === "plan" ? "In My Plan" : "In Think Tank"}
+          aria-label={mode === "plan" ? "In My Plan" : "In Think Tank"}>
+          {mode === "plan"
+            ? <SquareCheckBig size={13} aria-hidden="true"/>
+            : <Lightbulb size={13} aria-hidden="true"/>}
+        </span>}
         {hasDetails
           ? <button type="button" className="pd-topic-name pd-topic-title-button"
               aria-label={(infoOpen ? "Hide" : "Show") + " description and tips for " + topic.title}
