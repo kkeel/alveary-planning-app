@@ -3,7 +3,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
-import { effectiveTopicCount, isTopicAssigned } from "./topic-assignment.mjs";
+import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
 
 const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
@@ -46,6 +46,17 @@ export default function StudentAssignmentEditor({
   function assign(ids: string[]) {
     setStudentAssignments(ids, true);
   }
+  function finishEditing() {
+    // The existing editor autosaves checkbox changes. But an idea can contain
+    // previously checked students after Return to Think Tank. Those checkboxes
+    // don't fire an onChange when simply viewed, so Done must finalize its
+    // status, too, rather than only closing the editor.
+    if (shouldPromoteChoiceOnDone(course, topicId, demo.students)) {
+      demo.setStage(course.courseId, "planned");
+      onAssigned?.();
+    }
+    onClose?.();
+  }
   function openGroup(group?: PlanningGroup) {
     setGroupEditing(true);
     setEditingGroupId(group?.id ?? null);
@@ -85,7 +96,7 @@ export default function StudentAssignmentEditor({
           {addingStudent ? "Cancel adding" : "+ Add student"}
         </button>
         {onClose && <button type="button" className="pd-done-action"
-          onClick={onClose} title="Close student editing; changes save automatically">Done</button>}
+          onClick={finishEditing} title="Finish student editing and save this selection to My Plan">Done</button>}
       </div>
     </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
