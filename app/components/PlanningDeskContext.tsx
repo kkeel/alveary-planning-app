@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { CountryFilter } from "../courses/country-filter.mjs";
 import { useDemoPlan } from "./DemoPlanContext";
 
@@ -134,9 +134,15 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
     });
   }, [ready, storageScope, cloud.ready, cloud.courses]);
 
+  // Keep this action stable across state updates so auth initialization never
+  // re-runs merely because a member clicks List | Planning.
+  const setCourseMode = useCallback((mode: "browse" | "plan") => {
+    setValue(previous => previous.courseMode === mode ? previous : { ...previous, courseMode: mode });
+  }, []);
+
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,
-    setCourseMode: courseMode => setValue(v => v.courseMode === courseMode ? v : { ...v, courseMode }),
+    setCourseMode,
     setGrades: next => setValue(v => ({
       ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
     })),
@@ -240,7 +246,7 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       delete ordered[subject];
       return { ...v, orderedIdsBySubject: ordered };
     }),
-  }), [value, ready, cloud]);
+  }), [value, ready, cloud, setCourseMode]);
 
   return <PlanningDeskContext.Provider value={api}>{children}</PlanningDeskContext.Provider>;
 }

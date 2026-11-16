@@ -73,8 +73,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
   const [modeReadyForStatus, setModeReadyForStatus] = useState<"public" | "signed-in" | null>(null);
-  // Set the initial mode *before* revealing the page, not after the first
-  // list-view paint. Later manual List/Planning changes remain available.
+  // Initialize List only when the authenticated account status changes.
+  // setCourseMode has stable identity, so clicking Planning must not trigger
+  // this effect and immediately snap the member back to List.
   useEffect(() => {
     if (status === "checking") {
       setModeReadyForStatus(null);
@@ -83,7 +84,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     // Members enter List with the portable desk; Planning opens the full workspace.
     setCourseMode("browse");
     setModeReadyForStatus(status);
-  }, [status, signedIn, setCourseMode]);
+  }, [status, setCourseMode]);
   const checking = status === "checking" || modeReadyForStatus !== status;
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
