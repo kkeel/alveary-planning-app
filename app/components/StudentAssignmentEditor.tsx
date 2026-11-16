@@ -5,8 +5,9 @@ import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
 import { coursePriority, topicPriorityOverride } from "./priority-inheritance.mjs";
+import { courseArrangement, topicArrangementOverride } from "./arrangement-inheritance.mjs";
 
-const arrangements: StudentPreference["arrangement"][] = ["Combined", "Separate", "Later"];
+const arrangements = ["Combined", "Separate", "Later"] as const;
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
   ["Core", "High Interest", "Additional"];
 
@@ -201,8 +202,8 @@ export default function StudentAssignmentEditor({
     </button>
     {showPreferences && <div className="plan-preferences">
       <p className="plan-microcopy">
-        Course priority is the default for this student. Individual topics can
-        inherit it or use a different priority without affecting other topics.
+        Course priorities and arrangements are defaults for each student.
+        Individual topics can inherit them or have their own settings.
       </p>
       {demo.students.filter(student => assigned.has(student.id) ||
         (!topicId && effectiveTopicCount(course, student.id) > 0)).map(student => {
@@ -211,9 +212,12 @@ export default function StudentAssignmentEditor({
         const topicSelection = topicId
           ? topicPriorityOverride(demo.assignmentPriorities,course.courseId,student.id,topicId)
           : "inherit";
-        const arrangement = demo.studentPreferences.find(p =>
-          p.courseId === course.courseId && p.studentId === student.id)?.arrangement ?? "Later";
-        const wholeCourseAssigned = course.studentIds.includes(student.id);
+        const arrangement = courseArrangement(demo.assignmentArrangements,
+          course.courseId,student.id);
+        const topicArrangement = topicId
+          ? topicArrangementOverride(demo.assignmentArrangements,
+              course.courseId,student.id,topicId)
+          : "inherit";
         return <div className="plan-preference-row" key={student.id}>
           <strong>{student.displayName}</strong>
           <label>Course default priority
@@ -228,7 +232,7 @@ export default function StudentAssignmentEditor({
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          {topicId ? <label>Priority for this topic
+          {topicId && <label>Priority for this topic
             <select value={topicSelection}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -242,24 +246,39 @@ export default function StudentAssignmentEditor({
               <option value="Not set">Not set (override)</option>
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
-          </label> : wholeCourseAssigned ? <label>Arrangement
+          </label>}
+          <label>Course default arrangement
             <select value={arrangement}
               onChange={event => {
                 setHasSavedEdits(true);
-                // Arrangement remains a whole-course preference. Its legacy
-                // priority field is retained for backwards compatibility;
-                // the dedicated assignment priority table is authoritative.
-                const legacyPriority = demo.studentPreferences.find(p =>
-                  p.courseId === course.courseId && p.studentId === student.id)?.priority ?? null;
-                demo.setPreference(course.courseId, student.id,legacyPriority,
-                  event.target.value as StudentPreference["arrangement"]);
+                demo.setAssignmentArrangement(course.courseId, student.id, null,
+                  event.target.value as "Combined" | "Separate" | "Later");
               }}>
-              {arrangements.map(item => <option key={item} value={item}>{item}</option>)}
-              {arrangement === "Both" && <option value="Both">Both (previous selection)</option>}
+              {arrangements.map(item => <option key={item} value={item}>
+                {item === "Later" ? "Decide later" : item}
+              </option>)}
+              {arrangement === "Both" && <option value="Both">Both (previous setting)</option>}
             </select>
-          </label> : <small className="plan-partial-pref-note">
-            Topic-only selection; arrangement can be chosen after assigning the full course.
-          </small>}
+          </label>
+          {topicId && <label>Arrangement for this topic
+            <select value={topicArrangement}
+              onChange={event => {
+                setHasSavedEdits(true);
+                demo.setAssignmentArrangement(course.courseId, student.id, topicId,
+                  event.target.value === "inherit" ? null :
+                    event.target.value as "Combined" | "Separate" | "Later");
+              }}>
+              <option value="inherit">
+                {"Use course default (" +
+                  (arrangement === "Later" ? "Decide later" :
+                    arrangement === "Both" ? "Both, previous setting" : arrangement) + ")"}
+              </option>
+              {arrangements.map(item => <option key={item} value={item}>
+                {item === "Later" ? "Decide later (override)" : item}
+              </option>)}
+              {topicArrangement === "Both" && <option value="Both">Both (previous setting)</option>}
+            </select>
+          </label>}
         </div>;
       })}
       {!demo.students.some(student => assigned.has(student.id) ||
