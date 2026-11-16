@@ -3,6 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 import { demoteIfNoAssignedTopics, isTopicAssigned } from "./topic-assignment.mjs";
+import catalog from "../courses/catalog-preview.json";
+import { previewTopicsForCourse } from "../courses/optimistic-topics.mjs";
 
 export type SavedTopic = {
   topicId:string; topicEditionId:string; included:boolean; order:number;
@@ -214,19 +216,27 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   },[mutate]);
 
   const toggleListIdea = useCallback((courseId:string,topicId:string|null) => {
+    // The catalog already knows the parent and all included source topics.
+    // Hydrate the optimistic choice BEFORE the API responds so both its
+    // button color and the portable Planning Desk update on this click.
+    // Confirmation and rollback still come exclusively from mutate().
     void mutate("toggle_idea",{courseId,topicId},current => {
       const existing=current.courses.find(c=>c.courseId===courseId);
       if (!existing) {
+        const topics=previewTopicsForCourse(catalog,courseId).map(t=>({
+          ...t,ideaChoice:(t.topicId===topicId ? "on" : "inherit") as SavedTopic["ideaChoice"],
+        }));
         return {...current,courses:[...current.courses,{
-          courseId,stage:"idea",ideaAll:topicId===null,topics:[],
+          courseId,stage:"idea",ideaAll:topicId===null,topics,
           studentIds:[],overrides:[],
         }]};
       }
       return {...current,courses:current.courses.map(c=>{
         if (c.courseId!==courseId) return c;
+        const topics=c.topics.length ? c.topics : previewTopicsForCourse(catalog,courseId);
         if (topicId===null) return {...c,ideaAll:!c.ideaAll,
-          topics:c.topics.map(t=>({...t,ideaChoice:"inherit" as const}))};
-        return {...c,topics:c.topics.map(t=>{
+          topics:topics.map(t=>({...t,ideaChoice:"inherit" as const}))};
+        return {...c,topics:topics.map(t=>{
           if (t.topicId!==topicId) return t;
           const selected=t.ideaChoice==="on"||
             (t.ideaChoice==="inherit"&&c.ideaAll);
