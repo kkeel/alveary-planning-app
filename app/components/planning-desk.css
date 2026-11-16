@@ -946,3 +946,93 @@
   .pd-think-review .pd-course-tips, .pd-think-review .pd-topic-tips { padding:9px 10px; }
   .pd-other-topics-all { padding:5px 6px; }
 }
+
+
+/* Think Tank's single, consistent hover language. Nothing gains an
+   underlined "link" effect solely because the record has details; hover is
+   a quiet highlight for title, topic row, disclosures and Other topics.
+   All topic identity lightbulbs/checkmarks remain present. */
+.pd-idea:not(.myplan-row) .pd-idea-review,
+.pd-think-review .pd-topic-row,
+.pd-think-review .pd-plan-info-disclosure,
+.pd-think-review .pd-other-topics-toggle,
+.pd-think-review .pd-other-topics-all,
+.pd-subject-toggle {
+  border-radius:3px;
+  transition:background-color 110ms ease,color 110ms ease;
+}
+.pd-idea:not(.myplan-row) .pd-idea-review:hover,
+.pd-idea:not(.myplan-row) .pd-idea-review:focus-visible,
+.pd-think-review .pd-topic-row:hover,
+.pd-think-review .pd-topic-row:focus-within,
+.pd-think-review .pd-plan-info-disclosure:hover,
+.pd-think-review .pd-plan-info-disclosure:focus-visible,
+.pd-think-review .pd-other-topics-toggle:hover:not(:disabled),
+.pd-think-review .pd-other-topics-toggle:focus-visible,
+.pd-think-review .pd-other-topics-all:hover:not(:disabled),
+.pd-subject-toggle:hover,
+.pd-subject-toggle:focus-visible {
+  background:#eef3eb;
+  color:#365a40;
+  text-decoration:none;
+}
+.pd-think-review .pd-topic-row .pd-topic-title-button:hover,
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"],
+.pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible {
+  text-decoration:none;
+  color:#365a40;
+}
+.pd-think-review .pd-topic-title-button,
+.pd-think-review .pd-topic-name {
+  text-decoration:none;
+}
+/* Make inline management commands feel like the existing course-level
+   Remove button, including when the labels wrap on narrow screens. */
+.pd-think-review .pd-topic-menu {
+  background:#f8faf6;
+  padding:7px 9px;
+  gap:7px;
+}
+.pd-think-review .pd-topic-menu button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:6px;
+  min-height:32px;
+  padding:7px 10px;
+  border:1px solid #d7e2d5;
+  border-radius:4px;
+  background:#fff;
+  color:#536e59;
+  font:inherit;
+  font-size:11px;
+  line-height:1.35;
+  text-decoration:none;
+  transition:background-color 110ms ease,border-color 110ms ease;
+}
+.pd-think-review .pd-topic-menu button:hover:not(:disabled),
+.pd-think-review .pd-topic-menu button:focus-visible {
+  border-color:#c1d2c0;
+  background:#edf3eb;
+  color:#355b40;
+  text-decoration:none;
+}
+.pd-think-review .pd-topic-menu button:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:2px;
+}
+/* The status belongs beside the N-of-M topic count, never as a detached
+   badge in the expanded course details. */
+.pd-idea-review .pd-meta-divider { color:#94a393; white-space:pre; }
+@media (prefers-reduced-motion:reduce) {
+  .pd-idea:not(.myplan-row) .pd-idea-review,
+  .pd-think-review .pd-topic-row,
+  .pd-think-review .pd-plan-info-disclosure,
+  .pd-think-review .pd-other-topics-toggle,
+  .pd-think-review .pd-other-topics-all,
+  .pd-subject-toggle,
+  .pd-think-review .pd-topic-menu button {
+    transition:none;
+  }
+}

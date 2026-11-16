@@ -203,11 +203,14 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
                           onClick={() => {
                             setReviewOverrides(old => ({ ...old,[idea.id]:!reviewOpen }));
+                            setCourseInfoId(null);
                             setJustPlannedId(null);
                           }}>
                           <Lightbulb size={14} aria-hidden="true"/><span>{idea.title}
-                            {showTopicCount && <small className="pd-topic-count-note">
-                              {topicCount.selected} of {topicCount.total} topics
+                            {(showTopicCount || partiallyPlanned) && <small className="pd-topic-count-note">
+                              {showTopicCount && <>{topicCount.selected} of {topicCount.total} topics</>}
+                              {showTopicCount && partiallyPlanned && <span className="pd-meta-divider"> · </span>}
+                              {partiallyPlanned && "Partial My Plan"}
                             </small>}
                           </span>
                         </button>
@@ -219,7 +222,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           onClick={() => {
                             const next=!reviewOpen;
                             setReviewOverrides(old=>({...old,[idea.id]:next}));
-                            setCourseInfoId(next && (idea.description || idea.tips) ? idea.id : null);
+                            // Opening the outer course never auto-expands its
+                            // nested Description & tips disclosure.
+                            setCourseInfoId(null);
                             setJustPlannedId(null);
                           }}>
                           <Info size={15} aria-hidden="true"/>
@@ -244,6 +249,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             const next=assigningId!==idea.id;
                             setAssigningId(next?idea.id:null);
                             setReviewOverrides(old=>({...old,[idea.id]:true}));
+                            setCourseInfoId(null);
                             setJustPlannedId(null);
                           }}>
                           <Plus size={14} aria-hidden="true"/>
@@ -284,8 +290,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           </button>
                           {courseInfoId===idea.id && <CourseInfoDisclosure course={idea}/>}
                         </div>}
-                        {plannedIds.has(idea.id) && <span className="pd-plan-added">
-                          {partiallyPlanned ? "Partly in My Plan" : "In My Plan"}
+                        {plannedIds.has(idea.id) && !partiallyPlanned && <span className="pd-plan-added">
+                          In My Plan
                         </span>}
                         {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
                           <div className="pd-assign-in-place">
