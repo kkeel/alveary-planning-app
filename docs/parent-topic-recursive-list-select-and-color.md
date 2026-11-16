@@ -72,11 +72,16 @@ topics to the course's Think Tank context. Saved per-student priorities and
 arrangements remain untouched. **Shared source editions in other parent
 courses are never modified.**
 
-Previously saved whole-course ideas are backfilled as `idea_all=true`,
-with each topic inheriting them. This preserves existing plans instead
-of silently changing historical selections. Courses intentionally returned
-to Think Tank with their prior student checkboxes retained remain visible
-as drafts until promoted again.
+Previously saved whole-course Think Tank ideas retain `idea_all=true`,
+with each topic inheriting them. Older **planned choices with only explicit
+positive topic assignments and no whole-course student links** are inferred
+as topic-origin selections instead, so unrelated siblings do not falsely
+light up. This is a one-time Demo-only compatibility adjustment to the new
+intent field; it does not change assignments, priority, arrangement, or
+included-topic customizations. Where the prior UI never stored the original
+click location, member re-selection can still clarify ambiguous historical
+choices. Courses intentionally returned to Think Tank with their previous
+student checkboxes retained remain visible as drafts until promoted again.
 
 ## Acceptance testing after merge
 
