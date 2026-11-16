@@ -249,6 +249,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             const next=assigningId!==idea.id;
                             setAssigningId(next?idea.id:null);
                             setReviewOverrides(old=>({...old,[idea.id]:true}));
+                            setCourseInfoId(null);
                             setJustPlannedId(null);
                           }}>
                           <Plus size={14} aria-hidden="true"/>
