@@ -39,6 +39,25 @@ The old Done control only closed the editor, leaving the stage mismatched.
 - Quick Add, priority inheritance, and saved topic priorities remain
   separate follow-up work.
 
+## Consistent Cancel / Close / Done
+
+Every shared course or topic student editor now has a visible secondary exit
+beside Done, rather than requiring a second click on the student icon.
+
+- On first opening, with no edits made: **Cancel** closes the editor without
+  finalizing a pre-checked Think Tank choice. This avoids involuntary
+  promotion of a previously returned-to-Think-Tank course.
+- After clicking a student checkbox, using a Family/group assignment shortcut,
+  saving a student/group, or changing priorities/arrangements, the secondary
+  control says **Close**, because those mutations already entered the
+  automatic save queue. Close must never imply it can undo them.
+- **Done** is the separate, explicit action for finalizing an already-checked
+  parent from Think Tank into My Plan.
+- At the parent Think Tank level, Cancel never invokes the My Plan focus
+  callback. The same holds for nested topic assignment.
+- My Plan's course and topic editors use the same header controls; exiting
+  either way does not delete a saved assignment.
+
 ## Browser QA
 
 1. **Reproduction state:** Open a combined course whose U.S. History child
