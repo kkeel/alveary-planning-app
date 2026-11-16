@@ -18,6 +18,7 @@ import { selectionTopicCount } from "./planning-topic-sections.mjs";
 import { pendingIdeaCount, topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
+import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
@@ -213,6 +214,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                               {showTopicCount && partiallyPlanned && <span className="pd-meta-divider"> · </span>}
                               {partiallyPlanned && "Partial My Plan"}
                             </small>}
+                            {reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}
                           </span>
                         </button>
                         <button type="button"
