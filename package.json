@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node scripts/prepare-brand-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/prepare-brand-assets.mjs && node tests/catalog-preview.test.mjs && node tests/course-topic-provenance.test.mjs && node tests/course-list-actions.test.mjs",
+    "prebuild": "node scripts/prepare-brand-assets.mjs && node tests/catalog-preview.test.mjs && node tests/course-topic-provenance.test.mjs && node tests/course-list-actions.test.mjs && node tests/course-list-subject-state.test.mjs",
     "build": "next build",
     "start": "next start",
     "pretypecheck": "node scripts/prepare-brand-assets.mjs",

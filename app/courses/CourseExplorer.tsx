@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal, UsersRound } from "lucide-react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
 import { sourceChoiceForRow } from "./course-list-actions.mjs";
+import { subjectColor } from "./legacy-subject-colors.mjs";
+import { listRowStatus } from "./list-row-status.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 import { usePlannerAuth } from "../components/PlannerAuthProvider";
@@ -14,7 +16,6 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import { useDemoPlan, type PlanningStudent, type SavedCourse } from "../components/DemoPlanContext";
-import { effectiveTopicCount, topicHasAssignedStudent } from "../components/topic-assignment.mjs";
 
 type Plan = {
   id: string;
@@ -100,6 +101,7 @@ type CourseRowProps = {
   planned: readonly string[];
   onPlannedToggle: (id: string) => void;
   parentCourseId?: string;
+  parentSubject?: string;
   detailMode: DetailMode;
   detailRevision: number;
   savedCourses: readonly SavedCourse[];
@@ -126,6 +128,7 @@ function CourseRow({
   planned,
   onPlannedToggle,
   parentCourseId,
+  parentSubject,
   detailMode,
   detailRevision,
   savedCourses,
@@ -151,14 +154,17 @@ function CourseRow({
   const sourceChoice = sourceChoiceForRow(course.id, parentCourseId);
   const sourceCourseId = sourceChoice.courseId;
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
-  const isSaved = planned.includes(sourceCourseId) || Boolean(parentChoice);
-  const isPlanned = parentChoice?.stage === "planned";
-  const isAssignedHere = nested
-    ? Boolean(parentChoice && topicHasAssignedStudent(parentChoice, course.id, students))
-    : Boolean(parentChoice && students.some(student =>
-        effectiveTopicCount(parentChoice, student.id) > 0));
+  const status = listRowStatus(parentChoice, students, sourceChoice.topicId,
+    isCombined, planned.includes(sourceCourseId));
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
     planningTarget.topicId === sourceChoice.topicId;
+  const subjectHex = subjectColor(parentSubject ?? course.subject);
+  const subjectVars = {
+    "--cx-subject": subjectHex,
+    "--cx-subject-soft": subjectHex + "29",
+    "--cx-subject-pale": subjectHex + "15",
+    "--cx-subject-medium": subjectHex + "4D",
+  } as CSSProperties;
 
   // Keep the clicked row in the same visible place when content above/below
   // shrinks or expands. Browsers can otherwise reanchor the long Course List.
@@ -178,49 +184,72 @@ function CourseRow({
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics, mode, planned, onPlannedToggle, parentCourseId: sourceCourseId,
+    parentSubject: parentSubject ?? course.subject,
     detailMode, detailRevision, savedCourses, students, planningTarget,
     onStartPlan, onEndPlan,
   };
 
-  return <div className={"cx-course" + (nested ? " cx-course--topic" : "") + (isExpanded ? " is-expanded" : "")}>
+  return <div style={subjectVars} className={"cx-course" +
+    (nested ? " cx-course--topic" : "") +
+    (isExpanded ? " is-expanded" : "") +
+    (mode === "plan" && status.planTone !== "none" ? " cx-status-" + status.planTone : "") +
+    (mode === "plan" && status.ideaActive ? " cx-status-idea" : "") +
+    (mode === "plan" && status.contextTone !== "none" ? " cx-context-" + status.contextTone : "")}>
     <div className="cx-course-head">
       <button ref={disclosureRef} type="button" className="cx-course-disclosure"
         aria-expanded={canExpand ? isExpanded : undefined}
         aria-controls={canExpand ? detailsId : undefined}
-        disabled={!canExpand}
+        disabled={!canExpand} title={canExpand ? (isExpanded ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}</span>
-        {canExpand && <span className="cx-view-label">{isExpanded ? "Hide details" : "View details"}</span>}
-        {canExpand && <ChevronDown size={16} strokeWidth={1.7} className="cx-chevron" aria-hidden="true" />}
       </button>
-      {mode === "plan" && <div className="cx-course-actions">
-        <button className={"cx-idea-action" + (isSaved ? " is-selected" : "")}
-          type="button" disabled={isPlanned || (nested && isSaved)}
-          aria-label={(isSaved ? "Saved parent course for " : "Save parent course for ") +
-            course.title + " in Think Tank"}
-          aria-pressed={isSaved}
-          title={isPlanned ? "Already in My Plan; manage it from the Planning Desk" :
-            nested && isSaved ? "This topic is already saved with its parent course" :
-            isSaved ? "Remove this course from Think Tank" :
-              nested ? "Save this topic's parent course to Think Tank" : "Save to Think Tank"}
-          onClick={() => onPlannedToggle(sourceCourseId)}>
-          {isSaved ? <Check size={14} aria-hidden="true"/> : <Lightbulb size={14} aria-hidden="true"/>}
-          <span>{isSaved ? "Saved" : "Think Tank"}</span>
-        </button>
-        <button className={"cx-direct-plan-action" + (activePlanEditor ? " is-open" : "")}
-          type="button"
-          aria-expanded={activePlanEditor}
-          aria-label={(isAssignedHere ? "Edit student assignments for " :
-            nested ? "Plan only " : isCombined ? "Plan all topics in " : "Plan ") + course.title}
-          title={nested ? "Assign just this topic within its parent course" :
-            isCombined ? "Assign all included topics" : "Assign students to this course"}
-          onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
-          {isAssignedHere ? <UsersRound size={14} aria-hidden="true"/> :
-            <Plus size={14} aria-hidden="true"/>}
-          <span>{isAssignedHere ? "Students" : isCombined && !nested ? "Plan all" : "Plan"}</span>
-        </button>
-      </div>}
-
+      <div className="cx-course-actions">
+        {canExpand && <button type="button" className={"cx-info-action" +
+          (isExpanded ? " is-open" : "")}
+          aria-controls={detailsId} aria-expanded={isExpanded}
+          aria-label={(isExpanded ? "Hide" : "View") + " details for " + course.title}
+          title={(isExpanded ? "Hide" : "View") + " description and topics"}
+          onClick={toggleDetails}>
+          <span className="cx-info-word">{isExpanded ? "Hide" : "View"}</span>
+          <Info size={16} strokeWidth={1.8} aria-hidden="true"/>
+        </button>}
+        {mode === "plan" && <>
+          <button type="button" className={"cx-idea-action" +
+            (status.ideaActive ? " is-selected" : "")}
+            aria-label={status.ideaActive
+              ? course.title + " is in Think Tank. Edit it in the Planning Desk"
+              : status.saved ? course.title + " is already saved. Manage it in Planning"
+              : "Add " + course.title + (nested ? " through its parent" : "") + " to Think Tank"}
+            aria-pressed={status.ideaActive}
+            disabled={status.saved}
+            title={status.ideaActive ? "In Think Tank · edit in Planning Desk" :
+              status.saved ? "Manage this selection in Planning Desk" :
+              "Save to Think Tank without assigning students"}
+            onClick={() => onPlannedToggle(sourceCourseId)}>
+            <Lightbulb size={16} strokeWidth={1.8} aria-hidden="true"/>
+          </button>
+          <button type="button" className={"cx-direct-plan-action" +
+            (status.planActive ? " is-selected" : "") +
+            (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
+            (activePlanEditor ? " is-open" : "")}
+            aria-expanded={activePlanEditor}
+            aria-pressed={status.planActive}
+            aria-label={status.planActive
+              ? course.title + " is planned. Edit student assignments in the Planning Desk"
+              : nested ? "Plan only " + course.title + " through " + sourceCourseId
+                : isCombined ? "Plan all included topics in " + course.title
+                : "Plan " + course.title}
+            title={status.excluded ? "Restore this topic in the Planning Desk before assigning it" :
+              status.planActive ? "In My Plan · edit students in the Planning Desk" :
+              nested ? "Assign this topic through its parent course" :
+              isCombined ? "Assign all included topics" : "Assign students"}
+            disabled={status.excluded || (status.planActive && !activePlanEditor)}
+            onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
+            <Plus size={17} strokeWidth={1.9} aria-hidden="true"/>
+            {isCombined && !nested && <span className="cx-plus-all">All</span>}
+          </button>
+        </>}
+      </div>
     </div>
     {mode === "plan" && activePlanEditor && <div className="cx-inline-assign" role="region"
       aria-label={"Assign students for " + course.title}>
@@ -249,6 +278,7 @@ function CourseRow({
       {course.description && <p className="cx-description">{course.description}</p>}
       {course.tips && <TipCallout>{course.tips}</TipCallout>}
       {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
+        <div className="cx-topic-heading">Topics</div>
         {children.map(child => <CourseRow key={child.id} course={child} nested {...childProps} />)}
       </div>}
     </div>}
@@ -399,7 +429,10 @@ export default function CourseExplorer() {
     planned,
     onPlannedToggle: courseId => {
       if (!cloud.ready) return;
-      if (planningTarget?.courseId === courseId) setPlanningTarget(null);
+      // The List is for first-time selections. Avoid any delete/reassign
+      // actions here once a course is saved; use the portable desk instead.
+      if (cloud.courses.some(course => course.courseId === courseId) ||
+          desk.thinkTankIds.includes(courseId)) return;
       desk.toggleIdea(courseId);
     },
     detailMode: desk.listDetails,
