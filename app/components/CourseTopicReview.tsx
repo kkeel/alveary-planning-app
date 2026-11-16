@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import { topicHasAssignedStudent } from "./topic-assignment.mjs";
+import { topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -82,8 +83,9 @@ export default function CourseTopicReview({
     Boolean(savedChoice && topicHasAssignedStudent(savedChoice, topic.id, demo.students));
   const included = children.filter(topic => !excluded(topic.id) &&
     (mode === "think"
-      ? savedChoice?.stage !== "planned" ||
-        !assignedInThisCourse(topic) || planningTopicId === topic.id
+      ? !savedChoice ||
+        topicIsThinkTankIdea(savedChoice,topic.id,demo.students) ||
+        planningTopicId === topic.id
       : assignedInThisCourse(topic) || editingTopicId === topic.id));
   const removed = children.filter(topic => excluded(topic.id));
   const totalIncluded = children.length - removed.length;
@@ -202,7 +204,7 @@ export default function CourseTopicReview({
     {included.map(topic => renderTopic(topic))}
     {!included.length && <p className="pd-topic-zero">
       {totalIncluded === 0 ? "No topics included yet." :
-        mode === "think" ? "All included topics are in My Plan." :
+        mode === "think" ? "No topics are currently selected for Think Tank." :
           "No included topics are assigned yet."}
     </p>}
     {!!removed.length && <div className="pd-removed">

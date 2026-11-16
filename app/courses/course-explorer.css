@@ -315,11 +315,13 @@
 }
 .cx-course-actions .cx-info-action.is-open { background:#f1f5ed; }
 .cx-info-word { font-size:10px; }
-.cx-course-actions .cx-idea-action.is-selected,
+.cx-course-actions .cx-idea-action.is-tone-full,
 .cx-course-actions .cx-direct-plan-action.is-tone-full {
   border-color:var(--cx-subject);
   background:var(--cx-subject); color:#fff;
 }
+.cx-course-actions .cx-idea-action.is-tone-partial,
+.cx-course-actions .cx-idea-action.is-tone-inherited,
 .cx-course-actions .cx-direct-plan-action.is-tone-partial,
 .cx-course-actions .cx-direct-plan-action.is-tone-inherited {
   border-color:var(--cx-subject-medium);
@@ -332,6 +334,8 @@
 .cx-course-actions .cx-direct-plan-action:not(.is-selected) {
   background:#fff; color:#607663;
 }
+.cx-course-actions .cx-idea-action.is-tone-partial,
+.cx-course-actions .cx-idea-action.is-tone-inherited,
 .cx-course-actions .cx-direct-plan-action.is-tone-partial,
 .cx-course-actions .cx-direct-plan-action.is-tone-inherited {
   background:var(--cx-subject-soft); color:var(--cx-subject);
