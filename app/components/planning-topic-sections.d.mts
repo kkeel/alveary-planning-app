@@ -6,7 +6,7 @@ export type ContextCourse={
  overrides:{topicId:string;studentId:string;assigned:boolean}[];
  topics:TopicChoice[];
 };
-export type ContextTopic={id:string;[key:string]:unknown};
+export type ContextTopic={id:string};
 export declare function thinkTankTopicSections<T extends ContextTopic>(
  children:readonly T[],choice:ContextCourse|undefined,
  students:readonly{id:string}[],excludedLocal?:readonly string[]
