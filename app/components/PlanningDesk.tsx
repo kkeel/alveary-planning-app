@@ -309,8 +309,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         <CourseTopicReview parent={idea} mode="think"
                           savedChoice={savedChoice}
                           excludedTopicIds={excludedTopicIds}
-                          onToggleTopic={topicId =>
-                            desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
+                          onToggleTopic={(topicId,include) => {
+                            if (savedChoice && cloud.ready)
+                              cloud.setTopic(idea.id,topicId,include);
+                            else desk.toggleCourseTopic(idea.id,topicId,courseTopics.map(t=>t.id));
+                          }}
                           onTopicAssigned={sourceCourseId => {
                             // Editing a shared edition through another parent must
                             // focus THAT course, never the course used to open it.
