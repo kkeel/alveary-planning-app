@@ -62,13 +62,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   const [openId, setOpenId] = useState<string | null>(null);
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
+  const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
   // Keep a now-unassigned parent visible only while its editor is open.
   // Changes autosave immediately, but Done/Close should remain reachable
   // before the course fully returns to Think Tank.
   const planned = demo.courses.filter(c => c.stage === "planned" ||
     (c.stage === "idea" && c.courseId === openId &&
-      (editingStudentsId === c.courseId || openId === c.courseId)));
+      (editingStudentsId === c.courseId || editingTopicCourseId === c.courseId)));
   const sharedTopics = useMemo(() =>
     buildTopicSharingIndex(demo.courses, demo.students),
     [demo.courses, demo.students]);
@@ -138,6 +139,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       // Reopening a course should never reveal a stale edit
                       // form until the member explicitly requests it.
                       setEditingStudentsId(null);
+                      setEditingTopicCourseId(null);
                     }}>
                     {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                     <span>
@@ -192,11 +194,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     }}
                     onTopicCancel={() => {
                       if (course.stage === "idea") setOpenId(null);
-                    }}/>}
+                    }}
+                    onTopicEditingChange={editing =>
+                      setEditingTopicCourseId(editing ? course.courseId : null)}/>} 
                   <div className="pd-review-actions">
                     <button type="button" className="myplan-return" onClick={() => {
                       demo.setStage(course.courseId, "idea");
                       setOpenId(null); setEditingStudentsId(null);
+                      setEditingTopicCourseId(null);
                     }}>Return to Think Tank</button>
                   </div>
                 </div>}
