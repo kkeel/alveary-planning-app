@@ -1,12 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, Minus, Plus, RotateCcw, UsersRound } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, MoreHorizontal, Plus, RotateCcw, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
-import { isTopicAssigned } from "./topic-assignment.mjs";
-import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
+import { topicHasAssignedStudent } from "./topic-assignment.mjs";
+import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
@@ -53,6 +53,7 @@ export default function CourseTopicReview({
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [planningTopicId, setPlanningTopicId] = useState<string | null>(null);
   const [removedOpen, setRemovedOpen] = useState(false);
+  const [topicMenuId, setTopicMenuId] = useState<string | null>(null);
 
   const combined = parent.type === "Combined Course";
   const children = useMemo(() => combined
@@ -73,8 +74,15 @@ export default function CourseTopicReview({
       ? excludedTopicIds.includes(topicId)
       : persisted ? !persisted.included : excludedTopicIds.includes(topicId);
   }
-  const included = children.filter(topic => !excluded(topic.id));
+  // The same saved combined course can have unfinished topics in Think Tank
+  // and assigned topics in My Plan; neither side is a duplicated choice.
+  const assignedInThisCourse = (topic: CatalogCourse) =>
+    Boolean(savedChoice && topicHasAssignedStudent(savedChoice, topic.id, demo.students));
+  const included = children.filter(topic => !excluded(topic.id) &&
+    (savedChoice?.stage !== "planned" ||
+      (mode === "think" ? !assignedInThisCourse(topic) : assignedInThisCourse(topic))));
   const removed = children.filter(topic => excluded(topic.id));
+  const totalIncluded = children.length - removed.length;
 
   function renderTopic(topic: CatalogCourse, isRemoved = false) {
     const infoOpen = infoTopicId === topic.id;
@@ -84,8 +92,7 @@ export default function CourseTopicReview({
     const editing = editingTopicId === topic.id;
     const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
     const planning = planningTopicId === topic.id;
-    const hasAssignedStudent = Boolean(savedChoice?.stage === "planned" &&
-      demo.students.some(student => isTopicAssigned(savedChoice, topic.id, student.id)));
+    const menuOpen = topicMenuId === topic.id;
 
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
@@ -102,10 +109,6 @@ export default function CourseTopicReview({
           aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
-        <Link className="pd-topic-icon" href={"/books?course=" + encodeURIComponent(topic.id)}
-          aria-label={"View books for " + topic.title} title="View books">
-          <BookOpen size={14} aria-hidden="true"/>
-        </Link>
         {mode === "plan" && savedChoice && !isRemoved &&
           <button type="button" className="pd-topic-icon pd-topic-edit"
             aria-label={"Edit students for " + topic.title} title="Edit students"
@@ -115,21 +118,36 @@ export default function CourseTopicReview({
           </button>}
         {mode === "think" && !isRemoved && demo.ready &&
           <button type="button" className="pd-topic-icon pd-topic-add"
-            aria-label={"Assign " + topic.title + " within " + parent.title}
-            title={linkedTopic ? "Assign this topic within the combined course" :
-              "Save this course to your Demo Think Tank before assigning its topics"}
+            aria-label={"Add students to " + topic.title + " in " + parent.title}
+            title={linkedTopic ? "Add students to this topic" :
+              "Save this course to Think Tank before assigning"}
             aria-expanded={planning}
             disabled={!linkedTopic}
             onClick={() => setPlanningTopicId(planning ? null : topic.id)}>
             <Plus size={15} aria-hidden="true"/>
           </button>}
-        <button type="button" className="pd-topic-icon pd-topic-remove"
-          aria-label={(isRemoved ? "Restore " : "Exclude ") + topic.title + " in " + parent.title}
-          title={isRemoved ? "Restore topic" : "Exclude topic"}
-          onClick={() => onToggleTopic(topic.id, isRemoved)}>
-          {isRemoved ? <RotateCcw size={14}/> : <Minus size={14}/>}
+        <button type="button" className="pd-topic-icon pd-topic-more"
+          aria-label={"More options for " + topic.title} title="More options"
+          aria-expanded={menuOpen}
+          onClick={() => setTopicMenuId(menuOpen ? null : topic.id)}>
+          <MoreHorizontal size={16} aria-hidden="true"/>
         </button>
       </div>
+      {menuOpen && <div className="pd-topic-menu" role="group"
+        aria-label={"More options for " + topic.title}>
+        <Link href={"/books?course=" + encodeURIComponent(topic.id)}
+          onClick={() => setTopicMenuId(null)}>
+          <BookOpen size={14} aria-hidden="true"/> View books
+        </Link>
+        <button type="button" onClick={() => {
+          onToggleTopic(topic.id, isRemoved);
+          setTopicMenuId(null);
+        }}>
+          {isRemoved ? <RotateCcw size={14} aria-hidden="true"/> :
+            <span aria-hidden="true">−</span>}
+          {isRemoved ? "Restore to course" : "Remove from course"}
+        </button>
+      </div>}
       <TopicOtherUses topicEditionId={topic.editionId}
         parentCourseId={parent.id} index={sharingIndex}/>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
@@ -140,42 +158,33 @@ export default function CourseTopicReview({
       </div>}
       {editing && mode === "plan" && savedChoice && !isRemoved &&
         <div className="pd-topic-edit-section">
-          <SharedTopicStudentEditor
-            topicEditionId={topic.editionId} currentCourseId={parent.id}/>
+          <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
+            onClose={() => setEditingTopicId(null)}/>
         </div>}
       {planning && linkedTopic && savedChoice && <div className="pd-topic-plan-inline">
-        <div className="pd-assignment-title">
-          <strong>Assign {topic.title}</strong>
-          <div className="pd-assignment-quick-actions">
-            <button type="button" className="pd-inline-edit"
-              onClick={() => setPlanningTopicId(null)}>Hide</button>
-            <button type="button" className="pd-done-action"
-              disabled={!hasAssignedStudent}
-              style={{ visibility: hasAssignedStudent ? "visible" : "hidden" }}
-              title="Finish assigning this topic; the change will keep saving in the background"
-              onClick={() => { setPlanningTopicId(null); onTopicDone?.(); }}>Done</button>
-          </div>
-        </div>
-        <SharedTopicStudentEditor
-          topicEditionId={topic.editionId} currentCourseId={parent.id}
-          currentCourseOnly onAssigned={onTopicAssigned}/>
-        <p className="plan-microcopy">
-          Only this topic is assigned through {parent.title}. Other topic
-          assignments stay as they are. The parent course will appear in My Plan.
-        </p>
+        <StudentAssignmentEditor course={savedChoice} topicId={topic.id}
+          onAssigned={onTopicAssigned}
+          onClose={() => { setPlanningTopicId(null); onTopicDone?.(); }}/>
       </div>}
     </div>;
   }
 
   return <div className="pd-topic-review" aria-label={"Topics in " + parent.title}>
     <div className="pd-topic-review-heading">
-      <strong>Topics{removed.length > 0
-        ? " · Customized: " + included.length + " of " + children.length + " included"
-        : ""}</strong>
+      <strong>Topics{savedChoice?.stage === "planned" && totalIncluded > 0
+        ? " · " + included.length + (mode === "think" ? " to consider" : " in My Plan")
+        : ""}
+        {removed.length > 0
+          ? " · Customized: " + totalIncluded + " of " + children.length + " included"
+          : ""}</strong>
       {mode === "plan" && <small>Topics remain individually schedulable and printable</small>}
     </div>
     {included.map(topic => renderTopic(topic))}
-    {!included.length && <p className="pd-topic-zero">No topics included yet.</p>}
+    {!included.length && <p className="pd-topic-zero">
+      {totalIncluded === 0 ? "No topics included yet." :
+        mode === "think" ? "All included topics are in My Plan." :
+          "No included topics are assigned yet."}
+    </p>}
     {!!removed.length && <div className="pd-removed">
       <button type="button" className="pd-removed-toggle" aria-expanded={removedOpen}
         onClick={() => setRemovedOpen(value => !value)}>
