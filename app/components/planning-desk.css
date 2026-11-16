@@ -18,7 +18,13 @@
 .pd-intro, .pd-empty { color: #768676; font-size: 11px; line-height: 1.55; margin: 2px 0 13px; }
 .pd-subject-list { display: flex; flex-direction: column; gap: 8px; }
 .pd-subject { background: #fff; border: 1px solid #e0e6d9; min-width: 0; }
-.pd-subject-heading { display: flex; align-items: center; gap: 3px; padding: 4px 7px 4px 4px; background: #f8faf5; }
+/* Subject-only wayfinding. The subtle catalog highlight is reused in both
+   Think Tank and My Plan, while course/topic cards stay neutral. */
+.pd-subject-heading {
+  display:flex; align-items:center; gap:3px; padding:4px 7px 4px 4px;
+  background:var(--pd-subject-wash,#f8faf5);
+  box-shadow:inset 3px 0 0 var(--pd-subject-edge,transparent);
+}
 .pd-subject-toggle { display: flex; flex: 1; align-items: center; min-width: 0; gap: 8px; padding: 7px 5px; border: 0; background: transparent; text-align: left; color: #465b47; font-size: 12px; }
 .pd-subject-toggle strong { flex: 1; min-width: 0; font-weight: 600; }
 .pd-subject-toggle span { font-size: 11px; color: #869687; font-variant-numeric: tabular-nums; }
