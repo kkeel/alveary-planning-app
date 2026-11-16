@@ -107,7 +107,7 @@ export default function StudentAssignmentEditor({
       {topicOnlyStudents.map(student => student.displayName).join(", ")}.
       Checking their box above will assign the entire included course and replace
       their individual topic exceptions. Other students are unaffected.
-    </p>
+    </p>}
     {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
       <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
         title="Assign the full included course to every current student">
