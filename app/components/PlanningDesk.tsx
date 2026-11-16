@@ -207,6 +207,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const excludedCount = courseTopics.filter(t => excludedTopicIds.includes(t.id)).length;
                     const isCustomized = excludedCount > 0;
                     const includedCount = courseTopics.length - excludedCount;
+                    const savedChoice = cloud.courses.find(course => course.courseId === idea.id);
+                    const remainingCount = savedChoice
+                      ? remainingTopicCount(savedChoice,cloud.students) : 0;
+                    const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
                     return <div className="pd-idea" key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewId === idea.id}
@@ -216,10 +220,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
-                            {plannedIds.has(idea.id) &&
+                            {partiallyPlanned &&
                               <small className="pd-customized-label">
-                                Partly planned · {remainingTopicCount(
-                                  cloud.courses.find(c => c.courseId === idea.id)!,cloud.students)} to consider
+                                Partly planned · {remainingCount} to consider
                               </small>}
                           </span>
                           {reviewId === idea.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
@@ -258,12 +261,19 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                               ? "Save this browser idea to your Demo plan first"
                               : idea.type === "Combined Course"
                                 ? "Add students to every included topic" : "Add students to this topic"}
-                            onClick={() => setAssigningId(assigningId === idea.id ? null : idea.id)}>
+                            onClick={() => {
+                              if (assigningId === idea.id) {
+                                setAssigningId(null);
+                                setJustPlannedId(null);
+                              } else setAssigningId(idea.id);
+                            }}>
                             <Plus size={14} aria-hidden="true"/>
                             {idea.type === "Combined Course" && "All"}
                           </button>}
                           {plannedIds.has(idea.id) &&
-                            <span className="pd-plan-added">Partly in My Plan</span>}
+                            <span className="pd-plan-added">
+                              {partiallyPlanned ? "Partly in My Plan" : "In My Plan"}
+                            </span>}
                           <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(idea.id)}
                             aria-label={"View books for " + idea.title} title="View books"
                             onClick={closeMobileDrawer}>
@@ -282,7 +292,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             />
                           </div>}
                         <CourseTopicReview parent={idea} mode="think"
-                          savedChoice={cloud.courses.find(c => c.courseId === idea.id)}
+                          savedChoice={savedChoice}
                           excludedTopicIds={excludedTopicIds}
                           onToggleTopic={topicId =>
                             desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
