@@ -48,7 +48,7 @@ const rule = (source, selector) => {
   return source.slice(open + 1, close);
 };
 const declaration = (body, property) => {
-  const match = body.match(new RegExp("(?:^|;)\\\\s*" + property + ":\\\\s*([^;]+);"));
+  const match = body.match(new RegExp("(?:^|;)\\s*" + property + ":\\s*([^;]+);"));
   assert.ok(match, "Missing declaration: " + property + " in " + body);
   return match[1].trim();
 };
