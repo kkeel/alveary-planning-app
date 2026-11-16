@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import CourseCustomizationNote from "./CourseCustomizationNote";
 import { remainingTopicCount } from "./topic-assignment.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -226,7 +227,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             setJustPlannedId(null);
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
-                            {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
+                            {isCustomized && <CourseCustomizationNote included={includedCount} total={courseTopics.length}/>}
                             {partiallyPlanned &&
                               <small className="pd-customized-label">
                                 Partly planned · {remainingCount} to consider
