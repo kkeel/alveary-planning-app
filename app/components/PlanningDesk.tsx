@@ -10,6 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import { remainingTopicCount } from "./topic-assignment.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import CourseTopicReview from "./CourseTopicReview";
@@ -59,13 +60,20 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
   const plannedIds = useMemo(() => new Set(
     cloud.courses.filter(c => c.stage === "planned").map(c => c.courseId)), [cloud.courses]);
-  // Keep the row being actively edited in place after an assignment succeeds.
-  // It moves out of Think Tank only when the member leaves this review/tab.
+  // A combined course is one saved choice that can appear in BOTH columns:
+  // topics without any assigned student stay in Think Tank; assigned topics
+  // appear in My Plan. Keep an editor visible until Done, even when its final
+  // click assigns the last remaining topic.
   const ideas = useMemo(() => desk.thinkTankIds
-    .filter(id => !plannedIds.has(id) || justPlannedId === id)
+    .filter(id => {
+      const choice = cloud.courses.find(course => course.courseId === id);
+      return !choice || choice.stage !== "planned" ||
+        remainingTopicCount(choice, cloud.students) > 0 ||
+        justPlannedId === id || assigningId === id;
+    })
     .map(id => lookup.get(id))
     .filter((plan): plan is CatalogPlan => Boolean(plan)),
-  [desk.thinkTankIds, plannedIds, justPlannedId]);
+  [desk.thinkTankIds, cloud.courses, cloud.students, justPlannedId, assigningId]);
   const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
     !cloud.courses.some(c => c.courseId === id)) : [];
   const saveLegacyIdeas = () => {
@@ -208,6 +216,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           }}>
                           <Lightbulb size={14}/><span>{idea.title}
                             {isCustomized && <small className="pd-customized-label">Customized · {includedCount} of {courseTopics.length} topics</small>}
+                            {plannedIds.has(idea.id) &&
+                              <small className="pd-customized-label">
+                                Partly planned · {remainingTopicCount(
+                                  cloud.courses.find(c => c.courseId === idea.id)!,cloud.students)} to consider
+                              </small>}
                           </span>
                           {reviewId === idea.id ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                         </button>
@@ -235,68 +248,47 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                       {reviewId === idea.id && <div className="pd-review">
                         <CourseInfoDisclosure course={idea}/>
                         <div className="pd-review-actions">
-                          {cloud.ready && (justPlannedId === idea.id || plannedIds.has(idea.id)
-                            ? <span className="pd-plan-added">In My Plan</span>
-                            : <button type="button" className="pd-plan-action"
-                                disabled={!cloud.courses.some(c => c.courseId === idea.id)}
-                                title={!cloud.courses.some(c => c.courseId === idea.id)
-                                  ? "Save this browser idea to your Demo plan first" : undefined}
-                                onClick={() => {
-                                  // Opening student choices does not promote
-                                  // an unassigned idea into My Plan.
-                                  setAssigningId(idea.id);
-                                }}>
-                                <Plus size={14} aria-hidden="true"/>
-                                {idea.type === "Combined Course" ? "All" : "Plan"}
-                              </button>)}
+                          {cloud.ready && <button type="button" className="pd-plan-action"
+                            aria-label={idea.type === "Combined Course"
+                              ? "Add students to all included topics in " + idea.title
+                              : "Add students to " + idea.title}
+                            aria-expanded={assigningId === idea.id}
+                            disabled={!cloud.courses.some(c => c.courseId === idea.id)}
+                            title={!cloud.courses.some(c => c.courseId === idea.id)
+                              ? "Save this browser idea to your Demo plan first"
+                              : idea.type === "Combined Course"
+                                ? "Add students to every included topic" : "Add students to this topic"}
+                            onClick={() => setAssigningId(assigningId === idea.id ? null : idea.id)}>
+                            <Plus size={14} aria-hidden="true"/>
+                            {idea.type === "Combined Course" && "All"}
+                          </button>}
+                          {plannedIds.has(idea.id) &&
+                            <span className="pd-plan-added">Partly in My Plan</span>}
                           <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(idea.id)}
                             aria-label={"View books for " + idea.title} title="View books"
                             onClick={closeMobileDrawer}>
                             <BookOpen size={15} aria-hidden="true"/>
                           </Link>
                         </div>
+                        {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
+                          <div className="pd-assign-in-place">
+                            <StudentAssignmentEditor
+                              course={cloud.courses.find(c => c.courseId === idea.id)!}
+                              onAssigned={() => setJustPlannedId(idea.id)}
+                              onClose={() => {
+                                setAssigningId(null);
+                                setJustPlannedId(null);
+                              }}
+                            />
+                          </div>}
                         <CourseTopicReview parent={idea} mode="think"
                           savedChoice={cloud.courses.find(c => c.courseId === idea.id)}
                           excludedTopicIds={excludedTopicIds}
                           onToggleTopic={topicId =>
                             desk.toggleCourseTopic(idea.id, topicId, courseTopics.map(t => t.id))}
                           onTopicAssigned={() => setJustPlannedId(idea.id)}
-                          onTopicDone={() => {
-                            setReviewId(null);
-                            setJustPlannedId(null);
-                            setAssigningId(null);
-                          }}
+                          onTopicDone={() => setJustPlannedId(null)}
                         />
-                        {assigningId === idea.id && cloud.courses.some(c => c.courseId === idea.id) &&
-                          <div className="pd-assign-in-place">
-                            <div className="pd-assignment-title">
-                              <strong>Who will study these included topics?</strong>
-                              <div className="pd-assignment-quick-actions">
-                                <button type="button" className="pd-inline-edit"
-                                  onClick={() => {
-                                    setAssigningId(null);
-                                    setJustPlannedId(null);
-                                  }}>Hide</button>
-                                <button type="button" className="pd-done-action"
-                                  disabled={!cloud.courses.some(choice =>
-                                    choice.courseId === idea.id && choice.stage === "planned" &&
-                                    choice.studentIds.length > 0)}
-                                  style={{ visibility: cloud.courses.some(choice =>
-                                    choice.courseId === idea.id && choice.stage === "planned" &&
-                                    choice.studentIds.length > 0) ? "visible" : "hidden" }}
-                                  title="Finish; the change will keep saving in the background"
-                                  onClick={() => {
-                                    setReviewId(null);
-                                    setJustPlannedId(null);
-                                    setAssigningId(null);
-                                  }}>Done</button>
-                              </div>
-                            </div>
-                            <StudentAssignmentEditor
-                              course={cloud.courses.find(c => c.courseId === idea.id)!}
-                              onAssigned={() => setJustPlannedId(idea.id)}
-                            />
-                          </div>}
 
                       </div>}
                     </div>;
