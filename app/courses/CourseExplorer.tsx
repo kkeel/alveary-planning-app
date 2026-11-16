@@ -99,7 +99,8 @@ type CourseRowProps = {
   childTopics: Map<string, Plan[]>;
   mode: Mode;
   planned: readonly string[];
-  onPlannedToggle: (id: string) => void;
+  onPlannedToggle: (courseId:string,topicId:string|null) => void;
+  onRemovePlan: (courseId:string,topicId:string|null) => void;
   parentCourseId?: string;
   parentSubject?: string;
   detailMode: DetailMode;
@@ -127,6 +128,7 @@ function CourseRow({
   mode,
   planned,
   onPlannedToggle,
+  onRemovePlan,
   parentCourseId,
   parentSubject,
   detailMode,
@@ -183,7 +185,8 @@ function CourseRow({
   }
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
-    childTopics, mode, planned, onPlannedToggle, parentCourseId: sourceCourseId,
+    childTopics, mode, planned, onPlannedToggle, onRemovePlan,
+    parentCourseId: sourceCourseId,
     parentSubject: parentSubject ?? course.subject,
     detailMode, detailRevision, savedCourses, students, planningTarget,
     onStartPlan, onEndPlan,
@@ -215,17 +218,23 @@ function CourseRow({
         </button>}
         {mode === "plan" && <>
           <button type="button" className={"cx-idea-action" +
-            (status.ideaActive ? " is-selected" : "")}
-            aria-label={status.ideaActive
-              ? course.title + " is in Think Tank. Edit it in the Planning Desk"
-              : status.saved ? course.title + " is already saved. Manage it in Planning"
-              : "Add " + course.title + (nested ? " through its parent" : "") + " to Think Tank"}
+            (status.ideaActive ? " is-selected is-tone-" + status.ideaTone : "")}
+            aria-label={status.ideaTone === "full"
+              ? "Remove " + course.title + " from Think Tank"
+              : status.ideaTone === "inherited"
+                ? "Remove only " + course.title + " from Think Tank"
+              : status.ideaTone === "partial"
+                ? "Add all topics of " + course.title + " to Think Tank"
+                : "Add " + course.title + (nested ? " through its parent" : "") + " to Think Tank"}
             aria-pressed={status.ideaActive}
-            disabled={status.saved}
-            title={status.ideaActive ? "In Think Tank · edit in Planning Desk" :
-              status.saved ? "Manage this selection in Planning Desk" :
-              "Save to Think Tank without assigning students"}
-            onClick={() => onPlannedToggle(sourceCourseId)}>
+            disabled={status.excluded ||
+              (status.planActive && (nested || status.planTone==="full"))}
+            title={status.excluded ? "Restore this topic in Planning first" :
+              status.ideaTone === "full" ? "Remove this selection from Think Tank" :
+              status.ideaTone === "inherited" ? "Remove only this inherited topic idea" :
+              status.ideaTone === "partial" ? "Select all topics for Think Tank" :
+              "Save this selection to Think Tank"}
+            onClick={() => onPlannedToggle(sourceCourseId,sourceChoice.topicId)}>
             <Lightbulb size={16} strokeWidth={1.8} aria-hidden="true"/>
           </button>
           <button type="button" className={"cx-direct-plan-action" +
@@ -234,17 +243,22 @@ function CourseRow({
             (activePlanEditor ? " is-open" : "")}
             aria-expanded={activePlanEditor}
             aria-pressed={status.planActive}
-            aria-label={status.planActive
-              ? course.title + " is planned. Edit student assignments in the Planning Desk"
+            aria-label={status.planActive && (nested || status.planTone==="full")
+              ? "Remove " + course.title + " from all assigned students"
               : nested ? "Plan only " + course.title + " through " + sourceCourseId
                 : isCombined ? "Plan all included topics in " + course.title
                 : "Plan " + course.title}
-            title={status.excluded ? "Restore this topic in the Planning Desk before assigning it" :
-              status.planActive ? "In My Plan · edit students in the Planning Desk" :
-              nested ? "Assign this topic through its parent course" :
+            title={status.excluded ? "Restore this topic in Planning first" :
+              status.planActive && (nested || status.planTone==="full")
+              ? "Remove this selection from every assigned student" :
+              nested ? "Assign only this topic through its parent" :
               isCombined ? "Assign all included topics" : "Assign students"}
-            disabled={status.excluded || (status.planActive && !activePlanEditor)}
-            onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
+            disabled={status.excluded}
+            onClick={() => {
+              if (status.planActive && (nested || status.planTone==="full")) {
+                onRemovePlan(sourceCourseId,sourceChoice.topicId);
+              } else onStartPlan(sourceCourseId,sourceChoice.topicId);
+            }}>
             <Plus size={17} strokeWidth={1.9} aria-hidden="true"/>
             {isCombined && !nested && <span className="cx-plus-all">All</span>}
           </button>
@@ -314,11 +328,11 @@ export default function CourseExplorer() {
     if (!cloud.ready) return;
     const same = planningTarget?.courseId === courseId && planningTarget.topicId === topicId;
     if (same) { setPlanningTarget(null); return; }
-    // The saved parent is essential for provenance. Never save a nested topic
-    // as a separate standalone choice just because the member clicks + Plan.
-    if (!cloud.courses.some(course => course.courseId === courseId) &&
-        !desk.thinkTankIds.includes(courseId)) desk.toggleIdea(courseId);
-    else if (!cloud.courses.some(course => course.courseId === courseId)) cloud.addChoice(courseId);
+    // Save the exact parent WITHOUT adding unrelated topics to Think Tank.
+    // The student editor will open after the confirmed child links arrive.
+    if (!cloud.courses.some(course=>course.courseId===courseId)) {
+      cloud.prepareListPlan(courseId,topicId);
+    }
     setPlanningTarget({courseId,topicId});
   }
 
@@ -427,13 +441,15 @@ export default function CourseExplorer() {
     childTopics,
     mode: signedIn && cloud.ready ? "plan" : "browse",
     planned,
-    onPlannedToggle: courseId => {
+    onPlannedToggle: (courseId,topicId) => {
       if (!cloud.ready) return;
-      // The List is for first-time selections. Avoid any delete/reassign
-      // actions here once a course is saved; use the portable desk instead.
-      if (cloud.courses.some(course => course.courseId === courseId) ||
-          desk.thinkTankIds.includes(courseId)) return;
-      desk.toggleIdea(courseId);
+      cloud.toggleListIdea(courseId,topicId);
+    },
+    onRemovePlan: (courseId,topicId) => {
+      if (!cloud.ready) return;
+      if (planningTarget?.courseId===courseId &&
+          planningTarget.topicId===topicId) setPlanningTarget(null);
+      cloud.clearListPlan(courseId,topicId);
     },
     detailMode: desk.listDetails,
     detailRevision,
