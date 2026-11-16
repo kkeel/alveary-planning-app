@@ -75,15 +75,22 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // topics without any assigned student stay in Think Tank; assigned topics
   // appear in My Plan. Keep an editor visible until Done, even when its final
   // click assigns the last remaining topic.
-  const ideas = useMemo(() => desk.thinkTankIds
-    .filter(id => {
+  const ideas = useMemo(() => {
+    // Source of truth is now the optimistic cloud snapshot, not only the old
+    // browser bookmark list. A freshly added topic/course appears in the mini
+    // desk on the very same click, even before local-storage rehydration runs.
+    const ids = new Set([
+      ...desk.thinkTankIds,
+      ...cloud.courses.filter(choice => pendingIdeaCount(choice,cloud.students) > 0)
+        .map(choice => choice.courseId),
+    ]);
+    return [...ids].filter(id => {
       const choice = cloud.courses.find(course => course.courseId === id);
       return !choice || pendingIdeaCount(choice,cloud.students) > 0 ||
         justPlannedId === id || assigningId === id;
-    })
-    .map(id => lookup.get(id))
-    .filter((plan): plan is CatalogPlan => Boolean(plan)),
-  [desk.thinkTankIds, cloud.courses, cloud.students, justPlannedId, assigningId]);
+    }).map(id => lookup.get(id))
+      .filter((plan):plan is CatalogPlan => Boolean(plan));
+  }, [desk.thinkTankIds, cloud.courses, cloud.students, justPlannedId, assigningId]);
   const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
     !cloud.courses.some(c => c.courseId === id)) : [];
   const saveLegacyIdeas = () => {
@@ -173,7 +180,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
             Save browser ideas to Demo plan
           </button>
         </div>}
-        {cloud.error && <div className="pd-save-error-inline" role="alert">{cloud.error}</div>}
   </>;
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
@@ -366,10 +372,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
     <div className="pd-full-status">
       <span className="pd-full-status-label"><NotebookPen size={16} aria-hidden="true"/> Your Planning Desk</span>
-      <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
-        role={cloud.error ? "alert" : "status"} aria-live="polite">
-        {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
-      </span>
     </div>
     <div className="pd-full-columns">
       <section className="pd-full-column" aria-label="Think Tank">
@@ -417,11 +419,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
       <header className="pd-header">
         <div className="pd-title"><NotebookPen size={20}/><h2>Your Planning Desk</h2></div>
         <div className="pd-header-actions">
-          <span className={"pd-sync-status" + (cloud.error ? " is-error" : "")}
-            role={cloud.error ? "alert" : "status"}
-            aria-live="polite" title={cloud.error ?? undefined}>
-            {cloud.error ? "Not saved" : cloud.saving ? "Saving…" : cloud.ready ? "Saved" : ""}
-          </span>
           <button type="button" aria-label="Open full-page Planning Desk"
             title="Open full-page Planning Desk"
             onClick={openFullPlanningDesk}>
