@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { isTopicAssigned, effectiveTopicCount } from "../app/components/topic-assignment.mjs";
+import { isTopicAssigned, effectiveTopicCount, remainingTopicCount } from "../app/components/topic-assignment.mjs";
 
 const catalog = JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json", import.meta.url), "utf8"
@@ -45,11 +45,15 @@ assert.equal(isTopicAssigned(ajParent,ancient9.topicId,"AJ"),false);
 assert.equal(isTopicAssigned(ajParent,world9.topicId,"AJ"),false);
 assert.equal(effectiveTopicCount(ajParent,"AJ"),1);
 assert.equal(effectiveTopicCount(ajParent,"Troy"),0);
+assert.equal(remainingTopicCount(ajParent,[{id:"AJ"},{id:"Troy"}]),2,
+  "the two unassigned History topics must remain in Think Tank");
 
 // Same edition, separate parent provenance for a different student.
 troyParent.stage = "planned";
 troyParent.overrides.push({ topicId:us1012.topicId, studentId:"Troy", assigned:true });
 assert.equal(effectiveTopicCount(troyParent,"Troy"),1);
+assert.equal(remainingTopicCount(troyParent,[{id:"AJ"},{id:"Troy"}]),2,
+  "the shared edition may be planned separately through a second parent");
 assert.equal(effectiveTopicCount(ajParent,"Troy"),0);
 assert.equal(effectiveTopicCount(troyParent,"AJ"),0);
 
@@ -58,6 +62,8 @@ assert.equal(effectiveTopicCount(troyParent,"AJ"),0);
 ajParent.studentIds.push("AJ");
 ajParent.overrides = [];
 assert.equal(effectiveTopicCount(ajParent,"AJ"),3);
+assert.equal(remainingTopicCount(ajParent,[{id:"AJ"},{id:"Troy"}]),0,
+  "a fully assigned course should no longer be duplicated in Think Tank");
 assert.equal(effectiveTopicCount(troyParent,"Troy"),1);
 ajParent.overrides.push({ topicId: ancient9.topicId, studentId:"AJ", assigned:false });
 assert.equal(effectiveTopicCount(ajParent,"AJ"),2);
