@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import { topicHasAssignedStudent } from "./topic-assignment.mjs";
-import { thinkTankTopicSections } from "./planning-topic-sections.mjs";
+import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -55,6 +55,11 @@ export default function CourseTopicReview({
   const [infoTopicId, setInfoTopicId] = useState<string | null>(null);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [planningTopicId, setPlanningTopicId] = useState<string | null>(null);
+  const [planningOrigin, setPlanningOrigin] = useState<"selected"|"other"|null>(null);
+  function finishPlanningTopic() {
+    setPlanningTopicId(null);
+    setPlanningOrigin(null);
+  }
   const [removedOpen, setRemovedOpen] = useState(false);
   const [topicMenuId, setTopicMenuId] = useState<string | null>(null);
 
@@ -78,7 +83,10 @@ export default function CourseTopicReview({
   const assignedInThisCourse = (topic: CatalogCourse) =>
     Boolean(savedChoice?.stage === "planned" &&
       topicHasAssignedStudent(savedChoice, topic.id, demo.students));
-  const sections = thinkTankTopicSections(children,savedChoice,demo.students,excludedTopicIds);
+  const baseSections = thinkTankTopicSections(children,savedChoice,demo.students,excludedTopicIds);
+  const sections = mode === "think"
+    ? pinTopicWhileEditing(children,baseSections,planningTopicId,planningOrigin)
+    : baseSections;
   const included = mode === "think" ? sections.selected :
     children.filter(topic => !excluded(topic.id) &&
       (assignedInThisCourse(topic) || editingTopicId === topic.id));
@@ -165,7 +173,7 @@ export default function CourseTopicReview({
             }}>
             <UsersRound size={15} aria-hidden="true"/>
           </button>}
-        {mode === "think" && demo.ready && !assignedInThisCourse(topic) &&
+        {mode === "think" && demo.ready && (planning || !assignedInThisCourse(topic)) &&
           <button type="button" className="pd-topic-icon pd-topic-add"
             aria-label={"Add students to " + topic.title + " in " + parent.title}
             title={savedChoice ? "Assign students to this topic" :
@@ -173,8 +181,9 @@ export default function CourseTopicReview({
             aria-expanded={planning}
             disabled={!savedChoice}
             onClick={() => {
-              if (planning) {setPlanningTopicId(null);return;}
+              if (planning) {finishPlanningTopic();return;}
               if (isRemoved) demo.setTopic(parent.id,topic.id,true);
+              setPlanningOrigin(isOther ? "other" : "selected");
               setPlanningTopicId(topic.id);
             }}>
             <Plus size={15} aria-hidden="true"/>
@@ -229,9 +238,9 @@ export default function CourseTopicReview({
         <SharedTopicStudentEditor topicEditionId={topic.editionId}
           currentCourseId={parent.id}
           onAssigned={sourceCourseId => onTopicAssigned?.(sourceCourseId)}
-          onCancel={() => { setPlanningTopicId(null); onTopicCancel?.(); }}
+          onCancel={() => { finishPlanningTopic(); onTopicCancel?.(); }}
           onClose={sourceCourseId => {
-            setPlanningTopicId(null); onTopicDone?.(sourceCourseId);
+            finishPlanningTopic(); onTopicDone?.(sourceCourseId);
           }}/>
       </div>}
     </div>;
