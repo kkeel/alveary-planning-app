@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { coursePriority, topicPriorityOverride, effectivePriority } from "../app/components/priority-inheritance.mjs";
 import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "../app/components/arrangement-inheritance.mjs";
+import { savedTopicContexts } from "../app/components/shared-topic-contexts.mjs";
 
 import { readFileSync } from "node:fs";
 import { isTopicAssigned, effectiveTopicCount, remainingTopicCount, shouldPromoteChoiceOnDone } from "../app/components/topic-assignment.mjs";
@@ -71,6 +72,36 @@ assert.equal(remainingTopicCount(troyParent,[{id:"AJ"},{id:"Troy"}]),2,
   "the shared edition may be planned separately through a second parent");
 assert.equal(effectiveTopicCount(ajParent,"Troy"),0);
 assert.equal(effectiveTopicCount(troyParent,"AJ"),0);
+
+// When the same exact topic edition is planned under multiple saved parent
+// courses, the editor can select and update either course context explicitly.
+// A checkbox in one context never overwrites the other context.
+const contexts = savedTopicContexts([ajParent,troyParent], us9.topicEditionId);
+assert.equal(contexts.length,2);
+assert.deepEqual(new Set(contexts.map(c=>c.courseId)),
+  new Set([g9.id,g1012.id]));
+assert.equal(contexts.find(c=>c.courseId === g9.id).topicId,us9.topicId);
+assert.equal(contexts.find(c=>c.courseId === g1012.id).topicId,us1012.topicId);
+assert.equal(isTopicAssigned(ajParent,us9.topicId,"AJ"),true);
+assert.equal(isTopicAssigned(troyParent,us1012.topicId,"AJ"),false,
+  "AJ in Grade 9 must not be marked as assigned through the Troy parent");
+troyParent.overrides.push({
+  topicId:us1012.topicId,studentId:"Hannah",assigned:true
+});
+assert.equal(isTopicAssigned(troyParent,us1012.topicId,"Hannah"),true);
+assert.equal(isTopicAssigned(ajParent,us9.topicId,"Hannah"),false,
+  "a new student in the alternate context leaves Grade 9 unchanged");
+troyParent.overrides=troyParent.overrides.filter(o=>o.studentId!=="Hannah");
+assert.equal(isTopicAssigned(troyParent,us1012.topicId,"Troy"),true,
+  "removing a student from the alternate parent leaves other students assigned");
+const excludedOther = structuredClone(troyParent);
+excludedOther.topics.find(t=>t.topicId===us1012.topicId).included=false;
+assert.deepEqual(savedTopicContexts([ajParent,excludedOther],us9.topicEditionId)
+  .map(c=>c.courseId),[g9.id],
+  "excluded topics cannot be edited as saved shared contexts");
+const differentEdition = savedTopicContexts([ajParent,troyParent],ancient9.topicEditionId);
+assert.deepEqual(differentEdition.map(c=>c.courseId),[g9.id],
+  "matching parent-course family names do not imply the same exact edition");
 
 // Each student has an independent course default, with optional topic
 // overrides within the SAME parent. Sharing the U.S. History edition across
