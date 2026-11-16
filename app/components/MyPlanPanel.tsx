@@ -63,7 +63,12 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
-  const planned = demo.courses.filter(c => c.stage === "planned");
+  // Keep a now-unassigned parent visible only while its editor is open.
+  // Changes autosave immediately, but Done/Close should remain reachable
+  // before the course fully returns to Think Tank.
+  const planned = demo.courses.filter(c => c.stage === "planned" ||
+    (c.stage === "idea" && c.courseId === openId &&
+      (editingStudentsId === c.courseId || openId === c.courseId)));
   const sharedTopics = useMemo(() =>
     buildTopicSharingIndex(demo.courses, demo.students),
     [demo.courses, demo.students]);
@@ -173,12 +178,21 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                   </>}
                   {editing && <div className="pd-assign-in-place myplan-assign-in-place">
                     <StudentAssignmentEditor course={course}
-                      onClose={() => setEditingStudentsId(null)}/>
+                      onClose={() => {
+                        setEditingStudentsId(null);
+                        if (course.stage === "idea") setOpenId(null);
+                      }}/>
                   </div>}
                   {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}
-                    onTopicDone={sourceCourseId => setOpenId(sourceCourseId)}/>}
+                    onTopicDone={sourceCourseId => {
+                      const source = demo.courses.find(c => c.courseId === sourceCourseId);
+                      setOpenId(source?.stage === "planned" ? sourceCourseId : null);
+                    }}
+                    onTopicCancel={() => {
+                      if (course.stage === "idea") setOpenId(null);
+                    }}/>}
                   <div className="pd-review-actions">
                     <button type="button" className="myplan-return" onClick={() => {
                       demo.setStage(course.courseId, "idea");
