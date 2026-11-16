@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { usePlannerAuth } from "./PlannerAuthProvider";
-import { usePlanningDesk } from "./PlanningDeskContext";
 
 /** Public browsing is open; member planning entry points use an auth-aware preview. */
 export default function PlanningOverview() {
   const { status, authenticated, planAccess } = usePlannerAuth();
-  const { setCourseMode } = usePlanningDesk();
   const signedIn = status === "signed-in";
 
   return <>
@@ -17,7 +15,7 @@ export default function PlanningOverview() {
       {signedIn && <Link className="card" href="/students">
         <h2>Add students</h2><p>Organize students and their grades when you&apos;re ready.</p>
       </Link>}
-      <Link className="card" href="/courses" onClick={() => setCourseMode(signedIn ? "plan" : "browse")}>
+      <Link className="card" href="/courses">
         <h2>Choose courses</h2><p>Explore the curriculum and gather your selections.</p>
       </Link>
       {signedIn && <Link className="card" href="/scheduling">
