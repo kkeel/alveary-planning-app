@@ -11,7 +11,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
-import CourseCustomizationNote from "./CourseCustomizationNote";
+import { selectionTopicCount } from "./planning-topic-sections.mjs";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
@@ -21,6 +21,14 @@ import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
 const lookup = new Map(catalog.courses.map(course => [course.id, course]));
+const byEdition=new Map(catalog.courses.map(course=>[course.editionId,course]));
+const childrenByParent=new Map<string,{id:string}[]>();
+for(const connection of catalog.topicLinks){
+ const topic=byEdition.get(connection.childEditionId);
+ if(!topic) continue;
+ childrenByParent.set(connection.parentEditionId,
+   [...(childrenByParent.get(connection.parentEditionId)??[]),topic]);
+}
 const compare = (a: SavedCourse, b: SavedCourse) => {
   const x = lookup.get(a.courseId), y = lookup.get(b.courseId);
   return (x?.presentationSort ?? "").localeCompare(y?.presentationSort ?? "") ||
@@ -148,9 +156,12 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                   openId === course.courseId);
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
-              const includedCount = course.topics.filter(topic => topic.included).length;
-              const customized = item?.type === "Combined Course" &&
-                includedCount !== course.topics.length;
+              const topicCount=item?.type === "Combined Course"
+                ? selectionTopicCount(course,
+                    childrenByParent.get(item.editionId)??[],demo.students,"plan")
+                : {selected:0,total:0};
+              const showTopicCount=topicCount.total>1 &&
+                topicCount.selected<topicCount.total;
               const shared = hasSharedTopic(sharedTopics, course);
               return <div className={"pd-idea myplan-row" + (open ? " is-expanded" : "")}
                 key={course.courseId}>
@@ -167,8 +178,9 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>
                       {item?.title ?? "Saved course"}
-                      {customized && <CourseCustomizationNote
-                        included={includedCount} total={course.topics.length}/>}
+                      {showTopicCount && <small className="pd-topic-count-note">
+                        {topicCount.selected} of {topicCount.total} topics
+                      </small>}
                       <small className="myplan-summary">
                         {studentSummary(course,demo.students,demo.assignmentArrangements,demo.assignmentPriorities)}
                         {shared && <span className="pd-course-shared"

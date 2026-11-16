@@ -781,3 +781,168 @@
   .pd-tabs button > svg { width:13px; height:13px; }
   .pd-idea-heading > .pd-mini-info-action { margin-top:2px; }
 }
+
+
+/* The Think Tank uses the Course List's neutral expanded details. Only the
+   subject heading retains a light subject tint; no filled review panel,
+   stacked green left borders, or tinted placement/tips callouts. */
+.pd-review.pd-think-review {
+  margin:0 0 10px;
+  padding:10px 0 12px;
+  background:#fff;
+  border-left:0;
+  box-shadow:none;
+  color:#364139;
+}
+.pd-think-review .pd-course-description-tips { padding:2px 0 8px; }
+.pd-think-review .pd-review-description {
+  color:#333b34;
+  line-height:1.58;
+  margin:5px 0 11px;
+}
+.pd-think-review .pd-course-tips,
+.pd-think-review .pd-topic-tips {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:8px 0 11px;
+  padding:11px 13px;
+  border:0;
+  border-left:0;
+  border-radius:2px;
+  background:#f4f6fa;
+  color:#6e747b;
+}
+.pd-think-review .pd-course-tips > p,
+.pd-think-review .pd-topic-tips p {
+  margin:0;
+  font-size:11px;
+  line-height:1.55;
+  color:#6e747b;
+}
+.pd-think-review .pd-course-tips > svg,
+.pd-think-review .pd-topic-tips > svg {
+  flex:0 0 17px;
+  color:#738179;
+}
+.pd-think-review .pd-topic-info {
+  border-left:0;
+  padding:6px 0 9px 16px;
+  background:transparent;
+}
+.pd-think-review .pd-topic-info > p { color:#374139; }
+.pd-think-review .pd-topic-review {
+  margin:9px 0 0;
+  padding-top:10px;
+  border-top:1px solid #e3e7e1;
+}
+
+/* Match List's course-level action order without duplicating toolbars
+   below the record. A second line under a partial course is metadata only. */
+.pd-topic-count-note {
+  display:block;
+  margin:3px 0 0;
+  color:#778877;
+  font-size:10px;
+  line-height:1.4;
+  font-weight:500;
+}
+.pd-think-toolbar-plus {
+  flex:0 0 auto;
+  min-width:28px;
+  min-height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  margin:0 1px;
+  padding:5px 7px;
+  border:1px solid #dbe5d6;
+  border-radius:3px;
+  background:#fff;
+  color:#58715e;
+  font-size:11px;
+  line-height:1;
+}
+.pd-think-toolbar-plus:hover:not(:disabled) {
+  background:#eff3ee;
+  border-color:#bfcfc0;
+}
+.pd-think-toolbar-plus:focus-visible { outline:2px solid #59836a; outline-offset:2px; }
+.pd-think-books { flex:0 0 auto; }
+.pd-idea-heading .pd-mini-info-action { margin-top:0; }
+.pd-think-review .pd-plan-info-disclosure {
+  margin:0 0 8px;
+  padding:6px 3px;
+}
+.pd-think-description-section { margin-bottom:3px; }
+
+/* "Other topics" includes both untouched and intentionally excluded
+   topics. It is a reviewable drawer, not a list of automatically removed
+   curriculum items. No left vertical rules or green review backgrounds. */
+.pd-other-topics {
+  border-top:1px solid #e3e8e2;
+  margin-top:10px;
+  padding-top:9px;
+}
+.pd-other-topics-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:6px 8px;
+}
+.pd-other-topics-toggle,
+.pd-other-topics-all {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:28px;
+  border:0;
+  background:transparent;
+  color:#5b735e;
+  font-size:11px;
+  font-weight:600;
+  line-height:1.35;
+}
+.pd-other-topics-toggle { text-align:left; padding:5px 2px; }
+.pd-other-topics-toggle > span {
+  color:#879387;
+  font-weight:500;
+}
+.pd-other-topics-all {
+  border:1px solid #d7e2d5;
+  border-radius:3px;
+  padding:5px 8px;
+  background:#fff;
+}
+.pd-other-topics-all:hover:not(:disabled),
+.pd-other-topics-toggle:hover:not(:disabled) { background:#f1f5f0; color:#406047; }
+.pd-other-topics-all:disabled { opacity:.48; cursor:default; }
+.pd-other-topics-list {
+  padding:5px 0 0;
+  margin:0;
+  border:0;
+  background:#fff;
+}
+.pd-other-topics-list .pd-topic-item.is-excluded .pd-topic-name {
+  text-decoration:none;
+  color:#637264;
+}
+.pd-other-topics-list .pd-topic-row .pd-topic-icon { flex-shrink:0; }
+.pd-other-topics-list .pd-topic-row { flex-wrap:nowrap; }
+.pd-topic-books {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:#738e76;
+  text-decoration:none;
+}
+.pd-topic-books:hover,
+.pd-topic-save-idea:hover { background:#f1f5ee; color:#486e50; }
+.pd-other-topics-list .pd-topic-row .pd-topic-name { min-width:0; }
+@media(max-width:520px) {
+  .pd-think-toolbar-plus { padding:5px 6px; }
+  .pd-think-review .pd-course-tips, .pd-think-review .pd-topic-tips { padding:9px 10px; }
+  .pd-other-topics-all { padding:5px 6px; }
+}
