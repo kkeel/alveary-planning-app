@@ -240,10 +240,11 @@ function CourseRow({
               : nested ? "Plan only " + course.title + " through " + sourceCourseId
                 : isCombined ? "Plan all included topics in " + course.title
                 : "Plan " + course.title}
-            title={status.planActive ? "In My Plan · edit students in the Planning Desk" :
+            title={status.excluded ? "Restore this topic in the Planning Desk before assigning it" :
+              status.planActive ? "In My Plan · edit students in the Planning Desk" :
               nested ? "Assign this topic through its parent course" :
               isCombined ? "Assign all included topics" : "Assign students"}
-            disabled={status.planActive && !activePlanEditor}
+            disabled={status.excluded || (status.planActive && !activePlanEditor)}
             onClick={() => onStartPlan(sourceCourseId, sourceChoice.topicId)}>
             <Plus size={17} strokeWidth={1.9} aria-hidden="true"/>
             {isCombined && !nested && <span className="cx-plus-all">All</span>}
