@@ -204,6 +204,8 @@
 .cx-choice-header {
   padding:11px 15px 10px;
   background:#f0f1ed;
+  /* Define the boundary even when the first selected option is tinted. */
+  border-bottom:2px solid #bcc8b8;
 }
 .cx-choice-header h3 {
   font-family:var(--font-circular), "DM Sans", sans-serif;
@@ -428,34 +430,36 @@
 .cx-course.cx-status-idea:not(.cx-course--topic) > .cx-course-head {
   box-shadow:inset 2px 0 0 var(--cx-subject-medium);
 }
-/* Topic selection cues belong alongside the TITLE, not beside expanded
-   descriptions. Preserve a strong bar for an explicitly chosen topic,
-   and a softer bar for inherited course-level Think Tank selections.
-   +All inheritance stays pale but has no extra vertical rail. */
-.cx-course.cx-course--topic:is(.cx-status-full, .cx-status-partial, .cx-status-inherited, .cx-context-inherited) {
+/* Distinguish selection ORIGIN without changing saved assignment state.
+   Direct topic plans get the original full-height saturated rail, including
+   beside expanded descriptions (History 10–12). Inherited +All plan topics
+   keep the pale title/header and light buttons, with NO topic rail (Grade 9).
+   Think Tank topics—both directly chosen and inherited from the parent—get
+   ONLY a med/light rail that matches the full height of their title row.
+   No full-line title background tint for Think Tank-only selections. */
+.cx-course.cx-course--topic:is(.cx-status-partial, .cx-status-inherited, .cx-context-inherited) {
   box-shadow:none;
 }
+.cx-course.cx-course--topic.cx-status-full {
+  box-shadow:inset 3px 0 0 var(--cx-subject);
+}
 .cx-course--topic > .cx-course-head { position:relative; }
-.cx-course--topic.cx-idea-tone-full > .cx-course-head {
-  background:var(--cx-subject-pale);
+.cx-course--topic:is(.cx-idea-tone-full, .cx-idea-tone-inherited):not(.cx-status-full) > .cx-course-head {
+  background:transparent;
 }
-.cx-course--topic.cx-idea-tone-inherited > .cx-course-head {
-  background:color-mix(in srgb, var(--cx-subject-pale) 65%, white);
-}
-.cx-course--topic:is(.cx-status-full, .cx-idea-tone-full) > .cx-course-head::before,
-.cx-course--topic.cx-idea-tone-inherited:not(.cx-status-full) > .cx-course-head::before {
+.cx-course--topic:is(.cx-idea-tone-full, .cx-idea-tone-inherited):not(.cx-status-full) > .cx-course-head::before {
   content:"";
   position:absolute;
   left:0;
-  top:6px;
-  bottom:6px;
+  top:0;
+  bottom:0;
   width:3px;
   pointer-events:none;
-  background:var(--cx-subject);
+  background:var(--cx-subject-medium);
 }
 .cx-course--topic.cx-idea-tone-inherited:not(.cx-status-full) > .cx-course-head::before {
   width:2px;
-  background:var(--cx-subject-medium);
+  background:var(--cx-subject-soft);
 }
 .cx-topic-list { margin-top:14px; padding-top:0; }
 .cx-topic-heading {
