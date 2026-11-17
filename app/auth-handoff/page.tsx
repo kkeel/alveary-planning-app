@@ -49,8 +49,8 @@ export default function AuthHandoffProofPage() {
         if (!active) return;
         const metadata = data.user?.app_metadata;
         if (!getUserError && data.user &&
-            metadata?.provider === "memberstack-handoff-test" &&
-            metadata?.memberstack_app_id === MEMBERSTACK_APP_ID) {
+            metadata?.memberstack_app_id === MEMBERSTACK_APP_ID &&
+            metadata?.provider === "email") {
           setPhase("complete");
           setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that the session is still active. Reloading this page also restores it. Saved students and course data are intentionally NOT unlocked by this test.");
         } else {
@@ -106,8 +106,8 @@ export default function AuthHandoffProofPage() {
         if (result.error || !result.data.session) throw Error("session_restore_failed");
         const checked = await plannerSupabaseClient.auth.getUser();
         if (checked.error || !checked.data.user ||
-            checked.data.user.app_metadata?.provider !== "memberstack-handoff-test" ||
-            checked.data.user.app_metadata?.memberstack_app_id !== MEMBERSTACK_APP_ID) {
+            checked.data.user.app_metadata?.memberstack_app_id !== MEMBERSTACK_APP_ID ||
+            checked.data.user.app_metadata?.provider !== "email") {
           throw Error("session_verify_failed");
         }
         if (!active) return;
