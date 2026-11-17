@@ -37,6 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           strategy="beforeInteractive"
           src="https://static.memberstack.com/scripts/v2/memberstack.js"
           data-memberstack-app="app_clbb9rspy00160ujl6tsxbsrj"
+          data-memberstack-use-cookies=""
         />
       </head>
       <body className={`${plantin.variable} ${circular.variable}`}>

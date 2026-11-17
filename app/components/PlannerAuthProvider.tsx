@@ -172,9 +172,15 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           clearEntryIntent();
         } else if (!isHandoffProofRoute() &&
                    (memberEntryIntent() || fromAlvearyTestDashboard())) {
-          // Navigation intent is not membership authorization; start normal
-          // OIDC exactly once, and verify the member's plan after redirect.
-          await signIn();
+          // The Alveary dashboard should NEVER send a logged-in member to
+          // the hosted Memberstack password page. First attempt a signed
+          // member-token handoff on the planner's own subdomain; where the
+          // browser does not share the root cookie, a small Webflow dashboard
+          // callback handles the same one-time exchange instead.
+          const destination = new URL("/auth-handoff/", window.location.origin);
+          destination.searchParams.set("auto", "1");
+          window.location.replace(destination.toString());
+          return;
         } else {
           setStarting(false);
         }

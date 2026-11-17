@@ -10,7 +10,8 @@ const HANDOFF_PATH = "/functions/v1/memberstack-handoff-proof";
 const MEMBERSTACK_APP_ID = "app_clbb9rspy00160ujl6tsxbsrj";
 const TEST_DASHBOARD = "https://alveary.org/alveary-2027-2028/dashboard-test";
 const STORAGE_KEY = "alveary:handoff-proof:v1";
-type Phase = "ready" | "checking-session" | "redirecting" | "redeeming" | "complete" | "error";
+type Phase = "ready" | "checking-session" | "connecting" | "website-needed" |
+  "redirecting" | "redeeming" | "complete" | "error";
 
 function base64url(bytes: Uint8Array): string {
   let binary = "";
@@ -26,6 +27,28 @@ async function challenge(verifier: string): Promise<string> {
   )));
 }
 
+// A signed Memberstack cookie shared with plan.alveary.org is the fastest
+// option: no trip back to Webflow and no hosted password prompt. This is only
+// a browser retrieval attempt; the Edge Function still verifies the signature,
+// current ACTIVE plan and the one-time PKCE proof on the server.
+async function sharedMemberstackToken(): Promise<string | null> {
+  type CookieSdk = { getMemberCookie?: () => unknown };
+  const memberstackWindow = window as Window & { $memberstackDom?: CookieSdk };
+  for (let tries = 0; tries < 24; tries += 1) {
+    const sdk = memberstackWindow.$memberstackDom;
+    try {
+      const token: unknown = sdk?.getMemberCookie?.();
+      if (typeof token === "string" && token.split(".").length === 3) {
+        return token;
+      }
+    } catch {
+      // Treat initialization failures as missing login, not as proof of access.
+    }
+    await new Promise<void>(resolve => window.setTimeout(resolve, 250));
+  }
+  return null;
+}
+
 export default function AuthHandoffProofPage() {
   const [phase, setPhase] = useState<Phase>("ready");
   const [message, setMessage] = useState(
@@ -38,25 +61,87 @@ export default function AuthHandoffProofPage() {
     const code = fragment.get("code");
     const state = fragment.get("state");
     if (!code && !state) {
-      // Restoring the existing test session is a first-class success state.
-      // A previous successful exchange may have caused the normal auth shell
-      // to rerender, so verify via Supabase rather than relying on transient UI.
       if (!plannerSupabaseClient) return;
+      const automatic = new URLSearchParams(window.location.search).get("auto") === "1";
       let active = true;
       setPhase("checking-session");
       void (async () => {
         const { data, error: getUserError } = await plannerSupabaseClient.auth.getUser();
         if (!active) return;
-        const metadata = data.user?.app_metadata;
-        if (!getUserError && data.user &&
-            metadata?.memberstack_app_id === MEMBERSTACK_APP_ID &&
-            metadata?.provider === "email") {
-          setPhase("complete");
-          setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that it is still active after reload. Your school-year membership and family workspace are checked separately before you can open private planning pages.");
-        } else {
-          setPhase("ready");
+        // Reuse any genuine existing Supabase Auth session. Private data is
+        // authorized separately by the unchanged current-year plan verifier.
+        if (!getUserError && data.user && !data.user.is_anonymous) {
+          if (automatic) {
+            window.location.replace("/");
+            return;
+          }
+          const metadata = data.user.app_metadata;
+          if (metadata?.memberstack_app_id === MEMBERSTACK_APP_ID &&
+              metadata?.provider === "email") {
+            setPhase("complete");
+            setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that it is still active after reload. Your school-year membership and family workspace are checked separately before you can open private planning pages.");
+          } else {
+            setPhase("ready");
+          }
+          return;
         }
-      })().catch(() => { if (active) setPhase("ready"); });
+        // Explicit page visits still keep the original development test flow.
+        if (!automatic) {
+          setPhase("ready");
+          return;
+        }
+
+        setPhase("connecting");
+        setMessage("Checking your existing Alveary login…");
+        const memberJwt = await sharedMemberstackToken();
+        if (!active) return;
+        if (!memberJwt) {
+          setPhase("website-needed");
+          setMessage("This browser is not sharing your Alveary website login with the Planning App. You do not need to re-enter your password. The remaining step is enabling the secure website-to-planner handoff on the Alveary testing dashboard.");
+          return;
+        }
+
+        const verifier = secret();
+        const nonce = secret();
+        const pkce = await challenge(verifier);
+        if (!active) return;
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+          state: nonce, verifier, issued: Date.now(),
+        }));
+        const response = await fetch(SUPABASE_URL + HANDOFF_PATH, {
+          method: "POST", mode: "cors", cache: "no-store", credentials: "omit",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + memberJwt,
+          },
+          body: JSON.stringify({
+            action: "issue", state: nonce, challenge: pkce,
+          }),
+        });
+        const result: unknown = await response.json();
+        if (!active) return;
+        if (!response.ok || !result || typeof result !== "object" ||
+            typeof (result as { code?: unknown }).code !== "string") {
+          window.sessionStorage.removeItem(STORAGE_KEY);
+          setPhase("error");
+          setError(response.status === 403
+            ? "We couldn't confirm an active 2027–28 Testing Plan for this login."
+            : "The existing Alveary login could not be connected. Your private planning information remains protected.");
+          return;
+        }
+        // The signed website JWT never enters a URL. The short-lived one-use
+        // handoff code is bound to the private PKCE verifier in sessionStorage.
+        window.location.replace(
+          "/auth-handoff/?auto=1#code=" +
+          encodeURIComponent((result as { code: string }).code) +
+          "&state=" + encodeURIComponent(nonce)
+        );
+      })().catch(() => {
+        if (!active) return;
+        window.sessionStorage.removeItem(STORAGE_KEY);
+        setPhase("error");
+        setError("We couldn't connect to Alveary. Please try again.");
+      });
       return () => { active = false; };
     }
     // Remove one-use credentials from browser history before any async work.
@@ -112,7 +197,10 @@ export default function AuthHandoffProofPage() {
         }
         if (!active) return;
         setPhase("complete");
-        setMessage("Supabase Auth session established and verified. Refreshing this page should restore the session. This proof does NOT yet grant Demo planning access.");
+        setMessage("Alveary confirmed your login and opened a persistent Planning App session. Your current-year membership will be checked separately.");
+        if (new URLSearchParams(window.location.search).get("auto") === "1") {
+          window.location.replace("/");
+        }
       } catch {
         if (!active) return;
         setPhase("error");
@@ -123,7 +211,7 @@ export default function AuthHandoffProofPage() {
   }, []);
 
   const begin = useCallback(async () => {
-    if (!SUPABASE_URL || !SUPABASE_KEY || phase !== "ready") return;
+    if (!SUPABASE_URL || !SUPABASE_KEY || (phase !== "ready" && phase !== "website-needed")) return;
     setPhase("redirecting");
     setError(null);
     try {
@@ -154,17 +242,30 @@ export default function AuthHandoffProofPage() {
         <p>Start this test in the same browser tab. You will return to the Alveary
           dashboard, where the next step currently requires one manual Console command.
           No Webflow edits are required.</p>
-        <p>This proof uses a separate Supabase test account. It does not read or
-          modify your existing students or course selections, but it may replace
-          your local planner login in this browser.</p>
+        <p>This development test uses a separately verified Supabase session
+          for your existing Alveary family workspace. Access to students and
+          course selections always requires your active Testing Plan.</p>
         <button type="button" onClick={() => void begin()}
           disabled={!SUPABASE_URL || !SUPABASE_KEY}>
           Start website handoff test
         </button>
       </>}
-      {(phase === "checking-session" || phase === "redeeming" || phase === "redirecting") && <p role="status">
+      {(phase === "checking-session" || phase === "connecting" ||
+        phase === "redeeming" || phase === "redirecting") && <p role="status">
         Connecting securely…
       </p>}
+      {phase === "website-needed" && <div role="status">
+        <p>To connect without another password on this device, we need to enable
+          the secure handoff on the Alveary Webflow testing dashboard.</p>
+        <p><a href={TEST_DASHBOARD}>Return to the Alveary testing dashboard</a></p>
+        <button type="button" onClick={() => window.location.reload()}>
+          Check for shared Alveary login again
+        </button>
+        <p>After the testing-dashboard handoff is enabled, you can use:</p>
+        <button type="button" onClick={() => void begin()}>
+          Connect through my Alveary dashboard
+        </button>
+      </div>}
       {phase === "complete" && <div role="status">
         <p>Your verified Supabase session is ready. The normal Planning App
           checks your active Demo membership and uses your verified Memberstack
@@ -175,9 +276,9 @@ export default function AuthHandoffProofPage() {
       </div>}
       {error && <p role="alert">{error}</p>}
       <p style={{ fontSize: ".9rem", marginTop: "2rem" }}>
-        This route is for development testing only. Automatic sign-in from
-        the member dashboard is not yet connected; school-year access rules
-        are still enforced separately.
+        This passwordless entry is in development. It works only for
+        preapproved test accounts; school-year access rules are enforced
+        separately for every private planning request.
       </p>
     </main>
   );
