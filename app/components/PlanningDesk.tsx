@@ -166,7 +166,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   }
 
   function openThinkForAssignment(courseId: string, target: HTMLElement) {
-    rememberThinkAnchor(target);
+    if (activeThinkCourseId !== courseId) rememberThinkAnchor(target);
+    else pendingThinkAnchor.current = null;
     setOpenThinkCourseId(courseId);
     desk.setThinkDetails("expanded");
     setCourseInfoId(null);
