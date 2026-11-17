@@ -76,3 +76,13 @@ https://supabase.com/docs/reference/javascript/auth-admin-generatelink
 https://supabase.com/docs/reference/javascript/auth-verifyotp
 https://supabase.com/docs/guides/auth/sessions
 https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend
+
+## First real signed-in browser result — November 17, 2026
+
+After PR #92 merged, the user completed a same-tab Webflow dashboard handoff. Aggregate development database observations: one handoff code issued and consumed, one Memberstack-to-synthetic-test-account mapping, and one Supabase Auth session. The browser displayed **Signed in · Public access**, plus HTTP 403 from the normal current-year entitlement checker. This is expected: the synthetic account lacks the existing trusted Custom OIDC identity. It must NOT gain access to Demo private data.
+
+The original test page lost its success state because the app shell remounted userId-keyed planning providers when the Auth identity changed. The test page also instantiated a second Supabase client, causing a duplicate GoTrueClient warning.
+
+Follow-up: bypass keyed planning/data providers for the isolated proof route; reuse one shared Supabase Auth client; on reload, call Supabase getUser and require trusted test-only app metadata to show the existing session as verified. Suppress the automatic hosted OIDC redirect only for this proof route. The synthetic test account still receives no private permissions; avoid the known-failing entitlement check for that synthetic account without changing normal member authorization.
+
+**Next user verification after the fix is merged and deployed:** Refresh https://plan.alveary.org/auth-handoff/ once and confirm the existing test session. Do not redo the handoff or share JWTs. Actual private Demo access requires a separate trusted identity/workspace integration and security review.
