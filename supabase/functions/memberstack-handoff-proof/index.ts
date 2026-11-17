@@ -41,7 +41,8 @@ function response(req: Request, status: number, value: object): Response {
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "authorization,apikey,content-type,x-client-info");
   }
-  return new Response(JSON.stringify(value), { status, headers });
+  // 204 preflight responses must not include a response body.
+  return new Response(status === 204 ? null : JSON.stringify(value), { status, headers });
 }
 function serviceKey(): string | undefined {
   const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
