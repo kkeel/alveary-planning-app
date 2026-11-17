@@ -56,7 +56,11 @@ Deno.serve(async (request: Request) => {
     const subject = typeof payload.sub === "string" ? payload.sub : "";
     const memberIdClaim = typeof payload.id === "string" ? payload.id : "";
     const memberId = subject || memberIdClaim;
-    if (payload.type !== "member" ||
+    // Preserve legacy sub-only tokens while requiring an explicit member type
+    // when the Webflow-only id claim is used.
+    const isMember = payload.type === "member" ||
+      (Boolean(subject) && payload.type === undefined);
+    if (!isMember ||
         !memberId || memberId.length > 128 ||
         !/^[A-Za-z0-9_-]+$/.test(memberId) ||
         (subject && memberIdClaim && subject !== memberIdClaim)) {
