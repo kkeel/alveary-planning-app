@@ -1013,19 +1013,19 @@
    never a hover surface. These are the same neutral states used by the
    Course List's unselected toolbar controls. Subject headings alone retain
    their subject palette. */
-.pd-idea:not(.myplan-row) .pd-idea-review,
+.pd-idea .pd-idea-review,
 .pd-think-review .pd-plan-info-disclosure,
 .pd-think-review .pd-other-topics-toggle,
 .pd-think-review .pd-other-topics-all,
 .pd-subject-toggle,
-.pd-idea:not(.myplan-row) .pd-mini-info-action,
+.pd-idea .pd-mini-info-action,
 .pd-think-review .pd-topic-row .pd-topic-title-button,
 .pd-think-review .pd-topic-row .pd-topic-icon {
   border-radius:3px;
   transition:background-color 110ms ease,color 110ms ease,border-color 110ms ease;
 }
-.pd-idea:not(.myplan-row) .pd-idea-review:hover,
-.pd-idea:not(.myplan-row) .pd-idea-review:focus-visible,
+.pd-idea .pd-idea-review:hover,
+.pd-idea .pd-idea-review:focus-visible,
 .pd-think-review .pd-plan-info-disclosure:hover,
 .pd-think-review .pd-plan-info-disclosure:focus-visible,
 .pd-think-review .pd-other-topics-toggle:hover:not(:disabled),
@@ -1036,8 +1036,8 @@
   text-decoration:none;
 }
 /* More is another neutral Think Tank toolbar action, not a subject choice. */
-.pd-idea:not(.myplan-row) .pd-more:hover,
-.pd-idea:not(.myplan-row) .pd-more:focus-visible {
+.pd-idea .pd-more:hover,
+.pd-idea .pd-more:focus-visible {
   background:#f0f3ee;
   color:#4e6655;
 }
@@ -1055,22 +1055,22 @@
 }
 /* The Think Tank course info button deliberately stays NEUTRAL even when
    expanded; it is a details disclosure, not a subject-colored selection. */
-.pd-idea:not(.myplan-row) .pd-mini-info-action {
+.pd-idea .pd-mini-info-action {
   border:1px solid transparent;
 }
-.pd-idea:not(.myplan-row) .pd-mini-info-action:hover,
-.pd-idea:not(.myplan-row) .pd-mini-info-action:focus-visible {
+.pd-idea .pd-mini-info-action:hover,
+.pd-idea .pd-mini-info-action:focus-visible {
   background:#f0f3ee;
   border-color:#cbd6c9;
   color:#4e6655;
 }
-.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"] {
+.pd-idea .pd-mini-info-action[aria-expanded="true"] {
   background:#f1f5ed;
   border-color:#d3dcd1;
   color:#4d6553;
 }
-.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:hover,
-.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:focus-visible {
+.pd-idea .pd-mini-info-action[aria-expanded="true"]:hover,
+.pd-idea .pd-mini-info-action[aria-expanded="true"]:focus-visible {
   background:#e9eee7;
 }
 /* The status lightbulb/checkmark and the topic text form ONE title target.
@@ -1168,12 +1168,12 @@
    badge in the expanded course details. */
 .pd-idea-review .pd-meta-divider { color:#94a393; white-space:pre; }
 @media (prefers-reduced-motion:reduce) {
-  .pd-idea:not(.myplan-row) .pd-idea-review,
+  .pd-idea .pd-idea-review,
   .pd-think-review .pd-plan-info-disclosure,
   .pd-think-review .pd-other-topics-toggle,
   .pd-think-review .pd-other-topics-all,
   .pd-subject-toggle,
-  .pd-idea:not(.myplan-row) .pd-mini-info-action,
+  .pd-idea .pd-mini-info-action,
   .pd-think-review .pd-topic-row .pd-topic-title-button,
   .pd-think-review .pd-topic-row .pd-topic-icon,
   .pd-think-review .pd-topic-menu button {
@@ -1249,4 +1249,37 @@
 }
 .pd-desk .pd-subject-items.pd-think-course-list {
   padding:8px 4px 7px;
+}
+
+
+/* My Plan uses the exact same neutral accordion and hover surfaces as
+   Think Tank; checked states remain metadata, not colored review cards. */
+.myplan-row .pd-idea-review .myplan-summary {
+  color:#77837a;
+  font-size:10px;
+  font-weight:400;
+  line-height:1.45;
+}
+.myplan-row .pd-idea-review > .pd-plan-choice-mark {
+  color:var(--pd-subject-color,#648567);
+}
+.pd-myplan-toolbar-edit[aria-expanded="true"] {
+  background:#f1f5ed;
+  border-color:#d3dcd1;
+  color:#4d6553;
+}
+.pd-myplan-toolbar-edit[aria-expanded="true"]:hover,
+.pd-myplan-toolbar-edit[aria-expanded="true"]:focus-visible {
+  background:#e9eee7;
+}
+.pd-think-review .pd-topic-assigned-meta {
+  display:block;
+  margin-top:3px;
+  color:#77837a;
+  font-size:10px;
+  font-weight:400;
+  line-height:1.4;
+}
+.pd-think-review.myplan-review .pd-assign-in-place {
+  margin:7px 0 11px;
 }
