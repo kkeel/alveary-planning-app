@@ -21,14 +21,14 @@ has a colored button/heading:
 | Source of selection | Course row | Topic rows |
 | --- | --- | --- |
 | Plan at course **+ All** | Full subject-color course rail | Light inherited header/buttons; **no topic rail** |
-| Plan one or a few individual topics | Partial subject-color course rail | Selected topics have a **strong bar beside the topic heading only**, not down the long description; unselected siblings neutral |
-| Think Tank at course lightbulb | Full idea marker at course heading | Included inherited ideas show a **soft short left rail** beside title and light header/buttons |
-| Think Tank at individual topic lightbulb | Partial idea marker on course | Selected topic shows a **strong short left rail** beside title; unrelated siblings neutral |
+| Plan one or a few individual topics | Partial subject-color course rail | Selected topics have a **strong full-height left rail** beside their entire expanded topic; unselected siblings neutral |
+| Think Tank at course lightbulb | Full idea marker at course heading | Included inherited ideas show a **soft title-height rail** with no full-width title tint; buttons stay light |
+| Think Tank at individual topic lightbulb | Partial idea marker on course | Selected topic shows a **medium title-height rail**, no full-width title tint; unrelated siblings neutral |
 
 The horizontal colored selection state continues to come from the existing
 subject palette, and all student/idea selection reciprocity is preserved.
-Short rails attach to `.cx-course-head`, not `.cx-course`, so descriptions
-remain clean when details expand. The `cx-idea-tone-full/inherited` classes
+Direct-plan rails attach to the complete `.cx-course` topic, including its description.
+Think Tank-only rails attach to `.cx-course-head` and stop at the end of the title row. The `cx-idea-tone-full/inherited` classes
 are presentational only, derived from existing saved idea state.
 
 ## Planning Desk
@@ -70,12 +70,12 @@ Grades 5–6 screenshots, the selection styling is refined:
    vertical topic rail**, including in expanded descriptions.
 2. Open History Grades 10–12 and assign only U.S. History and Ancient
    History topics: the parent shows its usual partial highlight and the
-   selected topics show a **short colored stripe next to their titles**.
+   selected topics show a **strong full-height colored rail** extending past expanded descriptions.
    World History remains neutral.
 3. Toggle the History Grades 7–8 course lightbulb: included topic headings
-   have a **soft, short rail** and lightly tinted heading, even when their
-   descriptions are expanded. For a directly selected topic lightbulb, use the
-   stronger short title rail. Unselected siblings remain neutral.
+   have a **soft, full-title-height rail** without a full-width tinted heading,
+   even when descriptions are expanded. For a directly selected topic lightbulb,
+   use a medium rail that also ends at the bottom of its title row. Unselected siblings remain neutral.
 4. On Latin and Science choices, confirm the neutral heading/tag labels but
    **no additional surrounding group box or bracket**. Latin 3/4 remain
    ordinary ungrouped rows. Selecting a Latin course still produces the
