@@ -2,6 +2,30 @@
 
 Status: **design/implementation proposal, NOT implemented.** No changes to production login, Webflow, Memberstack configuration, demo users or existing Supabase sessions.
 
+## November 17 decision — GitHub Pages + Supabase first; no paid custom domain
+
+**Decision:** Keep the app on `plan.alveary.org` (GitHub Pages) and use the existing `*.supabase.co` development project/API/Edge Function host for the first working handoff. **Do not plan a Vercel move or Supabase custom-domain add-on yet.** CMI already owns `alveary.org` and may assign `api.alveary.org` later, but Supabase bills for connecting that domain to its hosted project; DNS ownership alone does not remove the paid add-on requirement.
+
+**Verified browser/server result (Nov 17):** The authenticated Alveary Webflow dashboard running Memberstack's v1 script returns a valid signed member JWT through `$memberstackDom.getMemberCookie()`. The deployed `memberstack-identity-check` **v4** verifies that JWT successfully (HTTP 200, verified true). This requires Memberstack's *member* JWKS `https://auth.memberstack.com/.well-known/member-jwks.json` and accepts the signed `id` member claim; its `role=authenticated` Supabase role claim is **absent**. Do not treat this member JWT as a Supabase Auth access token or a membership entitlement. This changes the older, still-historical proof-of-token text further below.
+
+**Session strategy for first test:** Preserve and favor the existing Supabase Auth browser session (already configured with `persistSession: true` and `autoRefreshToken: true`). The main missing step is **how a successful signed Webflow token verification can start a supported Supabase Auth session without the second Memberstack-hosted password page**. Do not create a replacement browser token store or rewrite private APIs unless a supported Supabase Auth exchange is ruled out. A privileged backend OTP/link-generation flow may be evaluated in a test-only proof, but only if it binds a signed Memberstack member ID to a non-email-claim account in a secure, auditable way; it must never issue a login based on a user-supplied email, bypass anti-replay/PKCE, or allow account takeover. Never treat `setSession()` as token minting. If a safe built-in exchange is not feasible, a custom Edge Function-issued opaque session with rotation/revocation and verified API authorization is the fallback, still compatible with GitHub Pages.
+
+**Build/test stages:**
+
+1. **Proof of supported session bridge, isolated from member data:** Prepare a development-only exchange that takes a cryptographically verified Webflow Memberstack JWT and, only after a short-lived state/challenge and single-use redemption, demonstrates an actual persistent, refreshable planner session. Evaluate supported Supabase Auth issuance before creating a custom session system. Never send website JWTs, Supabase refresh tokens, or reusable credentials through URL params/fragments, logs, analytics or chat.
+2. **Identity and entitlement adapter:** Match the signed member ID to a trusted server-side mapping. Keep 2027–28 Demo Testing Plan verification active and server-side; fail closed for inactive/missing plans; use scoped workspace/year ownership. The current private Edge Functions require Supabase Auth and `custom:memberstack` OIDC identity, so update that assumption **only after** the new session mode has been proved and isolated.
+3. **Test without Webflow edits:** Use a controlled manual console bridge on the logged-in dashboard to simulate the eventual button/page script. This is a testing technique, not the user-facing final experience. No global header changes, domain/DNS changes or billing.
+4. **One limited Kathryn change after positive proof:** Provide a short, reviewed dashboard-only handoff script/button instruction with explicit copy/paste, rollback, and same-tab behavior. No shared Webflow login credentials.
+5. **Acceptance before rollout:** Test desktop/mobile Safari and Chrome, existing + first-time members, missing/revoked plans, browser close/reopen, refresh-token rotation and expiry, replay and tampering, offline recovery, and two members on a shared device. Retain a safe way to clear local state and switch users even if no prominent sign-out button is shown.
+
+**Security/cost note:** A hosted Supabase custom domain can help support same-site cookie deployment, but **does not automatically supply HttpOnly cookies or eliminate XSS/CSRF risk**. A secure API on the standard Supabase hostname and Supabase Auth's existing persistent session features are viable for the initial implementation. Reevaluate cost/security only after measuring actual behavior; do not represent the optional $10/month custom-domain fee as necessary to create a secure app.
+
+**Current status:** Design decision recorded; working dashboard-to-planner passwordless session handoff **not implemented**. Existing SSO and Demo APIs remain unchanged and should continue working during the isolated test.
+
+Official docs: https://supabase.com/docs/guides/platform/custom-domains ; https://supabase.com/docs/guides/auth/sessions ; https://supabase.com/docs/reference/javascript/auth-admin-generatelink ; https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend
+
+---
+
 ## Requirement
 
 Once a member has signed in at `www.alveary.org` using Memberstack, clicking the Planning App from the authenticated Alveary dashboard should open that member's plan at `plan.alveary.org` **without asking them to enter credentials again**. This must work with default iPhone/iPad Safari privacy settings and in common browsers in the **same browser navigation chain**. We cannot assume cookies or localStorage are shared between the domains or with `auth.memberstack.com`.
