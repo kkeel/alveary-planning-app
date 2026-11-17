@@ -27,8 +27,15 @@ const client: SupabaseClient | null = url && key
       auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true },
     })
   : null;
+// One shared Supabase client for the app AND the isolated handoff proof.
+export const plannerSupabaseClient = client;
 const ENTRY_QUERY = "connect";
 const PENDING_KEY = "alveary:planner:oauth-pending";
+
+function isHandoffProofRoute(): boolean {
+  return typeof window !== "undefined" &&
+    window.location.pathname.replace(/\/$/, "") === "/auth-handoff";
+}
 
 function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
@@ -163,7 +170,8 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           setStarting(false);
           setError("Sign-in returned without a planning session. Please try Alveary SSO again.");
           clearEntryIntent();
-        } else if (memberEntryIntent() || fromAlvearyTestDashboard()) {
+        } else if (!isHandoffProofRoute() &&
+                   (memberEntryIntent() || fromAlvearyTestDashboard())) {
           // Navigation intent is not membership authorization; start normal
           // OIDC exactly once, and verify the member's plan after redirect.
           await signIn();
@@ -202,6 +210,14 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!session) {
+      verifiedAtRef.current = 0;
+      setPlanAccess("none");
+      return;
+    }
+    // The synthetic account exists ONLY to prove Supabase session issuance.
+    // It can never access private planning data. Avoid a known-failing
+    // membership request and the resulting 403 on each token refresh.
+    if (session.user.app_metadata?.provider === "memberstack-handoff-test") {
       verifiedAtRef.current = 0;
       setPlanAccess("none");
       return;
