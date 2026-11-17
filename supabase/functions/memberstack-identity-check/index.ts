@@ -2,7 +2,8 @@
 // planning, read private Supabase tables, or create accounts.
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@6.1.2";
 
-const JWKS = createRemoteJWKSet(new URL("https://auth.memberstack.com/jwks"));
+// Member JWT signing keys differ from the keys used for Custom SSO OIDC.
+const JWKS = createRemoteJWKSet(new URL("https://auth.memberstack.com/.well-known/member-jwks.json"));
 const ISSUER = "https://api.memberstack.com";
 const AUDIENCE = "app_clbb9rspy00160ujl6tsxbsrj";
 const originAllowlist = new Set([
@@ -56,11 +57,10 @@ Deno.serve(async (request: Request) => {
     const subject = typeof payload.sub === "string" ? payload.sub : "";
     const memberIdClaim = typeof payload.id === "string" ? payload.id : "";
     const memberId = subject || memberIdClaim;
-    // Preserve legacy sub-only tokens while requiring an explicit member type
-    // when the Webflow-only id claim is used.
-    const isMember = payload.type === "member" ||
-      (Boolean(subject) && payload.type === undefined);
-    if (!isMember ||
+    // Only signed, unexpired MEMBER tokens can pass the identity diagnostic.
+    // jose validates exp when present; require it to exist as well.
+    if (payload.type !== "member" ||
+        typeof payload.exp !== "number" ||
         !memberId || memberId.length > 128 ||
         !/^[A-Za-z0-9_-]+$/.test(memberId) ||
         (subject && memberIdClaim && subject !== memberIdClaim)) {
