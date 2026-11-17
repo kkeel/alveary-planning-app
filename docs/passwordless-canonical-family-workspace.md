@@ -22,7 +22,7 @@ This change preserves the unique `auth_user_id` primary key, RLS, and current br
 
 ## Migration and tests
 
-Migration: `supabase/migrations/20261117212500_multiple_verified_auth_identities_per_member.sql`. Drop only `member_identity_links_memberstack_member_id_key`, replace it with a nonunique index for lookups. Retain `auth_user_id` primary key, existing RLS and role grants. A rollback-only SQL rehearsal showed 2 different Auth users sharing the same trusted Memberstack member, retaining both original OIDC links; no persistent test link was written.
+Migration: `supabase/migrations/20261117212505_multiple_verified_auth_identities_per_member.sql`. Drop only `member_identity_links_memberstack_member_id_key`, replace it with a nonunique index for lookups. Retain `auth_user_id` primary key, existing RLS and role grants. A rollback-only SQL rehearsal showed 2 different Auth users sharing the same trusted Memberstack member, retaining both original OIDC links; no persistent test link was written.
 
 Regression: `tests/passwordless-family-workspace.test.mjs` and updated `tests/auth-handoff-proof-stability.test.mjs`, run in prebuild. Security validation must confirm `anon`/`authenticated` cannot read or insert identity links, and unauthorized members are still blocked.
 
