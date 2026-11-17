@@ -18,6 +18,9 @@
 }
 * { box-sizing: border-box; }
 html { background: var(--paper); }
+/* Prevent the drawer's body scroll lock from changing available workspace
+   width right at the 50/50 container-query handoff. */
+html:has(.shell-page-layout.has-planning-desk) { scrollbar-gutter:stable; }
 body { margin: 0; color: var(--ink); font-family: "DM Sans", Arial, Helvetica, sans-serif; font-size: 16px; }
 button, input { font: inherit; }
 button { cursor: pointer; }
