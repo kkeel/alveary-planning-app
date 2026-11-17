@@ -43,8 +43,15 @@ assert.ok(tsx.includes("cx-status-") && tsx.includes("cx-context-"),
   "student/Think Tank status coloring remains intact");
 
 assert.ok(css.includes("background:#f0f1ed;"),"neutral choice heading");
-assert.ok(css.includes(".cx-choice-options {") && css.includes("border-bottom:2px solid #d1d8ce;"),
-  "quiet bracket and ending line distinguish Latin choices from Latin 3/4");
+assert.ok(!css.includes("border-left:2px solid #dde2d9;") &&
+  !css.includes("border-bottom:2px solid #d1d8ce;"),
+  "choice groups have no extra left or bottom outline");
+assert.ok(css.includes(".cx-choice + .cx-course,") &&
+  css.includes(".cx-choice + .cx-choice { border-top:1px solid #d3d9c2; }"),
+  "only an ordinary row divider separates the next group or Latin 3/4");
+assert.ok(css.includes(".cx-choice-header {") &&
+  css.includes("background:#f0f1ed;"),
+  "neutral headers stay visible without box borders");
 assert.ok(css.includes(".cx-choice-tag {") && css.includes("background:#f3f4f1;"));
 assert.ok(!css.includes("background:#303631;") && !css.includes("border:2px solid #434a45;"),
   "dark charcoal group boxes are gone");
