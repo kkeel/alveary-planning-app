@@ -13003,51 +13003,66 @@
   "releaseYear": "2027-28",
   "choiceGroups": [
     {
-      "id": "recPi3pKU2TMZ9ciN",
-      "title": "Latin Choices: Level 1",
-      "grades": [
-        7
-      ],
-      "guidance": null,
-      "courseIds": [
-        "recAA0ZagzqckHCk3",
-        "recs2njNvgo2NkizU"
+      "id": "recimzlFGRq3EGsyE",
+      "title": "Latin: Level 1 Choices",
+      "guidance": "Choose one approach for Latin Level 1.\n",
+      "tags": [
+        {
+          "id": "recPi3pKU2TMZ9ciN",
+          "label": "Level 1 Choice",
+          "sortOrder": null,
+          "courseIds": [
+            "recs2njNvgo2NkizU",
+            "recAA0ZagzqckHCk3"
+          ]
+        }
       ]
     },
     {
-      "id": "reco31yBaC5yZvZNa",
-      "title": "Latin Choices: Level 2",
-      "grades": [
-        8
-      ],
-      "guidance": null,
-      "courseIds": [
-        "rec35rf1E8qxmzr8i",
-        "recmGIFJQS2UIsA3Y"
+      "id": "recTo5LLWmlstCOax",
+      "title": "Latin: Level 2 Choices",
+      "guidance": "Choose one approach for Latin Level 2.\n",
+      "tags": [
+        {
+          "id": "reco31yBaC5yZvZNa",
+          "label": "Level 2 Choice",
+          "sortOrder": null,
+          "courseIds": [
+            "recmGIFJQS2UIsA3Y",
+            "rec35rf1E8qxmzr8i"
+          ]
+        }
       ]
     },
     {
-      "id": "recrIW5bpZaRZ50HS",
-      "title": "Science Choices: Grade 10",
-      "grades": [
-        10
-      ],
-      "guidance": null,
-      "courseIds": [
-        "recHqXhNk7mVGChFc",
-        "recNaAI9aThco0Wqt"
-      ]
-    },
-    {
-      "id": "recoyaVfgJo7uJxf2",
-      "title": "Science Choices: Grade 9",
-      "grades": [
-        9
-      ],
-      "guidance": null,
-      "courseIds": [
-        "recBfwwsSvSEPSnPJ",
-        "recHqXhNk7mVGChFc"
+      "id": "recaPxJPuLnr2lFb8",
+      "title": "Science Choices",
+      "guidance": "Explore the standard science disciplines and alternative studies to choose an appropriate science course for each student. Consider readiness, interests, previous studies, and any prerequisites or concurrent requirements. Review our [high school science placement guide](https://drive.google.com/file/d/1hH5tEEXGK7vnimhxzbAPOH0_5OkLvdYe/view) for more guidance.\n",
+      "tags": [
+        {
+          "id": "recoyaVfgJo7uJxf2",
+          "label": "Standard Discipline",
+          "sortOrder": 1,
+          "courseIds": [
+            "recBfwwsSvSEPSnPJ",
+            "recNaAI9aThco0Wqt",
+            "recE07d7ZlVzVRkRt"
+          ]
+        },
+        {
+          "id": "recrIW5bpZaRZ50HS",
+          "label": "Elective Alternative",
+          "sortOrder": 2,
+          "courseIds": [
+            "recHqXhNk7mVGChFc",
+            "recvdVDJqD3RovWNT",
+            "recPZJzQqitXcVhaU",
+            "rec7BQBcy9mPHy40M",
+            "recfOwt6Ny2yzcalz",
+            "recbDJ7OAFVM5ik9v",
+            "recjjZWvY1yFLNNIj"
+          ]
+        }
       ]
     }
   ],
