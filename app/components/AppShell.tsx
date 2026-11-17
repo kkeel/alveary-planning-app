@@ -269,6 +269,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
 function SessionPlanningShell({ children }: { children: ReactNode }) {
   const { userId } = usePlannerAuth();
+  const pathname = usePathname();
+  // The handoff proof must not remount when its synthetic auth user changes.
+  // It never opens Demo data, so it also does not need planning providers.
+  if (pathname.replace(/\/$/, "") === "/auth-handoff") return <>{children}</>;
   // Drafts are still browser-local and are intentionally *not* copied between
   // different account identities on the same device.
   return <DemoPlanProvider key={userId ?? "public"}>

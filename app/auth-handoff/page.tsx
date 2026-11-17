@@ -2,14 +2,15 @@
 
 // Isolated authentication proof route. NOT a replacement for normal login.
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { plannerSupabaseClient } from "../components/PlannerAuthProvider";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const HANDOFF_PATH = "/functions/v1/memberstack-handoff-proof";
+const MEMBERSTACK_APP_ID = "app_clbb9rspy00160ujl6tsxbsrj";
 const TEST_DASHBOARD = "https://alveary.org/alveary-2027-2028/dashboard-test";
 const STORAGE_KEY = "alveary:handoff-proof:v1";
-type Phase = "ready" | "redirecting" | "redeeming" | "complete" | "error";
+type Phase = "ready" | "checking-session" | "redirecting" | "redeeming" | "complete" | "error";
 
 function base64url(bytes: Uint8Array): string {
   let binary = "";
@@ -36,7 +37,28 @@ export default function AuthHandoffProofPage() {
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const code = fragment.get("code");
     const state = fragment.get("state");
-    if (!code && !state) return;
+    if (!code && !state) {
+      // Restoring the existing test session is a first-class success state.
+      // A previous successful exchange may have caused the normal auth shell
+      // to rerender, so verify via Supabase rather than relying on transient UI.
+      if (!plannerSupabaseClient) return;
+      let active = true;
+      setPhase("checking-session");
+      void (async () => {
+        const { data, error: getUserError } = await plannerSupabaseClient.auth.getUser();
+        if (!active) return;
+        const metadata = data.user?.app_metadata;
+        if (!getUserError && data.user &&
+            metadata?.provider === "memberstack-handoff-test" &&
+            metadata?.memberstack_app_id === MEMBERSTACK_APP_ID) {
+          setPhase("complete");
+          setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that the session is still active. Reloading this page also restores it. Saved students and course data are intentionally NOT unlocked by this test.");
+        } else {
+          setPhase("ready");
+        }
+      })().catch(() => { if (active) setPhase("ready"); });
+      return () => { active = false; };
+    }
     // Remove one-use credentials from browser history before any async work.
     window.history.replaceState(window.history.state, "",
       window.location.pathname + window.location.search);
@@ -75,14 +97,19 @@ export default function AuthHandoffProofPage() {
         const token = (data as { access_token?: unknown }).access_token;
         const refresh = (data as { refresh_token?: unknown }).refresh_token;
         if (typeof token !== "string" || typeof refresh !== "string") throw Error("missing_session");
-        const client = createClient(SUPABASE_URL, SUPABASE_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        // Reuse the same client as PlannerAuthProvider, never create a
+        // competing GoTrueClient under the same browser storage key.
+        if (!plannerSupabaseClient) throw Error("missing_auth_client");
+        const result = await plannerSupabaseClient.auth.setSession({
+          access_token: token, refresh_token: refresh,
         });
-        // This consumes a valid server-issued Supabase session; it never mints one.
-        const result = await client.auth.setSession({ access_token: token, refresh_token: refresh });
         if (result.error || !result.data.session) throw Error("session_restore_failed");
-        const checked = await client.auth.getUser();
-        if (checked.error || !checked.data.user) throw Error("session_verify_failed");
+        const checked = await plannerSupabaseClient.auth.getUser();
+        if (checked.error || !checked.data.user ||
+            checked.data.user.app_metadata?.provider !== "memberstack-handoff-test" ||
+            checked.data.user.app_metadata?.memberstack_app_id !== MEMBERSTACK_APP_ID) {
+          throw Error("session_verify_failed");
+        }
         if (!active) return;
         setPhase("complete");
         setMessage("Supabase Auth session established and verified. Refreshing this page should restore the session. This proof does NOT yet grant Demo planning access.");
@@ -135,12 +162,13 @@ export default function AuthHandoffProofPage() {
           Start website handoff test
         </button>
       </>}
-      {(phase === "redeeming" || phase === "redirecting") && <p role="status">
+      {(phase === "checking-session" || phase === "redeeming" || phase === "redirecting") && <p role="status">
         Connecting securely…
       </p>}
       {phase === "complete" && <p role="status">
-        Identity proof succeeded. Membership and private workspace integration is a
-        separate required step before this can replace the normal login.
+        The passwordless session test succeeded. It has no access to your
+        saved planning data; linking it to the correct family workspace is a
+        separate, security-reviewed implementation step.
       </p>}
       {error && <p role="alert">{error}</p>}
       <p style={{ fontSize: ".9rem", marginTop: "2rem" }}>
