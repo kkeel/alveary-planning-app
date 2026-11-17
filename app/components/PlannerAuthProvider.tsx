@@ -214,15 +214,9 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       setPlanAccess("none");
       return;
     }
-    // The synthetic account exists ONLY to prove Supabase session issuance.
-    // It can never access private planning data. Avoid a known-failing
-    // membership request and the resulting 403 on each token refresh.
-    if (session.user.app_metadata?.memberstack_app_id === "app_clbb9rspy00160ujl6tsxbsrj" &&
-        session.user.app_metadata?.provider === "email") {
-      verifiedAtRef.current = 0;
-      setPlanAccess("none");
-      return;
-    }
+    // All authenticated identities, including signed Memberstack handoff
+    // sessions, must pass the live 2027–28 server-side entitlement check.
+    // A browser session is NEVER sufficient to unlock private planning.
     let active = true;
     lastCheckAtRef.current = Date.now();
     // First sign-in must still verify before opening private navigation.

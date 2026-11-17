@@ -25,11 +25,15 @@ assert.ok(!page.includes("createClient("),
 assert.ok(auth.includes("!isHandoffProofRoute()"),
   "Do not auto-start Memberstack OIDC on the handoff callback");
 
-// A synthetically created test account is signed in but has NO Demo access.
-assert.ok(auth.includes('session.user.app_metadata?.memberstack_app_id === "app_clbb9rspy00160ujl6tsxbsrj"'));
-assert.ok(auth.includes('setPlanAccess("none");'));
-assert.ok(page.includes('saved planning data'),
-  "Proof must explicitly explain private data remain locked");
+// The synthetic account has a genuine session, but must still pass the SAME
+// server-side live Memberstack Testing Plan check as Custom OIDC accounts.
+assert.ok(auth.includes('"/functions/v1/memberstack-plan-access"'));
+assert.ok(!auth.includes('if (session.user.app_metadata?.memberstack_app_id'),
+  "No synthetic-account bypass or short-circuit of entitlement checks");
+assert.ok(page.includes('If your current-year membership cannot be verified'),
+  "Explicitly explain that private data remains gated by membership");
+assert.ok(page.includes('href="/students/"'),
+  "Only member-only page should determine whether Demo access is available");
 
 // The completion confirmation comes from getUser on the SAME Supabase client
 // and trusted, server-issued app metadata, including after a page reload.

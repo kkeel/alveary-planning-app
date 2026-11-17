@@ -86,3 +86,12 @@ The original test page lost its success state because the app shell remounted us
 Follow-up: bypass keyed planning/data providers for the isolated proof route; reuse one shared Supabase Auth client; on reload, call Supabase getUser and require trusted test-only app metadata to show the existing session as verified. Suppress the automatic hosted OIDC redirect only for this proof route. The synthetic test account still receives no private permissions; avoid the known-failing entitlement check for that synthetic account without changing normal member authorization.
 
 **Next user verification after the fix is merged and deployed:** Refresh https://plan.alveary.org/auth-handoff/ once and confirm the existing test session. Do not redo the handoff or share JWTs. Actual private Demo access requires a separate trusted identity/workspace integration and security review.
+
+
+## Follow-up: canonical private family access (PR #95)
+
+The previous sections document the original isolated authentication proof and are retained as historical test context. **PR #95 extends development-only private authorization**: both the previously trusted Custom OIDC session and a verified website-handoff Supabase Auth test session now resolve to the same server-verified Memberstack member ID and canonical 2027–28 family workspace. The normal independent active Testing Plan gate remains required for every private operation. This does not mean a successful session automatically grants private data.
+
+In development, the existing Memberstack member's OIDC family workspace contains 3 student records and 36 saved course choices (aggregate database counts, no names or IDs disclosed). The new member-to-session binding is designed to reuse those exact records, not copy them. A browser test after merging PR #95 is still required to verify actual students/course loads and account isolation.
+
+The email-based synthetic Auth user and any stored test session remain **development-only**; this is not an approved production account recovery/identity-linking policy. The member-facing dashboard script and mobile Safari rollout remain pending.

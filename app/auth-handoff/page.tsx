@@ -52,7 +52,7 @@ export default function AuthHandoffProofPage() {
             metadata?.memberstack_app_id === MEMBERSTACK_APP_ID &&
             metadata?.provider === "email") {
           setPhase("complete");
-          setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that the session is still active. Reloading this page also restores it. Saved students and course data are intentionally NOT unlocked by this test.");
+          setMessage("Your passwordless website handoff created a real Supabase Auth session, and Supabase verified that it is still active after reload. Your school-year membership and family workspace are checked separately before you can open private planning pages.");
         } else {
           setPhase("ready");
         }
@@ -165,15 +165,19 @@ export default function AuthHandoffProofPage() {
       {(phase === "checking-session" || phase === "redeeming" || phase === "redirecting") && <p role="status">
         Connecting securely…
       </p>}
-      {phase === "complete" && <p role="status">
-        The passwordless session test succeeded. It has no access to your
-        saved planning data; linking it to the correct family workspace is a
-        separate, security-reviewed implementation step.
-      </p>}
+      {phase === "complete" && <div role="status">
+        <p>Your verified Supabase session is ready. The normal Planning App
+          checks your active Demo membership and uses your verified Memberstack
+          identity to find your existing family workspace.</p>
+        <p><a href="/students/">Open my students and planning workspace</a></p>
+        <p>If your current-year membership cannot be verified, these private
+          pages will remain closed.</p>
+      </div>}
       {error && <p role="alert">{error}</p>}
       <p style={{ fontSize: ".9rem", marginTop: "2rem" }}>
-        This route is for development testing only. Your regular Planning App
-        login and school-year access rules have not changed.
+        This route is for development testing only. Automatic sign-in from
+        the member dashboard is not yet connected; school-year access rules
+        are still enforced separately.
       </p>
     </main>
   );
