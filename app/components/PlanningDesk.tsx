@@ -500,7 +500,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <ArrowLeft size={14}/> Back to Course List
         </Link>}
         {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
-          focusRevision={focusPlanned?.revision} />}
+          focusRevision={focusPlanned?.revision} onBrowseCourses={closeMobileDrawer} />}
       </div>
     </aside>}
   </div>;
