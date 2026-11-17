@@ -436,6 +436,12 @@
   box-shadow:none;
 }
 .cx-course--topic > .cx-course-head { position:relative; }
+.cx-course--topic.cx-idea-tone-full > .cx-course-head {
+  background:var(--cx-subject-pale);
+}
+.cx-course--topic.cx-idea-tone-inherited > .cx-course-head {
+  background:color-mix(in srgb, var(--cx-subject-pale) 65%, white);
+}
 .cx-course--topic:is(.cx-status-full, .cx-idea-tone-full) > .cx-course-head::before,
 .cx-course--topic.cx-idea-tone-inherited:not(.cx-status-full) > .cx-course-head::before {
   content:"";
