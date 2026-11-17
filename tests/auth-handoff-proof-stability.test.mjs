@@ -28,7 +28,7 @@ assert.ok(auth.includes("!isHandoffProofRoute()"),
 // A synthetically created test account is signed in but has NO Demo access.
 assert.ok(auth.includes('session.user.app_metadata?.provider === "memberstack-handoff-test"'));
 assert.ok(auth.includes('setPlanAccess("none");'));
-assert.ok(page.includes('private planning data'),
+assert.ok(page.includes('saved planning data'),
   "Proof must explicitly explain private data remain locked");
 
 // The completion confirmation comes from getUser on the SAME Supabase client
