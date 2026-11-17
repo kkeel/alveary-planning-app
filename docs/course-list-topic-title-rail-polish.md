@@ -38,6 +38,31 @@ are presentational only, derived from existing saved idea state.
   colored left rail beside expanded Think Tank **details**, unchanged.
 - Full Planning view already has its own 16px body padding and remains as-is.
 
+## November 17 follow-up: selected topic plan vs Think Tank
+
+After reviewing the History Grades 10–12, Grade 9, Grades 7–8, and
+Grades 5–6 screenshots, the selection styling is refined:
+
+- **Directly planned topic:** restore the strong, saturated **full-topic-height**
+  left rail, including when its metadata and description are expanded.
+  Keep the parent's partial reciprocal highlight when only some topics
+  are planned (History 10–12).
+- **Parent course + All:** do not add an individual topic rail. All included
+  topics remain softly tinted on their title row and + controls (History 9).
+- **Think Tank, individual or inherited topic:** remove the tinted full-width
+  topic title background and keep only a **medium/light** left rail along
+  the complete *title-row height*, not down the long topic description.
+  Direct topic idea uses medium; inherited course idea uses lighter. The
+  parent idea remains as currently styled (History 7–8 and 5–6).
+- Choice group headings keep their neutral fill and authored tags with no
+  surrounding box, and now have a slightly clearer **2px muted gray-green
+  bottom border**, even against a selected first option.
+- Course List **subject and text search filters** now join existing grade
+  and U.S./Canada preferences in the account-scoped Planning Desk
+  localStorage state. They restore after navigating between app pages or
+  returning to the Course List. The "Show all courses" reset clears all four
+  filters. Public/unsigned sessions retain the existing no-storage behavior.
+
 ## Browser acceptance
 
 1. Open Grade 9 History, choose + All for a student: parent header/rail is
