@@ -271,7 +271,6 @@ export default function CourseTopicReview({
   return <div className="pd-topic-review" aria-label={"Topics in " + parent.title}>
     <div className="pd-topic-review-heading">
       <strong>Topics</strong>
-      {mode === "plan" && <small>Topics remain individually schedulable and printable</small>}
     </div>
     {included.map(topic => renderTopic(topic))}
     {!included.length && <p className="pd-topic-zero">
