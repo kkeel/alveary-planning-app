@@ -125,7 +125,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     return grouped.get(subject) ?? [];
   }
 
-  const firstThinkCourseId = subjectOrder.flatMap(subject => orderedIdeas(subject))[0]?.id ?? null;
+  // A saved Expanded preference should open the first visible course, not
+  // one hidden inside a subject the member has already collapsed.
+  const firstThinkCourseId = subjectOrder
+    .filter(subject => !desk.collapsedSubjects.includes(subject))
+    .flatMap(subject => orderedIdeas(subject))[0]?.id ?? null;
   const resolvedThinkCourseId = resolveThinkCourse(
     openThinkCourseId, variant, desk.thinkDetails, firstThinkCourseId);
   const activeThinkCourseId = resolvedThinkCourseId &&
