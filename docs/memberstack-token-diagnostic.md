@@ -50,3 +50,23 @@ Sources:
 - https://www.memberstack.com/changelog (September 18, 2026 seamless SSO)
 - https://docs.memberstack.com/hc/en-us/articles/8159657704603-Circle-Community-SSO
 - https://docs.memberstack.com/hc/en-us/articles/18004875142555-Enable-Cross-Domain-Login-with-Memberstack
+
+
+## November 17 — Webflow member JWT identity-claim compatibility
+
+A logged-in Webflow dashboard running the Memberstack v1-hosted script and the root-cookie configuration reported a present JWT with expected RS256 algorithm, issuer, app audience and unexpired timestamp, but no `sub` subject or Supabase `role` claim. These client-side checks do **not** verify the signature.
+
+The development-only `memberstack-identity-check` now verifies the signature and standard claims using `jose` **before** accepting a signed `id` member claim as a fallback when `sub` is absent. An `id`-only JWT must identify its token type as `member`; conflicting `sub`/`id` are rejected. Legacy signed `sub` tokens remain supported. The diagnostic no longer echoes the member ID in a response. **No Supabase Auth session, membership grant, or private table access is created by this check.**
+
+After deployment, retest using the existing Webflow console request without disclosing the token. Expected valid signed member token: HTTP 200 and `verified: true`. Fake, expired, malformed, wrong-audience and non-member tokens must remain denied. If a valid browser token still receives 401, inspect the returned non-sensitive error code and server verification logic before broadening identity acceptance.
+
+
+## November 17 — Correct public signing keys for Webflow member tokens
+
+The first post-claim-fix browser test still returned `401 invalid_or_expired_token`. Memberstack's updated token-verification documentation explicitly distinguishes the member signing keys at `https://auth.memberstack.com/.well-known/member-jwks.json` from Custom SSO signing keys at `https://auth.memberstack.com/jwks`. Our diagnostic had incorrectly used the Custom SSO endpoint to verify the regular Webflow `getMemberCookie()` token.
+
+The diagnostic now selects the **Member JWT** JWKS URL, retains required RS256 cryptographic signature verification, exact issuer/audience, explicit numeric expiration, `type=member`, and signed member identifier checks. Neither verification failures nor successes grant app access. This is an independent test endpoint; it does not change Supabase Custom SSO login or the protected Demo planning entitlement function.
+
+Source: https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend
+
+**Browser retest needed:** a real signed-in Webflow member must resubmit the existing Bearer test to observe HTTP 200 with `identityVerified:true`; the previous 401 is evidence of the old misconfigured key source, not proof that the new deployment works.
