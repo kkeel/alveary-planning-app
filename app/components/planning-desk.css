@@ -83,7 +83,13 @@
   padding-inline:0;
 }
 .pd-desk .pd-details-toolbar { padding-inline:12px; }
-.pd-desk .pd-subject-list { width:100%; }
+/* With unboxed course rows and a details-only rail, a very small
+   side inset keeps subject headers from touching the mini desk frame. */
+.pd-desk .pd-subject-list {
+  width:100%;
+  padding-inline:6px;
+  box-sizing:border-box;
+}
 .pd-desk .pd-subject-items.pd-think-course-list {
   padding-left:4px;
   padding-right:4px;
