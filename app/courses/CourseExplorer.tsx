@@ -5,6 +5,7 @@ import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search,
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
+import { guidanceSegments, matchesCourseGrades } from "./choice-display.mjs";
 import { sourceChoiceForRow } from "./course-list-actions.mjs";
 import { canOpenListStudentEditor } from "./list-editor-readiness.mjs";
 import { subjectColor } from "./legacy-subject-colors.mjs";
@@ -48,13 +49,9 @@ type Plan = {
   }>;
 };
 type TopicLink = { parentEditionId: string; childEditionId: string };
-type ChoiceGroup = {
-  id: string;
-  title: string;
-  guidance: string | null;
-  grades: number[];
-  courseIds: string[];
-};
+type ChoiceTag = { id: string; label: string; sortOrder: number | null; courseIds: string[] };
+type ChoiceGroup = { id: string; title: string; guidance: string | null; tags: ChoiceTag[] };
+type ChoiceOption = { course: Plan; tags: string[] };
 type Catalog = {
   releaseYear: string;
   releaseStatus: string;
@@ -67,7 +64,7 @@ type Mode = "browse" | "plan";
 type PlanTarget = { courseId: string; topicId: string | null };
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
-  | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[]; optionNumbers: Map<string,number> };
+  | { kind: "choice"; sort: string; group: ChoiceGroup; options: ChoiceOption[] };
 
 const catalog = sourceCatalog as Catalog;
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -87,6 +84,13 @@ function gradeLabel(grades: number[]): string {
   return "Grades " + values.join(", ");
 }
 
+function ChoiceGuidance({ markdown }: { markdown: string }) {
+  return <>{guidanceSegments(markdown).map((part, index) =>
+    part.kind === "link" ? <a key={index} href={part.href} target="_blank"
+      rel="noopener noreferrer">{part.text}</a> :
+      <span key={index}>{part.text}</span>)}</>;
+}
+
 function TipCallout({ children }: { children: React.ReactNode }) {
   return <div className="cx-tip">
     <span className="cx-tip-icon"><PlacementSymbol /></span>
@@ -97,7 +101,7 @@ function TipCallout({ children }: { children: React.ReactNode }) {
 type CourseRowProps = {
   course: Plan;
   nested?: boolean;
-  choiceNumber?: number;
+  choiceTags?: string[];
   childTopics: Map<string, Plan[]>;
   mode: Mode;
   planned: readonly string[];
@@ -120,13 +124,13 @@ type CourseRowProps = {
  * remounted the clicked row, discarded focus and could jump the scroll position.
  *
  * Expansion is intentionally LOCAL to this rendered occurrence. The same plan
- * may appear under different parents or in multiple grade-specific choice
- * groups, but opening one occurrence must not open its other appearances.
+ * may appear under different combined parents, but opening one
+ * occurrence must not open another occurrence or move the scroll position.
  */
 function CourseRow({
   course,
   nested = false,
-  choiceNumber,
+  choiceTags,
   childTopics,
   mode,
   planned,
@@ -208,8 +212,9 @@ function CourseRow({
         disabled={!canExpand} title={canExpand ? (isExpanded ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
-          {choiceNumber !== undefined && !nested &&
-            <span className="cx-choice-number">Choice {choiceNumber}</span>}
+          {choiceTags?.length && !nested ? <span className="cx-course-tags">
+            {choiceTags.map(tag => <span className="cx-choice-tag" key={tag}>{tag}</span>)}
+          </span> : null}
         </span>
       </button>
       <div className="cx-course-actions">
@@ -377,7 +382,9 @@ export default function CourseExplorer() {
     return map;
   }, [plansByEditionId]);
 
-  const groupedIds = useMemo(() => new Set(catalog.choiceGroups.flatMap(g => g.courseIds)), []);
+  const groupedIds = useMemo(() => new Set(
+    catalog.choiceGroups.flatMap(group => group.tags.flatMap(tag => tag.courseIds))
+  ), []);
   const courses = useMemo(() => catalog.courses.filter(c => c.type !== "Topic"), []);
   const subjects = useMemo(() => {
     const unique = new Map<string, number>();
@@ -400,49 +407,52 @@ export default function CourseExplorer() {
       sectionMap.set(subjectName, [...(sectionMap.get(subjectName) ?? []), row]);
     };
 
-    // Once a course belongs to ANY active 2027–28 choice group, suppress its
-    // standalone row in every grade filter. The group grade controls placement.
+    // Choice membership changes presentation, NOT curriculum grade eligibility.
+    // Grouped plans never leak into a second standalone row.
     for (const course of courses) {
       if (groupedIds.has(course.id)) continue;
       if (subject && course.subject !== subject) continue;
       if (!matchesCountry(course.country, country)) continue;
-      // Airtable's Display Grade can be "GRADES: 1+". Those courses apply
-      // to higher grades even when only the starting grade is linked.
-      const isGradePlus = course.gradeDisplay?.trim().endsWith("+") ?? false;
-      const minGrade = Math.min(...course.grades);
-      if (grades.length && !course.grades.some(g => grades.includes(g)) &&
-          !(isGradePlus && grades.some(g => g >= minGrade))) continue;
+      if (!matchesCourseGrades(course, grades)) continue;
       if (!matchesText(course)) continue;
       add(course.subject, { kind: "course", sort: course.presentationSort, course });
     }
 
     for (const group of catalog.choiceGroups) {
-      if (grades.length && !group.grades.some(g => grades.includes(g))) continue;
-      const allOptions = group.courseIds
-        .map(id => plansById.get(id))
-        .filter((item): item is Plan => !!item && item.type !== "Topic" && matchesCountry(item.country, country));
-      if (!allOptions.length) continue;
-      // Keep the author's grade-specific options together. Never infer display
-      // grades from linked course eligibility (science differs by grade).
-      const groupSubject = allOptions[0].subject;
-      if (subject && !allOptions.some(item => item.subject === subject)) continue;
-      const groupMatchesSearch = normalizedQuery && [group.title, group.guidance]
-        .some(text => text?.toLocaleLowerCase().includes(normalizedQuery));
-      // Number by the full *displayed* curriculum ordering, not the
-      // filtered subset. Search must not renumber Choice 2 into Choice 1.
-      const orderedOptions = [...allOptions].sort(comparePlan);
-      const optionNumbers = new Map<string,number>(
-        orderedOptions.map((option,index): [string,number] => [option.id,index + 1]));
-      const options = groupMatchesSearch ? orderedOptions : orderedOptions.filter(matchesText);
+      const tagOptions = new Map<string,ChoiceOption>();
+      // First collect ALL a course's group labels. These aren't grade badges,
+      // and search/filter changes must never hide a valid second tag.
+      for (const tag of group.tags) {
+        for (const id of tag.courseIds) {
+          const course = plansById.get(id);
+          if (!course || course.type === "Topic") continue;
+          const previous = tagOptions.get(id);
+          if (previous) {
+            if (!previous.tags.includes(tag.label)) previous.tags.push(tag.label);
+          } else tagOptions.set(id, { course, tags: [tag.label] });
+        }
+      }
+      const groupMatchesSearch = Boolean(normalizedQuery) &&
+        [group.title, group.guidance].some(value => value?.toLocaleLowerCase().includes(normalizedQuery));
+      const options = [...tagOptions.values()].filter(option =>
+        (!subject || option.course.subject === subject) &&
+        matchesCountry(option.course.country, country) &&
+        matchesCourseGrades(option.course, grades) &&
+        (groupMatchesSearch || matchesText(option.course) ||
+          option.tags.some(tag => tag.toLocaleLowerCase().includes(normalizedQuery)))
+      ).sort((a,b) => comparePlan(a.course,b.course));
       if (!options.length) continue;
-      add(groupSubject, { kind: "choice", sort: options[0].presentationSort,
-        group, options, optionNumbers });
+      // Position the entire quiet group immediately before its earliest
+      // VISIBLE eligible option. Never show an empty Science header in 1–8.
+      add(options[0].course.subject, {
+        kind: "choice", sort: options[0].course.presentationSort, group, options
+      });
     }
     const result = [...sectionMap.entries()]
       .map(([name, rows]) => ({ name, rows: rows.sort((a, b) =>
         compareText(a.sort, b.sort) ||
-        compareText(a.kind === "choice" ? a.options[0].sort : a.course.sort,
-                    b.kind === "choice" ? b.options[0].sort : b.course.sort) ||
+        compareText(a.kind === "choice" ? a.options[0].course.sort : a.course.sort,
+                    b.kind === "choice" ? b.options[0].course.sort : b.course.sort) ||
         compareText(a.kind === "choice" ? a.group.id : a.course.id,
                     b.kind === "choice" ? b.group.id : b.course.id)) }))
       .sort((a, b) => (subjects.indexOf(a.name) - subjects.indexOf(b.name)) || compareText(a.name, b.name));
@@ -570,13 +580,17 @@ export default function CourseExplorer() {
             <h2>{section.name}</h2>
             <div className="cx-rows">{section.rows.map(row => row.kind === "course" ?
               <CourseRow key={row.course.id} course={row.course} {...courseRowProps} /> :
-              <div className="cx-choice cx-choice--accent" key={row.group.id}>
+              <div className="cx-choice" key={row.group.id}>
                 <div className="cx-choice-header">
                   <h3>{row.group.title}</h3>
-                  {row.group.guidance && <p>{row.group.guidance}</p>}
+                  {row.group.guidance && <p className="cx-choice-guidance">
+                    <ChoiceGuidance markdown={row.group.guidance}/>
+                  </p>}
                 </div>
-                <div>{row.options.map(option => <CourseRow key={option.id} course={option}
-                  choiceNumber={row.optionNumbers.get(option.id)} {...courseRowProps} />)}</div>
+                <div className="cx-choice-options">
+                  {row.options.map(({course,tags}) => <CourseRow key={course.id}
+                    course={course} choiceTags={tags} {...courseRowProps} />)}
+                </div>
               </div>)}</div>
           </section>
         ) : <div className="cx-empty">

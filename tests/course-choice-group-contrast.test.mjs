@@ -1,57 +1,67 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { matchesCourseGrades, guidanceSegments } from "../app/courses/choice-display.mjs";
 
-const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
-const explorer = read("app/courses/CourseExplorer.tsx");
+const read = path => readFileSync(new URL("../"+path, import.meta.url),"utf8");
+const tsx = read("app/courses/CourseExplorer.tsx");
 const css = read("app/courses/course-explorer.css");
 const deskCss = read("app/components/planning-desk.css");
-const catalog = JSON.parse(read("app/courses/catalog-preview.json"));
+const data = JSON.parse(read("app/courses/catalog-preview.json"));
+const plans = new Map(data.courses.map(row => [row.id,row]));
+const science = data.choiceGroups.find(group => group.title === "Science Choices");
+assert.ok(science && science.tags.length === 2);
+const allScienceIds = [...new Set(science.tags.flatMap(tag => tag.courseIds))];
+assert.equal(allScienceIds.length, 10, "one canonical catalog record per high-school course");
 
-// Choice numbers are optional root-course decorations. Topics never inherit
-// them, and the badge appears directly beside the course's own title.
-assert.ok(explorer.includes("choiceNumber?: number;"));
-assert.ok(explorer.includes('className="cx-course-name">{course.title}'));
-assert.match(explorer,
-  /choiceNumber !== undefined && !nested &&[\s\S]*?className="cx-choice-number">Choice \{choiceNumber\}/,
-  "Each numbered badge should sit next to its own root course title");
-assert.ok(explorer.includes("choiceNumber={row.optionNumbers.get(option.id)}"),
-  "Choice-group option numbers must be supplied to CourseRow");
+const scienceFor = grades => allScienceIds.map(id => plans.get(id))
+  .filter(course => matchesCourseGrades(course, grades));
+assert.equal(scienceFor([8]).length, 0, "Grade 1–8 only: no Science Choices header");
+assert.equal(scienceFor([1,2,3,4,5,6,7,8]).length, 0);
+assert.equal(scienceFor([9]).length, 5);
+assert.equal(scienceFor([10]).length, 6);
+assert.equal(scienceFor([11]).length, 9);
+assert.equal(scienceFor([12]).length, 10);
+assert.equal(scienceFor([3,10]).length, 6, "mixed-grade filters show high-school options once");
+assert.equal(scienceFor([]).length, 10, "all grades show each eligible choice once");
+const chemistry = plans.get(science.tags[0].courseIds[0]);
+assert.ok(chemistry && matchesCourseGrades(chemistry,[9,11]));
+assert.equal(matchesCourseGrades({grades:[7],gradeDisplay:"GRADES: 7+"},[11]),true,
+  "grade+ works for choice and non-choice courses alike");
+assert.equal(matchesCourseGrades({grades:[10],gradeDisplay:"GRADES: 10-12"},[9]),false);
 
-// Number the FULL display order BEFORE applying search text. A search that
-// leaves only Choice 2 must not relabel it Choice 1.
-assert.ok(explorer.includes("const orderedOptions = [...allOptions].sort(comparePlan);"));
-assert.ok(explorer.includes("new Map<string,number>("));
-assert.ok(explorer.includes("orderedOptions.map((option,index): [string,number] => [option.id,index + 1])"));
-assert.ok(explorer.includes("orderedOptions.filter(matchesText)"));
+assert.ok(tsx.includes("matchesCourseGrades(course, grades)"));
+assert.ok(tsx.includes("matchesCourseGrades(option.course, grades)"));
+assert.ok(!tsx.includes("group.grades"), "group tags do not impose a second grade filter");
+assert.ok(tsx.includes("const tagOptions = new Map<string,ChoiceOption>()"));
+assert.ok(tsx.includes("tagOptions.get(id)"), "shared course IDs deduplicate within parent group");
+assert.ok(tsx.includes("sort: options[0].course.presentationSort"),
+  "choice heading follows earliest visible matching course");
+assert.ok(tsx.includes('className="cx-choice-tag"'), "authored tag labels appear on course titles");
+assert.ok(!tsx.includes("choiceNumber") && !tsx.includes("optionNumbers"),
+  "obsolete numbered options have been removed");
+assert.ok(tsx.includes("cx-status-") && tsx.includes("cx-context-"),
+  "student/Think Tank status coloring remains intact");
 
-const latin = catalog.choiceGroups.find(g => g.title === "Latin Choices: Level 1");
-assert.ok(latin);
-const options = latin.courseIds.map(id => catalog.courses.find(c => c.id === id));
-assert.ok(options.every(Boolean));
-const compare = (a,b) =>
-  a.presentationSort.localeCompare(b.presentationSort) ||
-  a.sort.localeCompare(b.sort) || a.id.localeCompare(b.id);
-const ordered = [...options].sort(compare);
-const numbers = new Map(ordered.map((option,index) => [option.id,index + 1]));
-const selected = ordered.filter(option => option.title.includes("Video Course"));
-assert.equal(selected.length,1);
-assert.equal(numbers.get(selected[0].id),2,
-  "A filtered second choice must keep its original visible ordinal");
+assert.ok(css.includes("background:#f0f1ed;"),"neutral choice heading");
+assert.ok(css.includes(".cx-choice-options {") && css.includes("border-bottom:2px solid #d1d8ce;"),
+  "quiet bracket and ending line distinguish Latin choices from Latin 3/4");
+assert.ok(css.includes(".cx-choice-tag {") && css.includes("background:#f3f4f1;"));
+assert.ok(!css.includes("background:#303631;") && !css.includes("border:2px solid #434a45;"),
+  "dark charcoal group boxes are gone");
+assert.ok(css.includes("box-shadow:inset 3px 0 0 var(--cx-subject);"),
+  "the selected-course subject rail stays visible");
+assert.ok(deskCss.includes("border-left:4px solid var(--pd-subject-edge,#a8b9a9);"),
+  "Think Tank details-only subject rail remains unchanged");
 
-// The group heading should stand apart in Alveary charcoal, not use
-// another subject color. Choices use neutral outline/text badges.
-assert.ok(css.includes("border:2px solid #434a45;"));
-assert.ok(css.includes(".cx-choice--accent .cx-choice-header { background:#303631; }"));
-assert.ok(css.includes("color:#fff;"));
-assert.match(css,
-  /\.cx-choice-number\s*\{[\s\S]*?background:#eef0ee;[\s\S]*?color:#424944;/,
-  "Choice number badges must stay neutral rather than subject-colored");
-assert.ok(css.includes(".cx-choice-header h3, .cx-choice-header p { color:#171a18 !important; }"),
-  "The print stylesheet should keep text legible on the light printed header");
-
-// Only slight subject inset: don't bring back outlined subject cards.
-assert.match(deskCss,
-  /\.pd-desk \.pd-subject-list\s*\{\s*width:100%;\s*padding-inline:6px;/);
-assert.ok(deskCss.includes("border-left:4px solid var(--pd-subject-edge,#a8b9a9);"));
-assert.ok(deskCss.includes(".pd-think-course-list > .pd-idea + .pd-idea"));
-console.log("Choice group charcoal palette and stable numbered options: OK");
+const parsed = guidanceSegments(science.guidance);
+const realLink = parsed.find(p => p.kind === "link");
+assert.ok(realLink);
+assert.equal(realLink.text,"high school science placement guide");
+assert.equal(realLink.href,
+  "https://drive.google.com/file/d/1hH5tEEXGK7vnimhxzbAPOH0_5OkLvdYe/view");
+assert.ok(tsx.includes('rel="noopener noreferrer"'), "external links open safely");
+assert.ok(!tsx.includes("dangerouslySetInnerHTML"), "Airtable guidance isn't interpreted as HTML");
+assert.deepEqual(guidanceSegments("[bad](javascript:alert(1))"),
+  [{kind:"text",text:"[bad](javascript:alert(1))"}]);
+assert.deepEqual(guidanceSegments("Plain text"),[{kind:"text",text:"Plain text"}]);
+console.log("Choice groups: normal grades, deduplicated courses, neutral tags, links and selected rails: OK");
