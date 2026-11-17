@@ -50,14 +50,22 @@ Deno.serve(async (request: Request) => {
       algorithms: ["RS256"],
       clockTolerance: "5 seconds",
     });
-    if (typeof payload.sub !== "string" || !payload.sub) {
+    // Memberstack's Webflow member JWTs use a signed "id" claim, while
+    // some provider token variants use the standard "sub" subject claim.
+    // Trust either only AFTER jose verifies RS256, issuer, audience and expiry.
+    const subject = typeof payload.sub === "string" ? payload.sub : "";
+    const memberIdClaim = typeof payload.id === "string" ? payload.id : "";
+    const memberId = subject || memberIdClaim;
+    if (payload.type !== "member" ||
+        !memberId || memberId.length > 128 ||
+        !/^[A-Za-z0-9_-]+$/.test(memberId) ||
+        (subject && memberIdClaim && subject !== memberIdClaim)) {
       return respond(request, 401, { verified: false, error: "invalid_identity" });
     }
-    // Deliberately exclude the token, email and personal data from responses.
-    // A signature-verified identity is not a verified current plan entitlement.
+    // Development diagnostic only. Never expose the member ID or JWT and
+    // never treat a verified identity as a school-year entitlement.
     return respond(request, 200, {
       verified: true,
-      memberId: payload.sub,
       directSupabaseRoleCompatible: payload.role === "authenticated",
       membershipAuthorized: false,
       diagnosticOnly: true,
