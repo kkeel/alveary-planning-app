@@ -1,0 +1,78 @@
+# Alveary website → Supabase Auth: isolated handoff proof
+
+**Development only. Not an automatic member login and does not grant Demo data.**
+
+## Implementation
+
+The new, isolated Supabase Edge Function verifies a signed Memberstack member JWT (RS256 / member JWKS / issuer / exact audience / expiration / type / identity) and checks the active LIVE 2027–28 Testing Plan against Memberstack Admin API and server-held plan rules. An authenticated Webflow page can request a 60-second single-use handoff code bound to a random PKCE challenge and state. The callback on plan.alveary.org redeems it atomically; the code alone is useless without the secret verifier retained in sessionStorage at the planner origin.
+
+For the first technical proof, the backend uses Supabase Auth Admin generateLink and verifyOtp on a randomly provisioned, isolated, nondeliverable-email TEST account linked server-side to the verified Memberstack ID. The test page then stores only genuine Supabase Auth credentials via setSession and confirms getUser. This does NOT attach the new Auth user to existing family data, and the current protected APIs continue denying private access unless the normal OIDC/entitlement checks pass.
+
+The synthetic-account method is experimental. It requires security review and identity integration before members may use it. It is NOT evidence that Supabase directly accepts ordinary Memberstack JWTs as Auth sessions.
+
+## Setup prerequisites
+
+1. Run docs/sql/memberstack-passwordless-handoff-development.sql ONLY in Alveary Planning - Development, under reviewed migration tracking. Both tables have RLS enabled, no browser grants, and only service_role can consume codes or query the mappings.
+2. Deploy supabase/functions/memberstack-handoff-proof/index.ts, with Supabase gateway verify_jwt=false because the issued JWT comes from Memberstack, and the function validates it cryptographically in code.
+3. Keep the existing Memberstack Live API secret exclusively server-side. No additional Webflow headers or DNS subscriptions.
+4. After backend negative tests, merge the new Next.js route at https://plan.alveary.org/auth-handoff/ into GitHub Pages.
+
+## Manual same-tab test, no edits by Kathryn
+
+Start at https://plan.alveary.org/auth-handoff/ and select Start website handoff test. The test redirects to the already-signed-in Alveary Webflow dashboard. It includes only public state and challenge in the query parameters. Open Chrome Console on that dashboard and run the following. Do not copy or show JWT values.
+
+    (async () => {
+      const q = new URLSearchParams(location.search);
+      const state = q.get("alveary_handoff_state");
+      const challenge = q.get("alveary_handoff_challenge");
+      const memberJwt = window.$memberstackDom?.getMemberCookie?.();
+      if (!state || !challenge || !memberJwt) {
+        console.log("Missing handoff state/challenge or Alveary login.");
+        return;
+      }
+      const result = await fetch(
+        "https://fzitmrzuxxdmvrhftdkr.supabase.co/functions/v1/memberstack-handoff-proof",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + memberJwt
+          },
+          cache: "no-store",
+          credentials: "omit",
+          body: JSON.stringify({ action: "issue", state, challenge })
+        }
+      );
+      const data = await result.json();
+      if (!result.ok || typeof data.code !== "string") {
+        console.table({ httpStatus: result.status, error: data.error ?? "unknown" });
+        return;
+      }
+      window.location.assign(
+        "https://plan.alveary.org/auth-handoff/#code=" +
+          encodeURIComponent(data.code) + "&state=" + encodeURIComponent(state)
+      );
+    })();
+
+The code travels only as a one-time URL fragment (NOT the website JWT, Supabase access token or refresh token), bound to the planner-origin PKCE secret. The page immediately strips the fragment, redeems, and confirms a real Supabase session. It does not load family data and should not show Demo planning without additional server-side integration.
+
+## Acceptance before any broader rollout
+
+- Valid Testing Plan signed member: a single valid, refreshable Supabase Auth TEST session, which persists across browser reloads.
+- Missing, forged, invalid, expired, wrong issuer/audience or wrong-type Memberstack JWT: issue denied.
+- Member without active Testing Plan: issue denied.
+- Wrong state, wrong verifier, used code, expired code: redemption denied.
+- Redeem from Webflow origin instead of plan.alveary.org: denied.
+- Missing/forged browser Origin and malformed inputs: denied.
+- No browser reads of handoff SQL tables or privileged functions.
+- No member ID, child name, session token, secret, OTP, email, or account metadata in logs or redirect URLs.
+- Current demo-students, demo-course-planning and memberstack-plan-access behavior remains unchanged.
+- Test default iPhone Safari as well as desktop before planning an automatic button integration.
+
+Once the technical proof succeeds, implement a canonical trusted Memberstack-ID -> Supabase Auth user/workspace mapping and current-year permission checks in a separate reviewed PR. Only after authorization is correct should Kathryn receive a dashboard-specific button script. Retain a safe clear-session/account-switch path even if the main app doesn't prominently display Sign out.
+
+References:
+https://supabase.com/docs/reference/javascript/auth-admin-generatelink
+https://supabase.com/docs/reference/javascript/auth-verifyotp
+https://supabase.com/docs/guides/auth/sessions
+https://docs.memberstack.com/hc/en-us/articles/7253255689755-Using-Permissions-and-Token-Verification-to-Secure-Your-Site-on-a-Custom-Backend
