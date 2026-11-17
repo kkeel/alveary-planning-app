@@ -5,7 +5,7 @@ import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, P
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
-import { topicHasAssignedStudent } from "./topic-assignment.mjs";
+import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs";
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import PlacementSymbol from "./PlacementSymbol";
