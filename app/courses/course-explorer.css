@@ -115,6 +115,14 @@
 
 .cx-page-columns { display: grid; grid-template-columns: minmax(0, 840px) minmax(0, 1fr); align-items: start; gap: 38px; }
 .cx-page-columns--planning { grid-template-columns: minmax(0, 840px) minmax(235px, 310px); }
+/* The actual member Course List is already paired with the desk by the
+   outer shell. Do not retain Explorer's second, empty preview grid column,
+   which previously left unused space while the list became too narrow. */
+.shell-page-layout.has-planning-desk .cx-page { max-width:none; }
+.shell-page-layout.has-planning-desk .cx-page-columns {
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+}
 .cx-list-column { min-width: 0; }
 .cx-future-space { min-width: 0; }
 .cx-subject { margin-top: 26px; }
