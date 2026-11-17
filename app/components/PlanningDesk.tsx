@@ -13,7 +13,6 @@ import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
 import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
-import DetailViewSwitch from "./DetailViewSwitch";
 import { selectionTopicCount } from "./planning-topic-sections.mjs";
 import { resolveThinkCourse, toggleThinkCourse } from "./think-tank-accordion.mjs";
 import { pendingIdeaCount, topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
@@ -236,17 +235,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
-            {variant === "full" && <DetailViewSwitch label="Think Tank" singleOpen
-              value={activeThinkCourseId ? "expanded" : "compact"}
-              onChange={mode => {
-                setOpenThinkCourseId(mode === "expanded"
-                  ? activeThinkCourseId ?? firstThinkCourseId : null);
-                desk.setThinkDetails(mode);
-                setCourseInfoId(null);
-                setAssigningId(null);
-                setOpenMenu(null);
-                setJustPlannedId(null);
-              }}/>}
           </div>
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map(subject => {
@@ -431,9 +419,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   </>;
 
   if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
-    <div className="pd-full-status">
-      <span className="pd-full-status-label"><NotebookPen size={16} aria-hidden="true"/> Your Planning Desk</span>
-    </div>
     <div className="pd-full-columns">
       <section className="pd-full-column" aria-label="Think Tank">
         <header className="pd-full-column-heading">

@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, SquareCheckBig, UsersRound } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, SquareCheckBig, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
-import DetailViewSwitch from "./DetailViewSwitch";
 import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
+import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { selectionTopicCount } from "./planning-topic-sections.mjs";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
@@ -67,18 +67,23 @@ function studentSummary(course: SavedCourse,
   });
 }
 
+/** My Plan shares Think Tank's list, accordion, metadata and neutral disclosure
+ * styling, but its selection symbol is a check and its student actions edit
+ * existing assignments through the same editor used when first adding them. */
 export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, sideBySide = false }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
+  // One open course across all My Plan subjects, just as in Think Tank.
   const [openId, setOpenId] = useState<string | null>(null);
-  const [openOverrides, setOpenOverrides] = useState<Record<string,boolean>>({});
   const [infoId, setInfoId] = useState<string | null>(null);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
-  // Keep a now-unassigned parent visible only while its editor is open.
-  // Changes autosave immediately, but Done/Close should remain reachable
-  // before the course fully returns to Think Tank.
+  const pendingAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
+
+  // Changes autosave immediately. Keep a course with its last student removed
+  // visible only while the editing form still needs a reachable Done button.
   const planned = demo.courses.filter(c => c.stage === "planned" ||
     (c.stage === "idea" && c.courseId === openId &&
       (editingStudentsId === c.courseId || editingTopicCourseId === c.courseId)));
@@ -89,12 +94,49 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   useEffect(() => {
     if (focusCourseId && planned.some(c => c.courseId === focusCourseId)) {
       setOpenId(focusCourseId);
-      setOpenOverrides(old => ({...old,[focusCourseId]:true}));
+      setInfoId(null);
+      setOpenMenuId(null);
     }
-  // Follow explicit Add/Done events, including repeated assignments to the
-  // same combined course, without reopening on ordinary server refreshes.
+  // Follow actual Add/Done events only, not ordinary server refreshes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusCourseId, focusRevision]);
+
+  // Keep a clicked row under the pointer when opening it collapses another
+  // course above it, matching the Think Tank's global single-open behavior.
+  function rememberAnchor(element: HTMLElement) {
+    const row = element.closest(".pd-idea") as HTMLElement | null;
+    const scroller = element.closest(".pd-body, .pd-full-column-body") as HTMLElement | null;
+    if (row) pendingAnchor.current = {
+      row, top: row.getBoundingClientRect().top, scroller,
+    };
+  }
+  useLayoutEffect(() => {
+    const anchor = pendingAnchor.current;
+    pendingAnchor.current = null;
+    if (!anchor?.row.isConnected) return;
+    const delta = anchor.row.getBoundingClientRect().top - anchor.top;
+    if (Math.abs(delta) < 1) return;
+    if (anchor.scroller && anchor.scroller.scrollHeight > anchor.scroller.clientHeight + 2)
+      anchor.scroller.scrollTop += delta;
+    else window.scrollBy(0, delta);
+  }, [openId]);
+
+  function toggleDetails(courseId: string, target: HTMLElement) {
+    rememberAnchor(target);
+    setOpenId(openId === courseId ? null : courseId);
+    setInfoId(null);
+    setEditingStudentsId(null);
+    setEditingTopicCourseId(null);
+    setOpenMenuId(null);
+  }
+  function toggleStudentEdit(courseId: string, target: HTMLElement) {
+    if (openId !== courseId) rememberAnchor(target);
+    const next = editingStudentsId === courseId ? null : courseId;
+    setOpenId(courseId);
+    setEditingStudentsId(next);
+    setEditingTopicCourseId(null);
+    setOpenMenuId(null);
+  }
 
   const groups = useMemo(() => {
     const sections = new Map<string, SavedCourse[]>();
@@ -118,14 +160,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   return <section className="myplan-panel" aria-label="My Plan">
     <div className="pd-details-toolbar">
       <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
-      {sideBySide && <DetailViewSwitch label="My Plan" value={desk.planDetails}
-        onChange={mode => {
-          desk.setPlanDetails(mode);
-          setOpenOverrides({});
-          setOpenId(null);
-          setEditingStudentsId(null);
-          setEditingTopicCourseId(null);
-        }}/>} 
     </div>
     {!planned.length && <div className="pd-plan-empty">
       <p>{sideBySide ? "Choose a course or topic from the Think Tank alongside this plan to begin." :
@@ -135,27 +169,38 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
     <div className="pd-subject-list">
       {groups.map(([subject, courses]) => {
         const collapsed = collapsedSubjects.includes(subject);
-        return <section className="pd-subject" key={subject}>
-          <div className="pd-subject-heading"
-            style={{
-              "--pd-subject-wash": subjectColor(subject) + "15",
-              "--pd-subject-edge": subjectColor(subject) + "66",
-            } as CSSProperties}>
+        // Apply the palette at section scope, exactly as Think Tank does, so
+        // expanded My Plan details inherit the matching subject-colored rail.
+        return <section className="pd-subject" key={subject}
+          style={{
+            "--pd-subject-wash": subjectColor(subject) + "15",
+            "--pd-subject-edge": subjectColor(subject) + "66",
+            "--pd-subject-color": subjectColor(subject),
+          } as CSSProperties}>
+          <div className="pd-subject-heading">
             <button type="button" className="pd-subject-toggle" aria-expanded={!collapsed}
-              onClick={() => setCollapsedSubjects(previous => collapsed
-                ? previous.filter(value => value !== subject) : [...previous,subject])}>
+              onClick={() => {
+                if (!collapsed && courses.some(course => course.courseId === openId)) {
+                  setOpenId(null);
+                  setInfoId(null);
+                  setEditingStudentsId(null);
+                  setEditingTopicCourseId(null);
+                  setOpenMenuId(null);
+                }
+                setCollapsedSubjects(previous => collapsed
+                  ? previous.filter(value => value !== subject) : [...previous,subject]);
+              }}>
               {collapsed ? <ChevronRight size={15}/> : <ChevronDown size={15}/>}
               <strong>{subject}</strong><span>{courses.length}</span>
             </button>
           </div>
-          {!collapsed && <div className="pd-subject-items">
+          {!collapsed && <div className="pd-subject-items pd-think-course-list">
             {courses.map(course => {
               const item: CatalogCourse | undefined = lookup.get(course.courseId);
-              const open = openOverrides[course.courseId] ??
-                ((sideBySide && desk.planDetails === "expanded") ||
-                  openId === course.courseId);
+              const open = openId === course.courseId;
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
+              const detailsId = "pd-myplan-details-" + course.courseId;
               const topicCount=item?.type === "Combined Course"
                 ? selectionTopicCount(course,
                     childrenByParent.get(item.editionId)??[],demo.students,"plan")
@@ -163,21 +208,16 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
               const showTopicCount=topicCount.total>1 &&
                 topicCount.selected<topicCount.total;
               const shared = hasSharedTopic(sharedTopics, course);
-              return <div className={"pd-idea myplan-row" + (open ? " is-expanded" : "")}
+              const menuOpen = openMenuId === course.courseId;
+              const title = item?.title ?? "Saved course";
+              return <div className={"pd-idea myplan-row" + (open ? " is-open" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
                   <button className="pd-idea-review" type="button" aria-expanded={open}
-                    onClick={() => {
-                      setOpenOverrides(old => ({...old,[course.courseId]:!open}));
-                      setOpenId(open ? null : course.courseId);
-                      // Reopening a course should never reveal a stale edit
-                      // form until the member explicitly requests it.
-                      setEditingStudentsId(null);
-                      setEditingTopicCourseId(null);
-                    }}>
+                    aria-controls={detailsId}
+                    onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
-                    <span>
-                      {item?.title ?? "Saved course"}
+                    <span>{title}
                       {showTopicCount && <small className="pd-topic-count-note">
                         {topicCount.selected} of {topicCount.total} topics
                       </small>}
@@ -186,59 +226,67 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
-
                       </small>
+                      {open && item && <PlanningScheduleGradeMeta course={item}/>}
                     </span>
-                    {open ? <ChevronDown size={14}/> : <ChevronRight size={14}/>}
                   </button>
-                  {!sideBySide && <button type="button"
-                    className="pd-row-tool pd-mini-info-action"
-                    aria-label={(open && infoOpen ? "Hide" : "View") +
-                      " details for " + (item?.title ?? "course")}
-                    title={open && infoOpen ? "Hide details" : "View details"}
-                    aria-expanded={open && infoOpen}
-                    onClick={() => {
-                      if (open && infoOpen) {
-                        setInfoId(null);
-                        setOpenId(null);
-                        setOpenOverrides(old => ({...old,[course.courseId]:false}));
-                      } else {
-                        setInfoId(course.courseId);
-                        setOpenId(course.courseId);
-                        setOpenOverrides(old => ({...old,[course.courseId]:true}));
-                      }
-                    }}>
+                  <button type="button" className="pd-row-tool pd-mini-info-action"
+                    aria-label={(open ? "Hide" : "View") + " details for " + title}
+                    title={open ? "Hide details" : "View details"}
+                    aria-expanded={open} aria-controls={detailsId}
+                    onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
                     <Info size={15} aria-hidden="true"/>
-                  </button>}
-                  <Link className="pd-row-tool" href={"/books?course=" + encodeURIComponent(course.courseId)}
-                    aria-label={"View books for " + (item?.title ?? "course")}
-                    title="View Books"><BookOpen size={15}/></Link>
-                  <button type="button" className="pd-row-tool pd-course-edit-icon"
-                    aria-label={"Edit students and priorities for " + (item?.title ?? "course")}
-                    title="Edit students and priorities" aria-expanded={editing}
-                    onClick={() => {
-                      if (!open) {
-                        setOpenId(course.courseId);
-                        setOpenOverrides(old => ({...old,[course.courseId]:true}));
-                      }
-                      setEditingStudentsId(editing ? null : course.courseId);
-                    }}>
+                  </button>
+                  <Link className="pd-row-tool pd-think-books"
+                    href={"/books?course=" + encodeURIComponent(course.courseId)}
+                    aria-label={"View books for " + title} title="View books">
+                    <BookOpen size={15} aria-hidden="true"/>
+                  </Link>
+                  <button type="button" className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"
+                    aria-label={"Edit students and priorities for " + title}
+                    title={"Edit students for " + title} aria-expanded={editing}
+                    aria-controls={detailsId}
+                    onClick={event => toggleStudentEdit(course.courseId,event.currentTarget)}>
                     <UsersRound size={15} aria-hidden="true"/>
                   </button>
+                  <button type="button" className="pd-more"
+                    aria-label={"More options for " + title}
+                    title={"More options for " + title}
+                    aria-expanded={menuOpen}
+                    onClick={() => setOpenMenuId(menuOpen ? null : course.courseId)}>
+                    <MoreHorizontal size={16} aria-hidden="true"/>
+                  </button>
                 </div>
-                {open && <div className="pd-review myplan-review">
-                  {item && (item.description || item.tips) && <>
+                {menuOpen && <div className="pd-inline-actions" role="group"
+                  aria-label={"More options for " + title}>
+                  <button type="button" onClick={() => {
+                    demo.setStage(course.courseId,"idea");
+                    setOpenId(null);
+                    setInfoId(null);
+                    setEditingStudentsId(null);
+                    setEditingTopicCourseId(null);
+                    setOpenMenuId(null);
+                  }}><Lightbulb size={13} aria-hidden="true"/> Return to Think Tank</button>
+                </div>}
+                {open && <div className="pd-review pd-think-review myplan-review"
+                  id={detailsId} role="region" aria-label={"Details for " + title}>
+                  {item && (item.description || item.tips) && <div className="pd-think-description-section">
                     <button type="button" className="pd-plan-info-disclosure"
                       aria-expanded={infoOpen}
                       onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
                       <Info size={14} aria-hidden="true"/> Description &amp; tips
-                      {infoOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+                      {infoOpen ? <ChevronDown size={13} aria-hidden="true"/> :
+                        <ChevronRight size={13} aria-hidden="true"/>}
                     </button>
                     {infoOpen && <CourseInfoDisclosure course={item}/>}
-                  </>}
+                  </div>}
                   {editing && <div className="pd-assign-in-place myplan-assign-in-place">
                     <StudentAssignmentEditor course={course}
                       onClose={() => {
+                        setEditingStudentsId(null);
+                        if (course.stage === "idea") setOpenId(null);
+                      }}
+                      onCancel={() => {
                         setEditingStudentsId(null);
                         if (course.stage === "idea") setOpenId(null);
                       }}/>
@@ -248,23 +296,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
                       demo.setTopic(course.courseId,topicId,included)}
                     onTopicDone={sourceCourseId => {
                       const source = demo.courses.find(c => c.courseId === sourceCourseId);
-                      if (source?.stage === "planned") {
-                        setOpenId(sourceCourseId);
-                        setOpenOverrides(old => ({...old,[sourceCourseId]:true}));
-                      } else setOpenId(null);
+                      if (source?.stage === "planned") setOpenId(sourceCourseId);
+                      else setOpenId(null);
                     }}
                     onTopicCancel={() => {
                       if (course.stage === "idea") setOpenId(null);
                     }}
-                    onTopicEditingChange={editing =>
-                      setEditingTopicCourseId(editing ? course.courseId : null)}/>} 
-                  <div className="pd-review-actions">
-                    <button type="button" className="myplan-return" onClick={() => {
-                      demo.setStage(course.courseId, "idea");
-                      setOpenId(null); setEditingStudentsId(null);
-                      setEditingTopicCourseId(null);
-                    }}>Return to Think Tank</button>
-                  </div>
+                    onTopicEditingChange={isEditing =>
+                      setEditingTopicCourseId(isEditing ? course.courseId : null)}/>}
                 </div>}
               </div>;
             })}

@@ -5,7 +5,6 @@ import { resolveThinkCourse, toggleThinkCourse } from "../app/components/think-t
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const desk = read("app/components/PlanningDesk.tsx");
 const css = read("app/components/planning-desk.css");
-const switcher = read("app/components/DetailViewSwitch.tsx");
 
 // One active ID for ALL subject groups. Clicking the next course must close
 // the old course, even when it belongs to a different subject.
@@ -40,10 +39,10 @@ assert.ok(desk.includes('role="region" aria-label={"Details for " + idea.title}'
 assert.ok(desk.includes("rememberThinkAnchor") && desk.includes("useLayoutEffect"),
   "Changing expanded courses should preserve the clicked row's scroll position");
 
-// The Think Tank switch is one-open, not Expand All; other sections
-// keep their existing multi-open detail modes.
-assert.ok(desk.includes('<DetailViewSwitch label="Think Tank" singleOpen'));
-assert.ok(switcher.includes('singleOpen ? "Open one " + label + " course at a time"'));
+// Full Planning no longer needs an Expanded / Compact toggle. Its
+// single-open behavior continues through title and info clicks.
+assert.ok(!desk.includes("<DetailViewSwitch"));
+assert.ok(!desk.includes("pd-full-status"), "Redundant full-page title removed");
 
 // Individual course rows remain distinguishable in the lightweight list.
 // Only expanded details, not the whole course, get the subject-colored rail.

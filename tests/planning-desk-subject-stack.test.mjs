@@ -35,6 +35,8 @@ assert.ok(css.includes("border-left:4px solid var(--pd-subject-edge,#a8b9a9);"),
   "Expanded course details carry the subject-colored left rail");
 assert.ok(desk.includes('className="pd-subject-items pd-think-course-list"'),
   "Think Tank uses a subject wrapper containing plain course list rows");
-assert.ok(myPlan.includes('className="pd-subject-items"'),
-  "My Plan inherits the same unboxed subject layout");
+assert.ok(myPlan.includes('className="pd-subject-items pd-think-course-list"'),
+  "My Plan uses the exact same unboxed list rows as Think Tank");
+assert.ok(myPlan.includes('className="pd-review pd-think-review myplan-review"'),
+  "Expanded My Plan details use the same neutral review rail");
 console.log("Planning Desk stacked subjects and tiny course inset: OK");

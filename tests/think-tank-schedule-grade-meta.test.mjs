@@ -16,14 +16,14 @@ const titleEnd = desk.indexOf("</button>", courseMeta);
 assert.ok(status >= 0 && courseMeta > status && titleEnd > courseMeta,
   "Expanded course metadata belongs below the status line inside the title");
 
-// Every nested topic owns its own recommendation, visible only in details;
+// Every nested topic owns its own recommendation in either planning column, visible only in details;
 // it is not copied onto its combined-course parent or the collapsed topic row.
 const topicInfo = topics.indexOf('{infoOpen && <div className="pd-topic-info"');
-const topicMeta = topics.indexOf('{mode === "think" && <PlanningScheduleGradeMeta course={topic}/>}');
+const topicMeta = topics.indexOf('<PlanningScheduleGradeMeta course={topic}/>');
 assert.ok(topicInfo >= 0 && topicMeta > topicInfo,
   "Topic schedule must appear in the opened topic detail disclosure");
 assert.match(topics,
-  /mode === "think" && \(topic\.schedules\.length \|\| topic\.gradeDisplay \|\| topic\.grades\.length\)/,
+  /topic\.schedules\.length \|\| topic\.gradeDisplay \|\| topic\.grades\.length/,
   "A topic with scheduling or grade metadata should be expandable even without prose");
 
 assert.ok(meta.includes("schedule.text") && meta.includes("course.gradeDisplay"),
