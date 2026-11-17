@@ -67,12 +67,28 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
       if (event.key === "Escape") setDrawerOpen(false);
     }
     document.addEventListener("keydown", onKey);
-    const narrow = window.matchMedia("(max-width: 1280px)").matches;
     const oldOverflow = document.body.style.overflow;
-    if (narrow) document.body.style.overflow = "hidden";
+    // Match the real container-query slide-out state, not a viewport width.
+    // The navigation rail can collapse without any window resize, so observe
+    // workspace width and release the scroll lock if the desk becomes inline.
+    function syncScrollLock() {
+      const scrim = document.querySelector<HTMLElement>(
+        ".pd-wrapper.is-mobile-open > .pd-mobile-scrim");
+      const overlayVisible = Boolean(scrim &&
+        window.getComputedStyle(scrim).display !== "none");
+      document.body.style.overflow = overlayVisible ? "hidden" : oldOverflow;
+    }
+    syncScrollLock();
+    const workspace = document.querySelector<HTMLElement>(".shell-workspace");
+    const observer = workspace && typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(syncScrollLock) : null;
+    if (workspace && observer) observer.observe(workspace);
+    window.addEventListener("resize", syncScrollLock);
     return () => {
       document.removeEventListener("keydown", onKey);
-      if (narrow) document.body.style.overflow = oldOverflow;
+      window.removeEventListener("resize", syncScrollLock);
+      observer?.disconnect();
+      document.body.style.overflow = oldOverflow;
     };
   }, [drawerOpen]);
 
