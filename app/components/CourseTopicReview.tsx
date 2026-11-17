@@ -117,13 +117,17 @@ export default function CourseTopicReview({
   function renderTopic(topic: CatalogCourse, isRemoved = false, isOther = false) {
     const infoOpen = infoTopicId === topic.id;
     const hasDetails = Boolean(topic.description || topic.tips ||
-      (mode === "think" && (topic.schedules.length || topic.gradeDisplay || topic.grades.length)));
+      topic.schedules.length || topic.gradeDisplay || topic.grades.length);
     const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
     const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
     const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
     const planning = planningTopicId === topic.id;
     const menuOpen = topicMenuId === topic.id;
+    const assignedNames = mode === "plan" && savedChoice && !isRemoved
+      ? demo.students.filter(student =>
+          isTopicAssigned(savedChoice, topic.id, student.id)).map(student => student.displayName)
+      : [];
     // The selection marker belongs to the topic title, not the toolbar.
     // Keep both in the same hover/focus surface without tinting the row.
     const selectionMark = mode === "think" && isOther && assignedInThisCourse(topic)
@@ -141,16 +145,21 @@ export default function CourseTopicReview({
           </span>
         : null;
 
+    const topicTitle = <span className="pd-topic-title-text">{topic.title}
+      {!!assignedNames.length && <small className="pd-topic-assigned-meta">
+        {assignedNames.join(" / ")}
+      </small>}
+    </span>;
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
       <div className="pd-topic-row">
         {hasDetails
           ? <button type="button" className="pd-topic-name pd-topic-title-button"
               aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
               aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
-              {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
+              {selectionMark}{topicTitle}
             </button>
           : <span className="pd-topic-name">
-              {selectionMark}<span className="pd-topic-title-text">{topic.title}</span>
+              {selectionMark}{topicTitle}
             </span>}
         {hasDetails && <button type="button" className="pd-topic-icon"
           aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
@@ -158,11 +167,11 @@ export default function CourseTopicReview({
           aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
-        {mode === "think" && <Link className="pd-topic-icon pd-topic-books"
+        <Link className="pd-topic-icon pd-topic-books"
           href={"/books?course=" + encodeURIComponent(topic.id)}
           aria-label={"View books for " + topic.title} title="View books">
           <BookOpen size={15} aria-hidden="true"/>
-        </Link>}
+        </Link>
         {mode === "think" && isOther && !isRemoved && !assignedInThisCourse(topic) &&
           <button type="button" className="pd-topic-icon pd-topic-save-idea"
             title="Add this topic to Think Tank"
@@ -227,7 +236,7 @@ export default function CourseTopicReview({
       <TopicOtherUses topicEditionId={topic.editionId}
         parentCourseId={parent.id} index={sharingIndex}/>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
-        {mode === "think" && <PlanningScheduleGradeMeta course={topic}/>}
+        <PlanningScheduleGradeMeta course={topic}/>
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <div className="pd-topic-tips">
           <PlacementSymbol size={17}/><p>{topic.tips}</p>
