@@ -431,8 +431,8 @@ export default function CourseExplorer() {
       // Number by the full *displayed* curriculum ordering, not the
       // filtered subset. Search must not renumber Choice 2 into Choice 1.
       const orderedOptions = [...allOptions].sort(comparePlan);
-      const optionNumbers = new Map(orderedOptions.map((option,index) =>
-        [option.id,index + 1]));
+      const optionNumbers = new Map<string,number>(
+        orderedOptions.map((option,index): [string,number] => [option.id,index + 1]));
       const options = groupMatchesSearch ? orderedOptions : orderedOptions.filter(matchesText);
       if (!options.length) continue;
       add(groupSubject, { kind: "choice", sort: options[0].presentationSort,
