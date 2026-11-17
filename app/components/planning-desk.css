@@ -75,8 +75,28 @@
 .pd-quiet-summary button { border: 1px solid #e0e6da; border-radius: 3px; padding: 8px 10px; background: #f8faf5; color: #516c55; font-size: 11px; }
 .pd-wrapper button:focus-visible, .pd-wrapper a:focus-visible { outline: 2px solid #596e5e; outline-offset: 2px; }
 .pd-mobile-launcher, .pd-mobile-scrim { display: none; }
+/* Subject sections use the full mini-desk width, rather than sitting
+   inside the desk padding and another inset list/card stack. Only the
+   header, intro, and standalone notices retain comfortable side padding. */
+.pd-desk .pd-body {
+  margin-inline:-15px;
+  padding-inline:0;
+}
+.pd-desk .pd-details-toolbar { padding-inline:12px; }
+.pd-desk .pd-subject-list { width:100%; }
+.pd-desk .pd-subject-items.pd-think-course-list {
+  padding-left:4px;
+  padding-right:4px;
+}
+.pd-desk .pd-body > .pd-return,
+.pd-desk .pd-body > .pd-save-browser {
+  margin-inline:12px;
+}
+.pd-desk .myplan-intro { padding-inline:12px; }
 
-@media (max-width: 1280px) {
+
+
+@container planning-workspace (max-width:810px) {
   .pd-wrapper { position: static; max-height: none; margin: 0; }
   .pd-wrapper > .pd-desk, .pd-wrapper > .pd-quiet { display: none; }
   .pd-mobile-launcher { position: fixed; display: flex; align-items: center; justify-content: center; z-index: 70; bottom: calc(17px + env(safe-area-inset-bottom, 0px)); right: 17px; width: 56px; height: 56px; padding: 0; border: 1px solid #aebfa8; border-radius: 50%; color: #4f6c53; background: #fffefa; box-shadow: 0 5px 22px #26312838; cursor: pointer; }
