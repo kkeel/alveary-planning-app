@@ -223,7 +223,7 @@
 .cx-choice .cx-course + .cx-course { border-top:1px solid #dfe4df; }
 /* Number the *whole choice*, not its child topics or its action buttons.
    Inline placement allows long course titles to wrap naturally. */
-.cx-course-choice-badge, .cx-choice-number {
+.cx-choice-number {
   display:inline-block;
   margin-left:9px;
   padding:2px 6px;
