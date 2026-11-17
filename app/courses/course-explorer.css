@@ -194,17 +194,47 @@
 .cx-course--topic .cx-course-details { padding: 0 12px 11px; }
 .cx-course--topic .cx-description { font-size: 12px; }
 
-.cx-choice { border-top: 1px solid #d3d9c2; border-right: 0; border-left: 0; border-bottom: 1px solid #b5c2a9; background: #fff; }
-.cx-choice--accent { border-left: 3px solid #9caf97; border-bottom: 1px solid #9caf97; }
-.cx-choice--accent .cx-choice-header { background: #f6f8f2; }
-.cx-choice:first-child { border-top: 0; }
-.cx-choice-header { padding: 10px 13px 9px; background: #f4f5ed; border-bottom: 1px solid #d3d9c2; }
-.cx-choice-label { font-size: 10px; letter-spacing: .055em; font-weight: 600; text-transform: uppercase; color: #60705d; }
-.cx-choice-label span { text-transform: none; font-weight: 400; letter-spacing: 0; }
-.cx-choice-header h3 { font-family: var(--font-circular), "DM Sans", sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0; margin: 0; }
-.cx-choice-header h3 + p { margin-top: 5px; }
-.cx-choice-header p { color: #687769; margin: 0; font-size: 11px; line-height: 1.5; }
-.cx-choice .cx-course + .cx-course { border-top: 1px solid #dde2d5; }
+/* Choice groups are decisions within a subject, not another subject color.
+   A charcoal outline and header stay legible beside all curriculum hues. */
+.cx-choice {
+  border:2px solid #434a45;
+  background:#fff;
+}
+.cx-choice--accent { border-color:#434a45; }
+.cx-choice--accent .cx-choice-header { background:#303631; }
+.cx-choice:first-child { border-top:2px solid #434a45; }
+.cx-choice-header {
+  padding:10px 13px 9px;
+  background:#303631;
+  border-bottom:1px solid #555e56;
+}
+.cx-choice-label { font-size:10px; letter-spacing:.055em; font-weight:600; text-transform:uppercase; color:#e2e7e2; }
+.cx-choice-label span { text-transform:none; font-weight:400; letter-spacing:0; }
+.cx-choice-header h3 {
+  color:#fff;
+  font-family:var(--font-circular), "DM Sans", sans-serif;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0;
+  margin:0;
+}
+.cx-choice-header h3 + p { margin-top:5px; }
+.cx-choice-header p { color:#e3e7e3; margin:0; font-size:11px; line-height:1.5; }
+.cx-choice .cx-course + .cx-course { border-top:1px solid #dfe4df; }
+/* Number the *whole choice*, not its child topics or its action buttons.
+   Inline placement allows long course titles to wrap naturally. */
+.cx-choice-number {
+  display:inline-block;
+  margin-left:9px;
+  padding:2px 6px;
+  border:1px solid #c0c7c1;
+  border-radius:3px;
+  background:#eef0ee;
+  color:#424944;
+  font:600 10px/1.35 "DM Sans",sans-serif;
+  white-space:nowrap;
+  vertical-align:middle;
+}
 
 .cx-empty { margin-top: 30px; background: #fff; border: 1px solid #d3d9c2; padding: 24px; }
 .cx-empty h2 { font-size: 22px; }
@@ -282,7 +312,9 @@
   .cx-course, .cx-choice { break-inside: avoid-page; }
   .cx-course-disclosure { min-height: 31px; }
   .cx-view-label, .cx-chevron, .cx-row-action { display: none; }
-  .cx-choice-header { background: #f5f5f5 !important; }
+  .cx-choice-header { background:#f5f5f5 !important; }
+  .cx-choice-header h3, .cx-choice-header p { color:#171a18 !important; }
+  .cx-choice { border-color:#444 !important; }
   .cx-tip { background: #eee !important; color: #333; }
 }
 

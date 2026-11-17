@@ -67,7 +67,7 @@ type Mode = "browse" | "plan";
 type PlanTarget = { courseId: string; topicId: string | null };
 type DisplayRow =
   | { kind: "course"; sort: string; course: Plan }
-  | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[] };
+  | { kind: "choice"; sort: string; group: ChoiceGroup; options: Plan[]; optionNumbers: Map<string,number> };
 
 const catalog = sourceCatalog as Catalog;
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
@@ -97,6 +97,7 @@ function TipCallout({ children }: { children: React.ReactNode }) {
 type CourseRowProps = {
   course: Plan;
   nested?: boolean;
+  choiceNumber?: number;
   childTopics: Map<string, Plan[]>;
   mode: Mode;
   planned: readonly string[];
@@ -125,6 +126,7 @@ type CourseRowProps = {
 function CourseRow({
   course,
   nested = false,
+  choiceNumber,
   childTopics,
   mode,
   planned,
@@ -205,7 +207,10 @@ function CourseRow({
         aria-controls={canExpand ? detailsId : undefined}
         disabled={!canExpand} title={canExpand ? (isExpanded ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
-        <span className="cx-course-name">{course.title}</span>
+        <span className="cx-course-name">{course.title}
+          {choiceNumber !== undefined && !nested &&
+            <span className="cx-choice-number">Choice {choiceNumber}</span>}
+        </span>
       </button>
       <div className="cx-course-actions">
         {canExpand && <button type="button" className={"cx-info-action" +
@@ -423,10 +428,15 @@ export default function CourseExplorer() {
       if (subject && !allOptions.some(item => item.subject === subject)) continue;
       const groupMatchesSearch = normalizedQuery && [group.title, group.guidance]
         .some(text => text?.toLocaleLowerCase().includes(normalizedQuery));
-      const options = groupMatchesSearch ? allOptions : allOptions.filter(matchesText);
+      // Number by the full *displayed* curriculum ordering, not the
+      // filtered subset. Search must not renumber Choice 2 into Choice 1.
+      const orderedOptions = [...allOptions].sort(comparePlan);
+      const optionNumbers = new Map<string,number>(
+        orderedOptions.map((option,index): [string,number] => [option.id,index + 1]));
+      const options = groupMatchesSearch ? orderedOptions : orderedOptions.filter(matchesText);
       if (!options.length) continue;
-      options.sort(comparePlan);
-      add(groupSubject, { kind: "choice", sort: options[0].presentationSort, group, options });
+      add(groupSubject, { kind: "choice", sort: options[0].presentationSort,
+        group, options, optionNumbers });
     }
     const result = [...sectionMap.entries()]
       .map(([name, rows]) => ({ name, rows: rows.sort((a, b) =>
@@ -565,7 +575,8 @@ export default function CourseExplorer() {
                   <h3>{row.group.title}</h3>
                   {row.group.guidance && <p>{row.group.guidance}</p>}
                 </div>
-                <div>{row.options.map(option => <CourseRow key={option.id} course={option} {...courseRowProps} />)}</div>
+                <div>{row.options.map(option => <CourseRow key={option.id} course={option}
+                  choiceNumber={row.optionNumbers.get(option.id)} {...courseRowProps} />)}</div>
               </div>)}</div>
           </section>
         ) : <div className="cx-empty">
