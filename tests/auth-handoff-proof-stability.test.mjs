@@ -26,7 +26,7 @@ assert.ok(auth.includes("!isHandoffProofRoute()"),
   "Do not auto-start Memberstack OIDC on the handoff callback");
 
 // A synthetically created test account is signed in but has NO Demo access.
-assert.ok(auth.includes('session.user.app_metadata?.provider === "memberstack-handoff-test"'));
+assert.ok(auth.includes('session.user.app_metadata?.memberstack_app_id === "app_clbb9rspy00160ujl6tsxbsrj"'));
 assert.ok(auth.includes('setPlanAccess("none");'));
 assert.ok(page.includes('saved planning data'),
   "Proof must explicitly explain private data remain locked");
@@ -34,10 +34,10 @@ assert.ok(page.includes('saved planning data'),
 // The completion confirmation comes from getUser on the SAME Supabase client
 // and trusted, server-issued app metadata, including after a page reload.
 assert.ok(page.includes('plannerSupabaseClient.auth.getUser()'));
-assert.ok(page.includes('metadata?.provider === "memberstack-handoff-test"'));
+assert.ok(page.includes('metadata?.provider === "email"'));
 assert.ok(page.includes('metadata?.memberstack_app_id === MEMBERSTACK_APP_ID'));
 assert.ok(page.includes('setPhase("complete")'));
-assert.ok(page.includes('checked.data.user.app_metadata?.provider !== "memberstack-handoff-test"'));
+assert.ok(page.includes('checked.data.user.app_metadata?.provider !== "email"'));
 
 // Never put a reusable bearer or refresh credential in a callback URL.
 assert.ok(page.includes('window.history.replaceState('));
