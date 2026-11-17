@@ -211,7 +211,7 @@ export default function AuthHandoffProofPage() {
   }, []);
 
   const begin = useCallback(async () => {
-    if (!SUPABASE_URL || !SUPABASE_KEY || phase !== "ready") return;
+    if (!SUPABASE_URL || !SUPABASE_KEY || (phase !== "ready" && phase !== "website-needed")) return;
     setPhase("redirecting");
     setError(null);
     try {
@@ -242,9 +242,9 @@ export default function AuthHandoffProofPage() {
         <p>Start this test in the same browser tab. You will return to the Alveary
           dashboard, where the next step currently requires one manual Console command.
           No Webflow edits are required.</p>
-        <p>This proof uses a separate Supabase test account. It does not read or
-          modify your existing students or course selections, but it may replace
-          your local planner login in this browser.</p>
+        <p>This development test uses a separately verified Supabase session
+          for your existing Alveary family workspace. Access to students and
+          course selections always requires your active Testing Plan.</p>
         <button type="button" onClick={() => void begin()}
           disabled={!SUPABASE_URL || !SUPABASE_KEY}>
           Start website handoff test
@@ -255,11 +255,15 @@ export default function AuthHandoffProofPage() {
         Connecting securely…
       </p>}
       {phase === "website-needed" && <div role="status">
-        <p>We need one small update to the Alveary Webflow testing dashboard
-          so Safari can pass the login securely without another password.</p>
+        <p>To connect without another password on this device, we need to enable
+          the secure handoff on the Alveary Webflow testing dashboard.</p>
         <p><a href={TEST_DASHBOARD}>Return to the Alveary testing dashboard</a></p>
         <button type="button" onClick={() => window.location.reload()}>
           Check for shared Alveary login again
+        </button>
+        <p>After the testing-dashboard handoff is enabled, you can use:</p>
+        <button type="button" onClick={() => void begin()}>
+          Connect through my Alveary dashboard
         </button>
       </div>}
       {phase === "complete" && <div role="status">
@@ -272,9 +276,9 @@ export default function AuthHandoffProofPage() {
       </div>}
       {error && <p role="alert">{error}</p>}
       <p style={{ fontSize: ".9rem", marginTop: "2rem" }}>
-        This route is for development testing only. Automatic sign-in from
-        the member dashboard is not yet connected; school-year access rules
-        are still enforced separately.
+        This passwordless entry is in development. It works only for
+        preapproved test accounts; school-year access rules are enforced
+        separately for every private planning request.
       </p>
     </main>
   );
