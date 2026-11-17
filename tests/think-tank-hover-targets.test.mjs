@@ -22,8 +22,8 @@ for (const selector of [
   ".pd-think-review .pd-topic-row .pd-topic-icon:hover:not(:disabled)",
   ".pd-think-review .pd-topic-row .pd-topic-icon:focus-visible",
   '.pd-think-review .pd-topic-row .pd-topic-icon[aria-expanded="true"]',
-  ".pd-idea:not(.myplan-row) .pd-mini-info-action:hover",
-  '.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]',
+  ".pd-idea .pd-mini-info-action:hover",
+  '.pd-idea .pd-mini-info-action[aria-expanded="true"]',
   ".pd-subject-toggle:hover",
 ]) {
   assert.ok(css.includes(selector), "Missing individual hover/state: " + selector);
@@ -40,9 +40,9 @@ assert.match(review,
   /const selectionMark = mode === "think" && isOther && assignedInThisCourse\(topic\)/,
   "My Plan checkmarks in Other topics must remain supported");
 assert.equal(
-  (review.match(/\{selectionMark\}<span className="pd-topic-title-text">\{topic.title\}<\/span>/g) ?? []).length,
+  (review.match(/\{selectionMark\}\{topicTitle\}/g) ?? []).length,
   2,
-  "Both clickable and static topic titles must contain their own status marker");
+  "Both clickable and static topic titles use their shared marker and text");
 assert.match(css, /\.pd-topic-row \.pd-topic-name\s*\{\s*display:flex;/,
   "Title and status marker must share one visual surface");
 assert.ok(css.includes(".pd-topic-title-button:hover .pd-topic-selection-mark"),
@@ -71,9 +71,9 @@ const declaration = (body, property) => {
 const courseNeutral = rule(listCss,
   ".cx-course-actions .cx-info-action:not(.is-member):hover:not(:disabled),");
 for (const selector of [
-  ".pd-idea:not(.myplan-row) .pd-idea-review:hover,",
-  ".pd-idea:not(.myplan-row) .pd-more:hover,",
-  ".pd-idea:not(.myplan-row) .pd-mini-info-action:hover,",
+  ".pd-idea .pd-idea-review:hover,",
+  ".pd-idea .pd-more:hover,",
+  ".pd-idea .pd-mini-info-action:hover,",
   ".pd-think-toolbar-plus:hover:not(:disabled)",
   ".pd-think-review .pd-topic-row .pd-topic-title-button:hover,",
   ".pd-think-review .pd-topic-row .pd-topic-icon:hover:not(:disabled),",
@@ -88,7 +88,7 @@ for (const selector of [
 const courseOpenInfo = rule(listCss,
   ".cx-course-actions .cx-info-action.is-open:not(.is-member):hover:not(:disabled)");
 const thinkOpenInfo = rule(css,
-  '.pd-idea:not(.myplan-row) .pd-mini-info-action[aria-expanded="true"]:hover,');
+  '.pd-idea .pd-mini-info-action[aria-expanded="true"]:hover,');
 assert.equal(declaration(thinkOpenInfo, "background"),
   declaration(courseOpenInfo, "background"),
   "Expanded Think Tank info hover should match Course List expanded View/Hide hover");
