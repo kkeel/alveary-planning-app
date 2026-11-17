@@ -324,8 +324,12 @@ export default function CourseExplorer() {
   const setGrades = desk.setGrades;
   const country = desk.country;
   const setCountry = desk.setCountry;
-  const [subject, setSubject] = useState("");
-  const [query, setQuery] = useState("");
+  // Persist Course List subject and search alongside grade/country filters
+  // when members navigate between pages in the shared Planning Desk context.
+  const subject = desk.subjectFilter;
+  const setSubject = desk.setSubjectFilter;
+  const query = desk.courseSearch;
+  const setQuery = desk.setCourseSearch;
   const [gradesOpen, setGradesOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [detailRevision, setDetailRevision] = useState(0);
