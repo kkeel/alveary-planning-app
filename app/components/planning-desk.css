@@ -1175,49 +1175,55 @@
   }
 }
 
-/* Think Tank course boundaries. Treat each saved idea as a quiet, separate
-   neutral card. The expanded details stay visually inside their own card;
-   subject color remains exclusively at the subject header. */
+/* Think Tank courses are LIST rows, not nested cards. A quiet divider
+   separates course titles; the expanded details alone carry the same
+   subject-colored left rail as the subject heading. */
 .pd-think-course-list {
   display:flex;
   flex-direction:column;
-  gap:10px;
-  padding:9px 8px 11px;
+  gap:0;
+  padding:8px 4px 7px;
 }
 .pd-think-course-list > .pd-idea,
 .pd-think-course-list > .pd-idea:first-child {
-  border:1px solid #dce5dc;
-  border-radius:4px;
-  background:#fff;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
 }
-.pd-think-course-list > .pd-idea.is-open {
-  border-color:#bfcebf;
-  box-shadow:0 1px 4px rgba(43,63,49,.07);
+.pd-think-course-list > .pd-idea + .pd-idea {
+  border-top:1px solid #e3e9e2;
 }
 .pd-think-course-list > .pd-idea > .pd-idea-heading {
-  padding:8px 9px;
+  padding:8px 4px;
 }
 .pd-think-course-list > .pd-idea.is-open > .pd-idea-heading {
-  background:#f8faf8;
-  border-bottom:1px solid #e5ebe5;
-  border-radius:3px 3px 0 0;
-}
-.pd-think-course-list > .pd-idea > .pd-review.pd-think-review {
-  margin:0;
-  padding:11px 12px 14px;
-  background:#fff;
+  background:transparent;
   border:0;
+  border-radius:0;
+}
+/* Scope the bar to the open content, not the course title or whole row.
+   --pd-subject-edge is the exact color used by its subject heading rail. */
+.pd-think-course-list > .pd-idea > .pd-review.pd-think-review {
+  margin:0 0 7px 8px;
+  padding:10px 8px 12px 12px;
+  background:transparent;
+  border:0;
+  border-left:4px solid var(--pd-subject-edge,#a8b9a9);
   box-shadow:none;
 }
 @media (max-width:520px) {
-  .pd-think-course-list { gap:8px; padding:7px 5px 9px; }
-  .pd-think-course-list > .pd-idea > .pd-idea-heading { padding:7px 6px; }
-  .pd-think-course-list > .pd-idea > .pd-review.pd-think-review { padding:9px 8px 12px; }
+  .pd-think-course-list { gap:0; padding:7px 4px 8px; }
+  .pd-think-course-list > .pd-idea > .pd-idea-heading { padding:7px 3px; }
+  .pd-think-course-list > .pd-idea > .pd-review.pd-think-review {
+    margin-left:6px;
+    padding:9px 5px 12px 9px;
+  }
 }
 
 /* Subject sections are not cards inside the Planning Desk. Their tinted
-   headings stack directly beneath the desk header; only individual
-   Think Tank courses keep separate card outlines. */
+   headings stack directly beneath the desk header. Think Tank courses
+   keep list dividers and a details-only subject-colored rail. */
 .pd-desk .pd-subject,
 .pd-full-column-body .pd-subject {
   border:0;
@@ -1229,7 +1235,7 @@
   gap:4px;
 }
 /* The subject tint spans the desk's available width, while its actual
-   course records sit just four pixels inside the outer panel edge. */
+   course list rows sit just four pixels inside the outer panel edge. */
 .pd-desk .pd-subject-items,
 .pd-full-column-body .pd-subject-items {
   padding-left:4px;
