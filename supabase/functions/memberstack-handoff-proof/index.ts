@@ -15,6 +15,10 @@ const JWKS = createRemoteJWKSet(
 const ISSUE_ORIGINS = new Set([
   "https://alveary.org",
   "https://www.alveary.org",
+  // Same first-party browser origin may receive the root-domain Memberstack
+  // cookie and should not need a return trip through Webflow.
+  "https://plan.alveary.org",
+  "http://localhost:3000",
 ]);
 const REDEEM_ORIGINS = new Set([
   "https://plan.alveary.org",
@@ -156,36 +160,20 @@ async function hasActiveDemo(memberId: string,
   });
 }
 
+// The website handoff is a development-only pilot for identities already
+// verified and provisioned during the manual proof. Do NOT automatically
+// provision new email-based Auth accounts until the recovery/linking security
+// design has been reviewed; a Memberstack JWT is not an email-ownership proof.
 async function getTestAccount(memberId: string,
   admin: NonNullable<ReturnType<typeof adminClient>>): Promise<{
     auth_user_id: string; login_email: string;
-  }> {
+  } | null> {
   const { data: existing, error: lookupError } = await admin
     .from("memberstack_handoff_test_accounts")
-    .select("auth_user_id,login_email").eq("member_id", memberId).maybeSingle();
+    .select("auth_user_id,login_email")
+    .eq("member_id", memberId).maybeSingle();
   if (lookupError) throw Error("account_lookup_failed");
-  if (existing) return existing;
-  // Isolated random, non-guessable, non-deliverable address under CMI control.
-  // This is an Auth API compatibility experiment, NOT a permanent data model.
-  const email = "handoff-" + crypto.randomUUID() + "@identity.alveary.org";
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email, email_confirm: true,
-    app_metadata: { provider: "memberstack-handoff-test", memberstack_app_id: APP_ID },
-  });
-  if (createError || !created.user) throw Error("account_create_failed");
-  const { error: insertError } = await admin
-    .from("memberstack_handoff_test_accounts")
-    .insert({ member_id: memberId, auth_user_id: created.user.id, login_email: email });
-  if (insertError) {
-    // Concurrent issuance: never issue a session for an orphan user.
-    await admin.auth.admin.deleteUser(created.user.id);
-    const { data: canonical, error: retryError } = await admin
-      .from("memberstack_handoff_test_accounts")
-      .select("auth_user_id,login_email").eq("member_id", memberId).single();
-    if (retryError || !canonical) throw Error("account_mapping_failed");
-    return canonical;
-  }
-  return { auth_user_id: created.user.id, login_email: email };
+  return existing ?? null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -208,6 +196,12 @@ Deno.serve(async (req: Request) => {
       if (!memberId) return response(req, 401, { error: "invalid_member_token" });
       if (!await hasActiveDemo(memberId, admin)) {
         return response(req, 403, { error: "demo_plan_required" });
+      }
+      // Until account recovery is reviewed, allow only the server-verified
+      // identity that completed the controlled desktop test.
+      const pilotAccount = await getTestAccount(memberId, admin);
+      if (!pilotAccount) {
+        return response(req, 403, { error: "handoff_pilot_not_enabled" });
       }
       const recent = new Date(Date.now() - 300000).toISOString();
       const { count, error: countError } = await admin
@@ -251,6 +245,7 @@ Deno.serve(async (req: Request) => {
         return response(req, 403, { error: "demo_plan_required" });
       }
       const account = await getTestAccount(memberId, admin);
+      if (!account) return response(req, 403, { error: "handoff_pilot_not_enabled" });
       // Admin generates an OTP without sending mail; the OTP itself never
       // travels through browser URLs. Verify on the trusted backend.
       const { data: link, error: linkError } = await admin.auth.admin.generateLink({
