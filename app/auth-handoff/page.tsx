@@ -165,18 +165,19 @@ export default function AuthHandoffProofPage() {
       {(phase === "checking-session" || phase === "redeeming" || phase === "redirecting") && <p role="status">
         Connecting securely…
       </p>}
-      {phase === "complete" && <p role="status">
-        Your verified Supabase session is ready. The normal Planning App
-        checks your active Demo membership and uses your verified Memberstack
-        identity to find your existing family workspace.
+      {phase === "complete" && <div role="status">
+        <p>Your verified Supabase session is ready. The normal Planning App
+          checks your active Demo membership and uses your verified Memberstack
+          identity to find your existing family workspace.</p>
         <p><a href="/students/">Open my students and planning workspace</a></p>
         <p>If your current-year membership cannot be verified, these private
           pages will remain closed.</p>
-      </p>}
+      </div>}
       {error && <p role="alert">{error}</p>}
       <p style={{ fontSize: ".9rem", marginTop: "2rem" }}>
-        This route is for development testing only. A production-ready automatic
-        login and school-year access rules have not changed.
+        This route is for development testing only. Automatic sign-in from
+        the member dashboard is not yet connected; school-year access rules
+        are still enforced separately.
       </p>
     </main>
   );
