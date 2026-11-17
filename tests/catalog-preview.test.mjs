@@ -22,8 +22,9 @@ assert.equal(data.topicLinks.length, 308, "only valid within-snapshot topic conn
 assert.ok(topicRows.every(row => childEditionIds.has(row.editionId)), "all 193 topics must be linked within at least one course");
 assert.ok(rows.every(row => row.title && row.sort && row.subject && Array.isArray(row.grades)));
 assert.ok(data.topicLinks.every(link => byEdition.has(link.parentEditionId) && byEdition.has(link.childEditionId)));
-assert.equal(data.choiceGroups.length, 4);
-assert.equal(data.choiceGroups.reduce((sum, group) => sum + group.courseIds.length, 0), 8);
+assert.equal(data.choiceGroups.length, 3, "three member-facing choice groups");
+assert.equal(data.choiceGroups.reduce((sum, group) => sum + group.tags.length, 0), 4,
+  "two Science category tags and one for each Latin level");
 // Country filtering is inclusive: "Both" offerings must remain visible in
 // either regional view. Country never modifies the underlying course records.
 const countryCounts = courseRows.reduce((acc, row) => {
@@ -49,17 +50,25 @@ assert.equal(matchesCountry(null, "us"), false, "country-unknown courses should 
 assert.equal(matchesCountry("Both", "canada"), true);
 assert.equal(matchesCountry("Both", "us"), true);
 assert.equal(matchesCountry("Canada", "all"), true);
-// Current Active Choice Group options are all valid for either country; if
-// country-specific options are added later the same predicate still applies.
+// Choice groups only describe recommendations. Course/edition grade and country
+// filtering remains exactly the same as ordinary standalone courses.
 for (const group of data.choiceGroups) {
-  assert.ok(group.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "us")));
-  assert.ok(group.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "canada")));
+  assert.ok(group.tags.length > 0);
+  assert.ok(!("grades" in group), "choice groups do not override plan-grade filters");
+  for (const tag of group.tags) {
+    assert.ok(tag.label && tag.id && tag.courseIds.length);
+    assert.ok(tag.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "us")));
+    assert.ok(tag.courseIds.every(id => byPlan.has(id) && matchesCountry(byPlan.get(id).country, "canada")));
+  }
 }
-
-const grouped = data.choiceGroups.flatMap(group => group.courseIds);
-assert.equal(new Set(grouped).size, 7, "Advanced Nature Study appears in both grade-specific groups");
-assert.ok(grouped.every(id => byPlan.has(id) && byPlan.get(id).type !== "Topic"), "choice options are courses, never topics");
-assert.ok(data.choiceGroups.every(group => group.grades.length > 0));
+const grouped = data.choiceGroups.flatMap(group => group.tags.flatMap(tag => tag.courseIds));
+assert.equal(grouped.length, 14);
+assert.equal(new Set(grouped).size, 14, "ten different Science and four Latin course plans");
+assert.ok(grouped.every(id => byPlan.has(id) && byPlan.get(id).type !== "Topic"),
+  "choice options are courses, never topics");
+assert.deepEqual(
+  data.choiceGroups.find(group => group.title === "Science Choices").tags.map(tag => tag.label),
+  ["Standard Discipline", "Elective Alternative"]);
 assert.ok(rows.every(row => !("edition_development_notes" in row) && !("pdf_url" in row) && !("member_id" in row)),
   "static public preview must not bundle internal lesson notes or private member data");
 // Edition-specific schedules are real Airtable recommendations; preserve every
@@ -233,7 +242,7 @@ const shakespeare = orderedTitles("Literature").filter(name => name.startsWith("
 assert.deepEqual(shakespeare, ["Shakespeare: Beginner Track", "Shakespeare: Grades 5-8"],
   "Keep Shakespeare Beginner Track first");
 
-const groupedSourceIds = new Set(data.choiceGroups.flatMap(group => group.courseIds));
+const groupedSourceIds = new Set(data.choiceGroups.flatMap(group => group.tags.flatMap(tag => tag.courseIds)));
 assert.ok(groupedSourceIds.has(rows.find(row => row.title === "Science: Advanced Nature Study")?.id));
 assert.equal(data.choiceGroups.some(group => group.guidance !== null && !group.guidance.trim()), false);
 const art = rows.find(row => row.title === "Art: Level 1");
