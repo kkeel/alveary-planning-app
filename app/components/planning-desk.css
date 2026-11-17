@@ -1154,3 +1154,44 @@
     transition:none;
   }
 }
+
+/* Think Tank course boundaries. Treat each saved idea as a quiet, separate
+   neutral card. The expanded details stay visually inside their own card;
+   subject color remains exclusively at the subject header. */
+.pd-think-course-list {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:9px 8px 11px;
+}
+.pd-think-course-list > .pd-idea,
+.pd-think-course-list > .pd-idea:first-child {
+  border:1px solid #dce5dc;
+  border-radius:4px;
+  background:#fff;
+}
+.pd-think-course-list > .pd-idea.is-open {
+  border-color:#bfcebf;
+  box-shadow:0 1px 4px rgba(43,63,49,.07);
+}
+.pd-think-course-list > .pd-idea > .pd-idea-heading {
+  padding:8px 9px;
+}
+.pd-think-course-list > .pd-idea.is-open > .pd-idea-heading {
+  background:#f8faf8;
+  border-bottom:1px solid #e5ebe5;
+  border-radius:3px 3px 0 0;
+}
+.pd-think-course-list > .pd-idea > .pd-review.pd-think-review {
+  margin:0;
+  padding:11px 12px 14px;
+  background:#fff;
+  border:0;
+  box-shadow:none;
+}
+@media (max-width:520px) {
+  .pd-think-course-list { gap:8px; padding:7px 5px 9px; }
+  .pd-think-course-list > .pd-idea > .pd-idea-heading { padding:7px 6px; }
+  .pd-think-course-list > .pd-idea > .pd-review.pd-think-review { padding:9px 8px 12px; }
+}
+
