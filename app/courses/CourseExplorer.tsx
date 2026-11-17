@@ -203,7 +203,7 @@ function CourseRow({
     (nested ? " cx-course--topic" : "") +
     (isExpanded ? " is-expanded" : "") +
     (mode === "plan" && status.planTone !== "none" ? " cx-status-" + status.planTone : "") +
-    (mode === "plan" && status.ideaActive ? " cx-status-idea" : "") +
+    (mode === "plan" && status.ideaActive ? " cx-status-idea cx-idea-tone-" + status.ideaTone : "") +
     (mode === "plan" && status.contextTone !== "none" ? " cx-context-" + status.contextTone : "")}>
     <div className="cx-course-head">
       <button ref={disclosureRef} type="button" className="cx-course-disclosure"
