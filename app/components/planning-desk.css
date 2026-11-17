@@ -1215,3 +1215,26 @@
   .pd-think-course-list > .pd-idea > .pd-review.pd-think-review { padding:9px 8px 12px; }
 }
 
+/* Subject sections are not cards inside the Planning Desk. Their tinted
+   headings stack directly beneath the desk header; only individual
+   Think Tank courses keep separate card outlines. */
+.pd-desk .pd-subject,
+.pd-full-column-body .pd-subject {
+  border:0;
+  background:transparent;
+}
+.pd-desk .pd-subject-list,
+.pd-desk .myplan-panel .pd-subject-list,
+.pd-full-column-body .pd-subject-list {
+  gap:4px;
+}
+/* The subject tint spans the desk's available width, while its actual
+   course records sit just four pixels inside the outer panel edge. */
+.pd-desk .pd-subject-items,
+.pd-full-column-body .pd-subject-items {
+  padding-left:4px;
+  padding-right:4px;
+}
+.pd-desk .pd-subject-items.pd-think-course-list {
+  padding:8px 4px 7px;
+}
