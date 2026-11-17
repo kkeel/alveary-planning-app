@@ -233,9 +233,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
         </div>}
   </>;
   const thinkTankContent = <>
-          <div className="pd-details-toolbar">
+          {ideas.length > 0 && <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
-          </div>
+          </div>}
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map(subject => {
               const list = orderedIdeas(subject);
@@ -415,7 +415,14 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                 </div>}
               </section>;
             })}
-          </div> : <p className="pd-empty">Save a course or topic with its bookmark to begin your Think Tank.</p>}
+          </div> : <div className="pd-empty-state">
+            <h3>Your Think Tank is empty</h3>
+            <p>Explore the Course List and use a lightbulb to save a course or topic you want to consider.</p>
+            <Link className="pd-empty-action" href="/courses"
+              onClick={() => {desk.setCourseMode("browse"); closeMobileDrawer();}}>
+              Browse courses
+            </Link>
+          </div>}
   </>;
 
   if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
