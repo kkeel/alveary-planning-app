@@ -158,13 +158,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
-    <div className="pd-details-toolbar">
+    {planned.length > 0 && <div className="pd-details-toolbar">
       <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
-    </div>
-    {!planned.length && <div className="pd-plan-empty">
-      <p>{sideBySide ? "Choose a course or topic from the Think Tank alongside this plan to begin." :
-        "Start with one course or topic. The others can stay in Think Tank as long as you like."}</p>
-      {!sideBySide && <button type="button" onClick={() => desk.setTab("think")}>Open Think Tank</button>}
+    </div>}
+    {!planned.length && <div className="pd-empty-state">
+      <h3>Your plan starts here</h3>
+      <p>Add students to a course or topic from the Course List to see it in My Plan.</p>
+      <Link className="pd-empty-action" href="/courses"
+        onClick={() => desk.setCourseMode("browse")}>Browse courses</Link>
     </div>}
     <div className="pd-subject-list">
       {groups.map(([subject, courses]) => {
