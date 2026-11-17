@@ -19,6 +19,8 @@ assert.ok(auth.includes('client.auth.signInWithOAuth('));
 // Both domains configure Memberstack to share the root-domain cookie.
 assert.ok(layout.includes('useCookies: true, setCookieOnRootDomain: true'));
 assert.ok(layout.includes('static.memberstack.com/scripts/v2/memberstack.js'));
+assert.ok(layout.includes('data-memberstack-use-cookies=""'),
+  "Planner Memberstack script must explicitly attempt the shared root cookie");
 
 // No new secret is put in a URL. The server verifies the member JWT and the
 // client retains a PKCE verifier in sessionStorage before one-use redemption.
