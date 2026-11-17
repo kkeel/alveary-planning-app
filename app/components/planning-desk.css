@@ -68,6 +68,61 @@
 .pd-plan-empty h3 { margin: 0; color: #354635; font-family: var(--font-plantin), Georgia, serif; font-size: 22px; font-weight: 200; }
 .pd-plan-empty p { margin: 0; font-size: 12px; line-height: 1.6; }
 .pd-plan-empty button { margin-top: 7px; border: 1px solid #b6c5b1; border-radius: 3px; padding: 9px 11px; background: #f5f8f1; color: #4e6650; font-size: 12px; }
+
+/* Shared, readable zero-selection states for the mini desk and full Planning
+   columns. Unlike subject lists, empty content must never bleed to the edge. */
+.pd-empty-state {
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  padding:14px 16px 20px;
+  color:#536956;
+  overflow-wrap:anywhere;
+}
+.pd-empty-state h3 {
+  margin:0 0 7px;
+  color:#3d5240;
+  font-size:13px;
+  font-weight:650;
+  line-height:1.45;
+}
+.pd-empty-state p {
+  max-width:43ch;
+  margin:0 0 14px;
+  font-size:12px;
+  line-height:1.6;
+}
+.pd-empty-action {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:100%;
+  box-sizing:border-box;
+  padding:8px 11px;
+  border:1px solid #c7d5c4;
+  border-radius:4px;
+  background:#f5f8f2;
+  color:#416149;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:600;
+  line-height:1.3;
+}
+.pd-empty-action:hover {
+  background:#eaf2e8;
+  border-color:#aabfa8;
+  color:#31523b;
+}
+.pd-empty-action:focus-visible {
+  outline:2px solid #59836a;
+  outline-offset:3px;
+}
+/* The portable desk deliberately has a full-bleed list scroller. Keep
+   empty states aligned inside it, not flush against the frame. */
+.pd-desk .pd-empty-state { padding-inline:18px; }
+.pd-desk .pd-plan-empty { box-sizing:border-box; padding-inline:18px; }
+.pd-full-column-body .pd-empty-state { padding-inline:2px; }
+
 .pd-return { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #56745b; margin: 2px 0 15px; text-decoration: underline; text-underline-offset: 3px; }
 .pd-quiet { padding: 13px; }
 .pd-quiet-head span { font-size: 13px; font-weight: 600; }
@@ -98,7 +153,9 @@
 .pd-desk .pd-body > .pd-save-browser {
   margin-inline:12px;
 }
-.pd-desk .myplan-intro { padding-inline:12px; }
+/* Intro already inherits the shared toolbar inset; avoid doubling it. */
+.pd-desk .myplan-intro { padding-inline:0; }
+
 
 
 
