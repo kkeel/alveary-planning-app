@@ -70,6 +70,71 @@ function assertDatabase(error: unknown, stage: string): void {
   if (error) throw new Error(stage);
 }
 
+// Resolve a member ONLY from server-verified Supabase Auth + trusted identity.
+// OIDC subjects and passwordless Memberstack handoff mappings converge on one
+// canonical 24-character member ID, and therefore one family workspace.
+async function trustedMemberIdentity(
+  admin: ReturnType<typeof createClient>, authUserId: string
+): Promise<{ memberId: string; handoff: boolean } | null> {
+  const { data: account, error: accountError } =
+    await admin.auth.admin.getUserById(authUserId);
+  if (accountError || !account.user || account.user.is_anonymous) {
+    throw new Error("identity_lookup_failed");
+  }
+  const oidc = (account.user.identities ?? []).filter(
+    identity => identity.provider === "custom:memberstack"
+  );
+  if (oidc.length === 1) {
+    const subject = oidc[0].identity_data?.sub;
+    const match = typeof subject === "string"
+      ? new RegExp("^([0-9a-f]{24})-" + appId + "$").exec(subject)
+      : null;
+    return match ? { memberId: match[1], handoff: false } : null;
+  }
+  if (oidc.length > 1) return null;
+  // Supabase sets the real provider to 'email'. The Alveary-specific marker
+  // must be backed by a service-role-only link for the exact auth user/email.
+  if (account.user.app_metadata?.memberstack_app_id !== appId ||
+      account.user.app_metadata?.provider !== "email" ||
+      (account.user.identities ?? []).some(identity => identity.provider !== "email")) {
+    return null;
+  }
+  const { data: mapping, error: mappingError } = await admin
+    .from("memberstack_handoff_test_accounts")
+    .select("member_id,login_email")
+    .eq("auth_user_id", authUserId).maybeSingle();
+  if (mappingError) throw new Error("handoff_mapping_lookup_failed");
+  if (!mapping || mapping.login_email !== account.user.email ||
+      typeof mapping.member_id !== "string" ||
+      !/^[0-9a-f]{24}$/.test(mapping.member_id)) return null;
+  return { memberId: mapping.member_id, handoff: true };
+}
+
+// Existing service-only planning RPCs require an identity-link row for the
+// CURRENT auth_user_id. Insert once with correct provenance, verify its
+// ownership, and deny rather than silently repairing a conflicting link.
+async function ensureVerifiedHandoffLink(
+  admin: ReturnType<typeof createClient>, authUserId: string, memberId: string
+): Promise<void> {
+  const { error: insertError } = await admin
+    .from("member_identity_links")
+    .upsert({
+      auth_user_id: authUserId,
+      memberstack_member_id: memberId,
+      verified_at: new Date().toISOString(),
+      verified_source: "memberstack_server",
+    }, { onConflict: "auth_user_id", ignoreDuplicates: true });
+  if (insertError) throw new Error("handoff_link_write_failed");
+  const { data: linked, error: linkedError } = await admin
+    .from("member_identity_links")
+    .select("memberstack_member_id,verified_source")
+    .eq("auth_user_id", authUserId).maybeSingle();
+  if (linkedError || !linked || linked.memberstack_member_id !== memberId ||
+      linked.verified_source !== "memberstack_server") {
+    throw new Error("handoff_link_mismatch");
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     const origin = req.headers.get("Origin");
@@ -122,18 +187,14 @@ Deno.serve(async (req: Request) => {
       return response(req, 403, { error: "demo_access_required" });
     }
 
-    const { data: account, error: accountError } =
-      await admin.auth.admin.getUserById(caller.user.id);
-    assertDatabase(accountError, "identity_lookup_failed");
-    const identities = (account.user?.identities ?? []).filter(
-      identity => identity.provider === "custom:memberstack"
-    );
-    if (identities.length !== 1) return response(req, 403, { error: "identity_unverified" });
-    const subject = identities[0].identity_data?.sub;
-    if (typeof subject !== "string") return response(req, 403, { error: "identity_unverified" });
-    const match = new RegExp("^([0-9a-f]{24})-" + appId + "$").exec(subject);
-    if (!match) return response(req, 403, { error: "identity_unverified" });
-    const memberId = match[1];
+    // Supabase Auth identity and live Testing Plan were already verified.
+    // Resolve the same canonical Memberstack family for either sign-in path.
+    const identity = await trustedMemberIdentity(admin, caller.user.id);
+    if (!identity) return response(req, 403, { error: "identity_unverified" });
+    const memberId = identity.memberId;
+    if (identity.handoff) {
+      await ensureVerifiedHandoffLink(admin, caller.user.id, memberId);
+    }
     const workspaceId = await familyWorkspaceId(memberId);
 
     let input: unknown;
