@@ -1,6 +1,6 @@
 # Curriculum Planning → Supabase publishing contract (proposed)
 
-Status: **working implementation specification; no database tables have been created yet.** Applies to Alveary 2027–28 and future publication years. Keep all active 2026–27 pipelines untouched.
+Status: **working implementation specification; private Supabase development schema and draft 2027–28 catalog exist.** Member-facing publication routes and approvals remain separate. Applies to Alveary 2027–28 and future years; keep all active 2026–27 pipelines untouched.
 
 ## Authority and release model
 
