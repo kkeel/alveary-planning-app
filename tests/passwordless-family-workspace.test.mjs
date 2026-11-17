@@ -6,7 +6,7 @@ const plan = read("supabase/functions/memberstack-plan-access/index.ts");
 const students = read("supabase/functions/demo-students/index.ts");
 const courses = read("supabase/functions/demo-course-planning/index.ts");
 const auth = read("app/components/PlannerAuthProvider.tsx");
-const schema = read("supabase/migrations/20261117212500_multiple_verified_auth_identities_per_member.sql");
+const schema = read("supabase/migrations/20261117212505_multiple_verified_auth_identities_per_member.sql");
 
 // One Memberstack family can have two independent Supabase Auth credentials;
 // browser credentials must NEVER link or reassign families.
