@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, BookOpen, ChevronDown, ChevronRight, Info,
   SquareCheckBig, Lightbulb, NotebookPen, Maximize2, MoreHorizontal,
@@ -15,6 +15,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import DetailViewSwitch from "./DetailViewSwitch";
 import { selectionTopicCount } from "./planning-topic-sections.mjs";
+import { resolveThinkCourse, toggleThinkCourse } from "./think-tank-accordion.mjs";
 import { pendingIdeaCount, topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -43,7 +44,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const pathname = usePathname();
   const router = useRouter();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
-  const [reviewOverrides, setReviewOverrides] = useState<Record<string, boolean>>({});
+  // One active Think Tank course, shared by every subject in this desk.
+  // undefined allows the full-page Expanded preference to initially open one.
+  const [openThinkCourseId, setOpenThinkCourseId] = useState<string | null | undefined>(undefined);
+  const pendingThinkAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [courseInfoId, setCourseInfoId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -121,6 +125,55 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     return grouped.get(subject) ?? [];
   }
 
+  const firstThinkCourseId = subjectOrder.flatMap(subject => orderedIdeas(subject))[0]?.id ?? null;
+  const resolvedThinkCourseId = resolveThinkCourse(
+    openThinkCourseId, variant, desk.thinkDetails, firstThinkCourseId);
+  const activeThinkCourseId = resolvedThinkCourseId &&
+    ideas.some(idea => idea.id === resolvedThinkCourseId)
+    ? resolvedThinkCourseId : null;
+
+  // Collapsing a different, earlier course must not yank the clicked course
+  // away from the pointer. Preserve its position within the scrollable desk.
+  function rememberThinkAnchor(element: HTMLElement) {
+    const row = element.closest(".pd-idea") as HTMLElement | null;
+    const scroller = element.closest(".pd-body, .pd-full-column-body") as HTMLElement | null;
+    if (row) pendingThinkAnchor.current = {
+      row, top: row.getBoundingClientRect().top, scroller,
+    };
+  }
+  useLayoutEffect(() => {
+    const anchor = pendingThinkAnchor.current;
+    pendingThinkAnchor.current = null;
+    if (!anchor?.row.isConnected) return;
+    const delta = anchor.row.getBoundingClientRect().top - anchor.top;
+    if (Math.abs(delta) < 1) return;
+    if (anchor.scroller && anchor.scroller.scrollHeight > anchor.scroller.clientHeight + 2) {
+      anchor.scroller.scrollTop += delta;
+    } else {
+      window.scrollBy(0, delta);
+    }
+  }, [activeThinkCourseId]);
+
+  function toggleThinkDetails(courseId: string, target: HTMLElement) {
+    rememberThinkAnchor(target);
+    const next = toggleThinkCourse(activeThinkCourseId, courseId);
+    setOpenThinkCourseId(next);
+    desk.setThinkDetails(next ? "expanded" : "compact");
+    setCourseInfoId(null);
+    setAssigningId(null);
+    setOpenMenu(null);
+    setJustPlannedId(null);
+  }
+
+  function openThinkForAssignment(courseId: string, target: HTMLElement) {
+    rememberThinkAnchor(target);
+    setOpenThinkCourseId(courseId);
+    desk.setThinkDetails("expanded");
+    setCourseInfoId(null);
+    setOpenMenu(null);
+    setJustPlannedId(null);
+  }
+
   function selectTab(tab: "think" | "plan") {
     if (tab === "plan") {
       setJustPlannedId(null);
@@ -162,10 +215,16 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
-            {variant === "full" && <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
+            {variant === "full" && <DetailViewSwitch label="Think Tank"
+              value={activeThinkCourseId ? "expanded" : "compact"}
               onChange={mode => {
+                setOpenThinkCourseId(mode === "expanded"
+                  ? activeThinkCourseId ?? firstThinkCourseId : null);
                 desk.setThinkDetails(mode);
-                setReviewOverrides({});
+                setCourseInfoId(null);
+                setAssigningId(null);
+                setOpenMenu(null);
+                setJustPlannedId(null);
               }}/>}
           </div>
           {ideas.length ? <div className="pd-subject-list">
@@ -180,12 +239,22 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     "--pd-subject-color": subjectColor(subject),
                   } as CSSProperties}>
                   <button className="pd-subject-toggle" type="button" aria-expanded={!isCollapsed}
-                    onClick={() => desk.toggleSubject(subject)}>
+                    onClick={() => {
+                      // A closed subject cannot retain a hidden expanded course.
+                      if (!isCollapsed && list.some(idea => idea.id === activeThinkCourseId)) {
+                        setOpenThinkCourseId(null);
+                        desk.setThinkDetails("compact");
+                        setCourseInfoId(null);
+                        setAssigningId(null);
+                        setJustPlannedId(null);
+                      }
+                      desk.toggleSubject(subject);
+                    }}>
                     {isCollapsed ? <ChevronRight size={15}/> : <ChevronDown size={15}/>}
                     <strong>{subject}</strong><span>{list.length}</span>
                   </button>
                 </div>
-                {!isCollapsed && <div className="pd-subject-items">
+                {!isCollapsed && <div className="pd-subject-items pd-think-course-list">
                   {list.map(idea => {
                     const itemMenu = "idea:" + idea.id;
                     const courseTopics = topicConnections.get(idea.editionId) ?? [];
@@ -198,16 +267,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const remainingCount = savedChoice
                       ? pendingIdeaCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
-                    const reviewOpen = reviewOverrides[idea.id] ??
-                      (variant === "full" && desk.thinkDetails === "expanded");
-                    return <div className="pd-idea" key={idea.id}>
+                    const reviewOpen = activeThinkCourseId === idea.id;
+                    const reviewId = "pd-think-details-" + idea.id;
+                    return <div className={"pd-idea" + (reviewOpen ? " is-open" : "")} key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
-                          onClick={() => {
-                            setReviewOverrides(old => ({ ...old,[idea.id]:!reviewOpen }));
-                            setCourseInfoId(null);
-                            setJustPlannedId(null);
-                          }}>
+                          aria-controls={reviewId}
+                          onClick={event => toggleThinkDetails(idea.id, event.currentTarget)}>
                           <Lightbulb size={14} aria-hidden="true"/><span>{idea.title}
                             {(showTopicCount || partiallyPlanned) && <small className="pd-topic-count-note">
                               {showTopicCount && <>{topicCount.selected} of {topicCount.total} topics</>}
@@ -221,15 +287,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           className="pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
                           aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
-                          aria-expanded={reviewOpen}
-                          onClick={() => {
-                            const next=!reviewOpen;
-                            setReviewOverrides(old=>({...old,[idea.id]:next}));
-                            // Opening the outer course never auto-expands its
-                            // nested Description & tips disclosure.
-                            setCourseInfoId(null);
-                            setJustPlannedId(null);
-                          }}>
+                          aria-expanded={reviewOpen} aria-controls={reviewId}
+                          onClick={event => toggleThinkDetails(idea.id, event.currentTarget)}>
                           <Info size={15} aria-hidden="true"/>
                         </button>
                         <Link className="pd-row-tool pd-think-books"
@@ -248,12 +307,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             : "Save this browser idea before assigning"}
                           aria-expanded={assigningId===idea.id}
                           disabled={!cloud.courses.some(c=>c.courseId===idea.id)}
-                          onClick={() => {
+                          onClick={event => {
                             const next=assigningId!==idea.id;
+                            openThinkForAssignment(idea.id, event.currentTarget);
                             setAssigningId(next?idea.id:null);
-                            setReviewOverrides(old=>({...old,[idea.id]:true}));
-                            setCourseInfoId(null);
-                            setJustPlannedId(null);
                           }}>
                           <Plus size={14} aria-hidden="true"/>
                           {idea.type === "Combined Course" && <span>All</span>}
@@ -275,13 +332,18 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                                 cloud.toggleListIdea(idea.id,topic.topicId);
                             }
                           } else desk.removeIdea(idea.id);
-                          setReviewOverrides(old => {
-                            const next = {...old}; delete next[idea.id]; return next;
-                          });
+                          if (activeThinkCourseId === idea.id) {
+                            setOpenThinkCourseId(null);
+                            desk.setThinkDetails("compact");
+                            setCourseInfoId(null);
+                            setAssigningId(null);
+                            setJustPlannedId(null);
+                          }
                           setOpenMenu(null);
                         }}><X size={13}/> Remove</button>
                       </div>}
-                      {reviewOpen && <div className="pd-review pd-think-review">
+                      {reviewOpen && <div className="pd-review pd-think-review" id={reviewId}
+                        role="region" aria-label={"Details for " + idea.title}>
                         {(idea.description || idea.tips) && <div className="pd-think-description-section">
                           <button type="button" className="pd-plan-info-disclosure"
                             aria-expanded={courseInfoId===idea.id}
