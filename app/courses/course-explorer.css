@@ -194,48 +194,62 @@
 .cx-course--topic .cx-course-details { padding: 0 12px 11px; }
 .cx-course--topic .cx-description { font-size: 12px; }
 
-/* Choice groups are decisions within a subject, not another subject color.
-   A charcoal outline and header stay legible beside all curriculum hues. */
+/* Groups guide a decision without competing with the subject-colored
+   member-selection state. A neutral title, faint bracket, and closing divider
+   distinguish grouped options from ordinary course rows (Latin 3/4). */
 .cx-choice {
-  border:2px solid #434a45;
+  border:0;
   background:#fff;
 }
-.cx-choice--accent { border-color:#434a45; }
-.cx-choice--accent .cx-choice-header { background:#303631; }
-.cx-choice:first-child { border-top:2px solid #434a45; }
 .cx-choice-header {
-  padding:10px 13px 9px;
-  background:#303631;
-  border-bottom:1px solid #555e56;
+  padding:11px 15px 10px;
+  background:#f0f1ed;
+  border-top:1px solid #cfd6cc;
+  border-bottom:1px solid #dfe4dc;
 }
-.cx-choice-label { font-size:10px; letter-spacing:.055em; font-weight:600; text-transform:uppercase; color:#e2e7e2; }
-.cx-choice-label span { text-transform:none; font-weight:400; letter-spacing:0; }
 .cx-choice-header h3 {
-  color:#fff;
   font-family:var(--font-circular), "DM Sans", sans-serif;
   font-size:14px;
-  font-weight:600;
+  font-weight:650;
+  color:#333c35;
   letter-spacing:0;
   margin:0;
 }
-.cx-choice-header h3 + p { margin-top:5px; }
-.cx-choice-header p { color:#e3e7e3; margin:0; font-size:11px; line-height:1.5; }
-.cx-choice .cx-course + .cx-course { border-top:1px solid #dfe4df; }
-/* Number the *whole choice*, not its child topics or its action buttons.
-   Inline placement allows long course titles to wrap naturally. */
-.cx-choice-number {
+.cx-choice-guidance {
+  margin:5px 0 0;
+  color:#5d685f;
+  font:12px/1.55 "DM Sans",sans-serif;
+  white-space:pre-line;
+}
+.cx-choice-guidance a {
+  color:#355b44;
+  font-weight:600;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+.cx-choice-guidance a:hover { color:#203f2d; }
+.cx-choice-guidance a:focus-visible {
+  outline:2px solid #596e5e;
+  outline-offset:3px;
+}
+.cx-choice-options {
+  border-left:2px solid #dde2d9;
+  border-bottom:2px solid #d1d8ce;
+}
+.cx-choice-options > .cx-course + .cx-course { border-top:1px solid #e0e5dd; }
+.cx-course-tags { display:inline-flex; flex-wrap:wrap; gap:5px; margin-left:9px; vertical-align:middle; }
+.cx-choice-tag {
   display:inline-block;
-  margin-left:9px;
   padding:2px 6px;
-  border:1px solid #c0c7c1;
+  border:1px solid #d5dbd3;
   border-radius:3px;
-  background:#eef0ee;
-  color:#424944;
+  background:#f3f4f1;
+  color:#59625b;
   font:600 10px/1.35 "DM Sans",sans-serif;
   white-space:nowrap;
-  vertical-align:middle;
 }
-
+/* Never hide a course's subject-colored left rail or selected action tone.
+   The grouping bracket is outside the ordinary course row. */
 .cx-empty { margin-top: 30px; background: #fff; border: 1px solid #d3d9c2; padding: 24px; }
 .cx-empty h2 { font-size: 22px; }
 .cx-empty p { font-size: 13px; }
@@ -313,8 +327,9 @@
   .cx-course-disclosure { min-height: 31px; }
   .cx-view-label, .cx-chevron, .cx-row-action { display: none; }
   .cx-choice-header { background:#f5f5f5 !important; }
-  .cx-choice-header h3, .cx-choice-header p { color:#171a18 !important; }
-  .cx-choice { border-color:#444 !important; }
+  .cx-choice-header h3, .cx-choice-guidance { color:#171a18 !important; }
+  .cx-choice-options { border-color:#bbb !important; }
+  .cx-choice-tag { background:#f4f4f4 !important; color:#333 !important; }
   .cx-tip { background: #eee !important; color: #333; }
 }
 
