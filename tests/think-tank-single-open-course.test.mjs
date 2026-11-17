@@ -5,7 +5,6 @@ import { resolveThinkCourse, toggleThinkCourse } from "../app/components/think-t
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const desk = read("app/components/PlanningDesk.tsx");
 const css = read("app/components/planning-desk.css");
-const switcher = read("app/components/DetailViewSwitch.tsx");
 
 // One active ID for ALL subject groups. Clicking the next course must close
 // the old course, even when it belongs to a different subject.
