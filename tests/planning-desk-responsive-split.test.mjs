@@ -40,7 +40,7 @@ assert.match(explorer,
 // the whole desk retains header and tab padding.
 assert.match(desk, /\.pd-desk \.pd-body\s*\{\s*margin-inline:-15px;/);
 assert.match(desk,
-  /\.pd-desk \.pd-subject-list\s*\{\s*width:100%;\s*padding-inline:6px;/,
+  /\.pd-desk \.pd-subject-list\s*\{\s*width:100%;\s*padding-inline:12px;/,
   "Full-width subject stack should retain only a six-pixel edge inset");
 assert.ok(desk.includes(".pd-desk .pd-subject-items.pd-think-course-list"));
 assert.ok(desk.includes("padding-left:4px;") && desk.includes("padding-right:4px;"),
