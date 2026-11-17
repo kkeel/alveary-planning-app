@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node scripts/prepare-brand-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/prepare-brand-assets.mjs && node tests/catalog-preview.test.mjs && node tests/course-topic-provenance.test.mjs && node tests/course-list-actions.test.mjs && node tests/course-list-subject-state.test.mjs && node tests/optimistic-think-tank-feedback.test.mjs && node tests/planning-topic-sections.test.mjs && node tests/think-tank-editor-stability.test.mjs && node tests/think-tank-hover-targets.test.mjs && node tests/think-tank-schedule-grade-meta.test.mjs && node tests/think-tank-single-open-course.test.mjs",
+    "prebuild": "node scripts/prepare-brand-assets.mjs && node tests/catalog-preview.test.mjs && node tests/course-topic-provenance.test.mjs && node tests/course-list-actions.test.mjs && node tests/course-list-subject-state.test.mjs && node tests/optimistic-think-tank-feedback.test.mjs && node tests/planning-topic-sections.test.mjs && node tests/think-tank-editor-stability.test.mjs && node tests/think-tank-hover-targets.test.mjs && node tests/think-tank-schedule-grade-meta.test.mjs && node tests/think-tank-single-open-course.test.mjs && node tests/planning-desk-responsive-split.test.mjs",
     "build": "next build",
     "start": "next start",
     "pretypecheck": "node scripts/prepare-brand-assets.mjs",
