@@ -215,7 +215,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
-            {variant === "full" && <DetailViewSwitch label="Think Tank"
+            {variant === "full" && <DetailViewSwitch label="Think Tank" singleOpen
               value={activeThinkCourseId ? "expanded" : "compact"}
               onChange={mode => {
                 setOpenThinkCourseId(mode === "expanded"
