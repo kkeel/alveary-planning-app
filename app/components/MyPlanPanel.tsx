@@ -70,7 +70,7 @@ function studentSummary(course: SavedCourse,
 /** My Plan shares Think Tank's list, accordion, metadata and neutral disclosure
  * styling, but its selection symbol is a check and its student actions edit
  * existing assignments through the same editor used when first adding them. */
-export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, sideBySide = false }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean }) {
+export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, sideBySide = false, onBrowseCourses }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean; onBrowseCourses?: () => void }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   // One open course across all My Plan subjects, just as in Think Tank.
@@ -165,7 +165,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, s
       <h3>Your plan starts here</h3>
       <p>Add students to a course or topic from the Course List to see it in My Plan.</p>
       <Link className="pd-empty-action" href="/courses"
-        onClick={() => desk.setCourseMode("browse")}>Browse courses</Link>
+        onClick={() => {desk.setCourseMode("browse"); onBrowseCourses?.();}}>Browse courses</Link>
     </div>}
     <div className="pd-subject-list">
       {groups.map(([subject, courses]) => {
