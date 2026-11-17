@@ -45,12 +45,13 @@ assert.ok(desk.includes("rememberThinkAnchor") && desk.includes("useLayoutEffect
 assert.ok(desk.includes('<DetailViewSwitch label="Think Tank" singleOpen'));
 assert.ok(switcher.includes('singleOpen ? "Open one " + label + " course at a time"'));
 
-// Every course gets an independent calm outline and gap, with no subject wash
-// or full-row hover added to the course cards.
+// Individual course rows remain distinguishable in the lightweight list.
+// Only expanded details, not the whole course, get the subject-colored rail.
 assert.ok(desk.includes('className="pd-subject-items pd-think-course-list"'));
-assert.ok(css.includes(".pd-think-course-list > .pd-idea.is-open"));
-assert.ok(css.includes("gap:10px"));
-assert.ok(css.includes("border-bottom:1px solid #e5ebe5"));
+assert.ok(css.includes(".pd-think-course-list > .pd-idea.is-open > .pd-idea-heading"));
+assert.ok(css.includes(".pd-think-course-list > .pd-idea + .pd-idea"));
+assert.ok(css.includes("border-top:1px solid #e3e9e2;"));
+assert.ok(css.includes("border-left:4px solid var(--pd-subject-edge,#a8b9a9);"));
 assert.ok(css.includes(".pd-think-course-list > .pd-idea > .pd-review.pd-think-review"));
 assert.ok(!css.includes(".pd-think-review .pd-topic-row:hover"),
   "Topic hover must still apply to controls, not whole rows");
