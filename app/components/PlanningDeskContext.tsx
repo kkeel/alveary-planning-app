@@ -20,6 +20,8 @@ type PlanningDeskState = {
   courseMode: "browse" | "plan";
   grades: number[];
   country: CountryFilter;
+  subjectFilter: string;
+  courseSearch: string;
   notes: string;
 };
 type PlanningDeskContextValue = PlanningDeskState & {
@@ -30,6 +32,8 @@ type PlanningDeskContextValue = PlanningDeskState & {
   setPlanDetails: (mode: DetailMode) => void;
   setGrades: Dispatch<SetStateAction<number[]>>;
   setCountry: (country: CountryFilter) => void;
+  setSubjectFilter: (subject: string) => void;
+  setCourseSearch: (query: string) => void;
   toggleIdea: (id: string) => void;
   removeIdea: (id: string) => void;
   toggleCourseTopic: (courseId: string, topicId: string, includedTopicIds: string[]) => void;
@@ -50,7 +54,7 @@ const defaults: PlanningDeskState = {
   listDetails: "expanded", thinkDetails: "compact", planDetails: "compact",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
-  grades: [], country: "all", notes: "",
+  grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
 };
 // Keep user-view preferences valid even if old or manually edited local storage is malformed.
 function normalizeGrades(input: unknown): number[] {
@@ -58,6 +62,10 @@ function normalizeGrades(input: unknown): number[] {
   return [...new Set(input.filter((grade): grade is number =>
     typeof grade === "number" && Number.isInteger(grade) && grade >= 1 && grade <= 12
   ))].sort((a, b) => a - b);
+}
+
+function normalizeFilterText(input: unknown, maxLength: number): string {
+  return typeof input === "string" && input.length <= maxLength ? input : "";
 }
 
 function normalizeExcludedTopics(input: unknown): Record<string, string[]> {
@@ -102,6 +110,8 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           courseMode: saved.courseMode === "plan" ? "plan" : "browse",
           grades: normalizeGrades(saved.grades),
           country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
+          subjectFilter: normalizeFilterText(saved.subjectFilter, 100),
+          courseSearch: normalizeFilterText(saved.courseSearch, 500),
           notes: typeof saved.notes === "string" ? saved.notes : "",
         });
       }
@@ -164,6 +174,10 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       ...v, grades: normalizeGrades(typeof next === "function" ? next(v.grades) : next),
     })),
     setCountry: country => setValue(v => v.country === country ? v : { ...v, country }),
+    setSubjectFilter: subject => setValue(v => v.subjectFilter === subject ? v :
+      { ...v, subjectFilter: normalizeFilterText(subject, 100) }),
+    setCourseSearch: query => setValue(v => v.courseSearch === query ? v :
+      { ...v, courseSearch: normalizeFilterText(query, 500) }),
     toggleIdea: id => {
       const exists = value.thinkTankIds.includes(id);
       const saved = cloud.courses.find(c => c.courseId === id);
