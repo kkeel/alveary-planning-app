@@ -70,7 +70,7 @@ function studentSummary(course: SavedCourse,
 /** My Plan shares Think Tank's list, accordion, metadata and neutral disclosure
  * styling, but its selection symbol is a check and its student actions edit
  * existing assignments through the same editor used when first adding them. */
-export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, sideBySide = false, onBrowseCourses }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean; onBrowseCourses?: () => void }) {
+export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, onBrowseCourses }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean; onBrowseCourses?: () => void }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   // One open course across all My Plan subjects, just as in Think Tank.
