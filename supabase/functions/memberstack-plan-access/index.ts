@@ -43,6 +43,45 @@ function adminKey(): string | undefined {
   } catch { return undefined; }
 }
 
+// Trusted server-side identity resolver: Custom OIDC OR the signed website
+// handoff mapping. No browser-provided identity, email or membership claims.
+async function trustedMemberIdentity(
+  admin: ReturnType<typeof createClient>, authUserId: string
+): Promise<{ memberId: string; handoff: boolean } | null> {
+  const { data: account, error: accountError } =
+    await admin.auth.admin.getUserById(authUserId);
+  if (accountError || !account.user || account.user.is_anonymous) {
+    throw new Error("identity_lookup_failed");
+  }
+  const oidc = (account.user.identities ?? []).filter(
+    identity => identity.provider === "custom:memberstack"
+  );
+  if (oidc.length === 1) {
+    const subject = oidc[0].identity_data?.sub;
+    const match = typeof subject === "string"
+      ? new RegExp("^([0-9a-f]{24})-" + memberstackAppId + "$").exec(subject)
+      : null;
+    return match ? { memberId: match[1], handoff: false } : null;
+  }
+  if (oidc.length > 1) return null;
+  // app_metadata is server-only but must ALSO match a service-only mapping
+  // for the exact authenticated Supabase user and email.
+  if (account.user.app_metadata?.memberstack_app_id !== memberstackAppId ||
+      account.user.app_metadata?.provider !== "email" ||
+      (account.user.identities ?? []).some(identity => identity.provider !== "email")) {
+    return null;
+  }
+  const { data: mapping, error: mapError } = await admin
+    .from("memberstack_handoff_test_accounts")
+    .select("member_id,login_email")
+    .eq("auth_user_id", authUserId).maybeSingle();
+  if (mapError) throw new Error("handoff_mapping_lookup_failed");
+  if (!mapping || mapping.login_email !== account.user.email ||
+      typeof mapping.member_id !== "string" ||
+      !/^[0-9a-f]{24}$/.test(mapping.member_id)) return null;
+  return { memberId: mapping.member_id, handoff: true };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: headers(req) });
   if (req.method !== "POST") return reply(req, 405, "unavailable", "method_not_allowed");
@@ -63,22 +102,11 @@ Deno.serve(async (req: Request) => {
     const { data: auth, error: userError } = await admin.auth.getUser(jwt);
     if (userError || !auth.user || auth.user.is_anonymous) return reply(req, 401, "none");
 
-    // Read trusted identities via Admin Auth; never use editable user_metadata.
-    const { data: record, error: identityError } =
-      await admin.auth.admin.getUserById(auth.user.id);
-    if (identityError || !record.user) return reply(req, 503, "unavailable", "identity_lookup_failed");
-    const identities = (record.user.identities ?? []).filter(
-      identity => identity.provider === "custom:memberstack");
-    if (identities.length !== 1) return reply(req, 403, "none");
-
-    const subject = identities[0].identity_data?.sub;
-    if (typeof subject !== "string") return reply(req, 403, "none");
-    // Verified Supabase OIDC subject is "<24-lowercase-hex-id>-<app-id>".
-    // The OIDC sub is bound to this Memberstack app. Require the exact
-    // app ID; never accept a browser-supplied member ID.
-    const match = new RegExp("^([0-9a-f]{24})-" + memberstackAppId + "$").exec(subject);
-    if (!match) return reply(req, 503, "unavailable", "identity_format_unrecognized");
-    const internalId = match[1];
+    // Both valid Supabase Auth sessions resolve to the SAME stable Memberstack
+    // identity. Live current-year plan verification below remains mandatory.
+    const verified = await trustedMemberIdentity(admin, auth.user.id);
+    if (!verified) return reply(req, 403, "none");
+    const internalId = verified.memberId;
     const expectedMemberId = "mem_" + internalId;
 
     // Cache entries are created only by this server after a successful,
