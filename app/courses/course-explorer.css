@@ -194,9 +194,9 @@
 .cx-course--topic .cx-course-details { padding: 0 12px 11px; }
 .cx-course--topic .cx-description { font-size: 12px; }
 
-/* Groups guide a decision without competing with the subject-colored
-   member-selection state. A neutral title, faint bracket, and closing divider
-   distinguish grouped options from ordinary course rows (Latin 3/4). */
+/* Choice headers and tags identify alternatives; there is no extra
+   choice-group outline. Course rows keep their ordinary list dividers and
+   subject-colored member selection states. */
 .cx-choice {
   border:0;
   background:#fff;
@@ -204,8 +204,6 @@
 .cx-choice-header {
   padding:11px 15px 10px;
   background:#f0f1ed;
-  border-top:1px solid #cfd6cc;
-  border-bottom:1px solid #dfe4dc;
 }
 .cx-choice-header h3 {
   font-family:var(--font-circular), "DM Sans", sans-serif;
@@ -232,11 +230,10 @@
   outline:2px solid #596e5e;
   outline-offset:3px;
 }
-.cx-choice-options {
-  border-left:2px solid #dde2d9;
-  border-bottom:2px solid #d1d8ce;
-}
 .cx-choice-options > .cx-course + .cx-course { border-top:1px solid #e0e5dd; }
+/* Use only the same standard row divider when a choice group ends. */
+.cx-choice + .cx-course,
+.cx-choice + .cx-choice { border-top:1px solid #d3d9c2; }
 .cx-course-tags { display:inline-flex; flex-wrap:wrap; gap:5px; margin-left:9px; vertical-align:middle; }
 .cx-choice-tag {
   display:inline-block;
@@ -328,7 +325,6 @@
   .cx-view-label, .cx-chevron, .cx-row-action { display: none; }
   .cx-choice-header { background:#f5f5f5 !important; }
   .cx-choice-header h3, .cx-choice-guidance { color:#171a18 !important; }
-  .cx-choice-options { border-color:#bbb !important; }
   .cx-choice-tag { background:#f4f4f4 !important; color:#333 !important; }
   .cx-tip { background: #eee !important; color: #333; }
 }
@@ -431,6 +427,29 @@
 }
 .cx-course.cx-status-idea:not(.cx-course--topic) > .cx-course-head {
   box-shadow:inset 2px 0 0 var(--cx-subject-medium);
+}
+/* Topic selection cues belong alongside the TITLE, not beside expanded
+   descriptions. Preserve a strong bar for an explicitly chosen topic,
+   and a softer bar for inherited course-level Think Tank selections.
+   +All inheritance stays pale but has no extra vertical rail. */
+.cx-course.cx-course--topic:is(.cx-status-full, .cx-status-partial, .cx-status-inherited, .cx-context-inherited) {
+  box-shadow:none;
+}
+.cx-course--topic > .cx-course-head { position:relative; }
+.cx-course--topic:is(.cx-status-full, .cx-idea-tone-full) > .cx-course-head::before,
+.cx-course--topic.cx-idea-tone-inherited:not(.cx-status-full) > .cx-course-head::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:6px;
+  bottom:6px;
+  width:3px;
+  pointer-events:none;
+  background:var(--cx-subject);
+}
+.cx-course--topic.cx-idea-tone-inherited:not(.cx-status-full) > .cx-course-head::before {
+  width:2px;
+  background:var(--cx-subject-medium);
 }
 .cx-topic-list { margin-top:14px; padding-top:0; }
 .cx-topic-heading {
