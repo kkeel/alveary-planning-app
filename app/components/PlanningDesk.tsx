@@ -252,13 +252,15 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
             {subjectOrder.map(subject => {
               const list = orderedIdeas(subject);
               const isCollapsed = desk.collapsedSubjects.includes(subject);
-              return <section key={subject} className="pd-subject">
-                <div className="pd-subject-heading"
-                  style={{
-                    "--pd-subject-wash": subjectColor(subject) + "15",
-                    "--pd-subject-edge": subjectColor(subject) + "66",
-                    "--pd-subject-color": subjectColor(subject),
-                  } as CSSProperties}>
+              // Share the subject palette with the expanded course details as well
+              // as the heading, so the opened left rail matches that subject.
+              return <section key={subject} className="pd-subject"
+                style={{
+                  "--pd-subject-wash": subjectColor(subject) + "15",
+                  "--pd-subject-edge": subjectColor(subject) + "66",
+                  "--pd-subject-color": subjectColor(subject),
+                } as CSSProperties}>
+                <div className="pd-subject-heading">
                   <button className="pd-subject-toggle" type="button" aria-expanded={!isCollapsed}
                     onClick={() => {
                       // A closed subject cannot retain a hidden expanded course.
