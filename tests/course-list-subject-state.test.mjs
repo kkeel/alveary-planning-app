@@ -150,6 +150,43 @@ const one={courseId:single.id,stage:"planned",ideaAll:false,studentIds:["AJ"],
  overrides:[],topics:[{topicId:single.id,included:true,ideaChoice:"inherit"}]};
 assert.equal(listRowStatus(one,people,null,false,true).planTone,"full");
 
+// Toolbar tints use the same existing row status as the saved assignment
+// indicators. One chosen topic colors that topic + its parent, never siblings.
+const hasTint=(course,topicId=null)=>{
+ const row=listRowStatus(course,people,topicId,true,false);
+ return row.ideaActive || row.planActive;
+};
+assert.equal(hasTint(grade9),false,"untouched parent stays neutral");
+assert.equal(hasTint(allIdea),true,"whole-course idea colors its toolbar");
+for(const topic of allIdea.topics)
+ assert.equal(hasTint(allIdea,topic.topicId),true,
+   "all child toolbars tint when the whole course is considered");
+assert.equal(hasTint(withException,ancient.topicId),false,
+ "deselected child remains neutral despite an active parent idea");
+assert.equal(hasTint(withException,us.topicId),true);
+assert.equal(hasTint(topicPlan),true,"a topic-only plan tints the parent controls");
+assert.equal(hasTint(topicPlan,us.topicId),true);
+for(const topic of topicPlan.topics.filter(t=>t.topicId!==us.topicId))
+ assert.equal(hasTint(topicPlan,topic.topicId),false,
+   "topic-only plan must not tint untouched sibling controls");
+assert.equal(hasTint(allPlan),true);
+for(const topic of allPlan.topics)
+ assert.equal(hasTint(allPlan,topic.topicId),true,
+   "whole-course plan tints each included topic's toolbar");
+assert.equal(hasTint(mixed,ancient.topicId),true,"Think Tank idea coexists with planned topic");
+assert.equal(hasTint(mixed,us.topicId),true,"planned topic coexists with Think Tank idea");
+
+const explorer=readFileSync(new URL("../app/courses/CourseExplorer.tsx",import.meta.url),"utf8");
+const listCss=readFileSync(new URL("../app/courses/course-explorer.css",import.meta.url),"utf8");
+assert.match(explorer,/const hasPlanningSelection = mode === "plan" && \(status.ideaActive \|\| status.planActive\)/);
+assert.match(explorer,/hasPlanningSelection \? " cx-has-planning-selection" : ""/);
+assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head\s+\.cx-course-actions button\.planning-icon-control:not\(\.cx-info-action\)/);
+assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+\.priority-control:not\(\.shared-arrangement-control\):not\(\.has-priority\)/);
+assert.match(listCss,/button\.planning-icon-control\.cx-info-action:not\(\.is-open\)/);
+assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+button\.planning-icon-control\.cx-info-action\.is-open/);
+// Row tint/rail rules remain separate from this toolbar-only addition.
+assert.match(listCss,/\.cx-course\.cx-status-full \{\s*box-shadow:inset 3px 0 0 var\(--cx-subject\);/);
+
 for(const [subject,expected] of Object.entries({
  History:"#6b6bbf",Literature:"#c07669",Math:"#6d7eaa",
  English:"#9b5b7b",Science:"#96a767",Citizenship:"#62765c",
