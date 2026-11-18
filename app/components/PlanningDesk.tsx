@@ -215,7 +215,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const notices = null;
   const thinkTankContent = <>
           <div className="pd-details-toolbar">
-            <p className="pd-intro">Ideas to consider for your school year.</p>
+            {ideas.length > 0 && <p className="pd-intro">Ideas to consider for your school year.</p>}
             <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
               onChange={next => { desk.setThinkDetails(next); setOpenThinkCourseId(assigningId); setCourseInfoId(null); }}/>
           </div>
