@@ -39,24 +39,35 @@ export default function StudentArrangementControl({
   const [open,setOpen]=useState(false);
   const triggerRef=useRef<HTMLButtonElement>(null);
   const menuId=useId();
-  const base=courseArrangement(plan.assignmentArrangements,courseId,studentId) as Arrangement|"Both";
+  const base=courseArrangement(plan.assignmentArrangements,courseId,studentId,
+    plan.sharedArrangements) as Arrangement|"Both";
   const topic=topicId ? topicArrangementOverride(
     plan.assignmentArrangements,courseId,studentId,topicId) : "inherit";
   const effective=effectiveArrangement(
-    plan.assignmentArrangements,courseId,studentId,topicId) as Arrangement|"Both";
-  const selected:Choice=topicId ? topic as Choice : base;
-  const inherited=topicId!==null && topic==="inherit";
+    plan.assignmentArrangements,courseId,studentId,topicId,
+    plan.sharedArrangements) as Arrangement|"Both";
+  const specific=plan.assignmentArrangements.find(item=>
+    item.courseId===courseId && item.studentId===studentId &&
+    item.topicId===topicId);
+  const selected:Choice=specific?.arrangement??"inherit";
+  const inherited=!specific;
   const caption=(effective==="Later"?"Decide later":effective==="Both"?"Both (previous setting)":effective);
   function choose(value:Choice){
     if(value==="Both") return; // legacy read-only value
+    const withoutThis=plan.assignmentArrangements.filter(item=>!(
+      item.courseId===courseId && item.studentId===studentId && item.topicId===topicId));
+    const inheritedValue=effectiveArrangement(withoutThis,courseId,studentId,topicId,
+      plan.sharedArrangements);
+    // Selecting a value equal to the inherited effective choice restores
+    // inheritance instead of pinning a redundant student override.
     plan.setAssignmentArrangement(courseId,studentId,topicId,
-      value==="inherit"?null:value);
+      value==="inherit" || value===inheritedValue?null:value);
     onChanged?.();
     setOpen(false);
     triggerRef.current?.focus();
   }
   const choices:{value:Choice;label:string;display:Arrangement|"Both"|null}[]=[
-    ...(topicId?[{value:"inherit" as Choice,label:"Same as course",display:base}]:[]),
+    {value:"inherit",label:topicId?"Same as plan":"Same as everyone",display:base},
     {value:"Combined",label:"Combined",display:"Combined"},
     {value:"Separate",label:"Separate",display:"Separate"},
     {value:"Later",label:"Decide later",display:"Later"},
