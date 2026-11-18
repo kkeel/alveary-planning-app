@@ -8,6 +8,7 @@ import { sortTopicsForCourse } from "../courses/topic-order.mjs";
 import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs";
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
+import SharedPriorityEditor from "./SharedPriorityEditor";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
