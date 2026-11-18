@@ -164,7 +164,8 @@ export default function CourseTopicReview({
             demo.sharedPriorities,demo.assignmentPriorities,
             parent.id,topic.id,student.id);
           const arrangement=effectiveArrangement(
-            demo.assignmentArrangements,parent.id,student.id,topic.id);
+            demo.assignmentArrangements,parent.id,student.id,topic.id,
+            demo.sharedArrangements);
           return <span key={student.id} className="pd-topic-student-name">
             {index>0 && <span className="pd-student-name-separator"> / </span>}
             {name}{displayPriority==="Varied" && <StudentPriorityDot
