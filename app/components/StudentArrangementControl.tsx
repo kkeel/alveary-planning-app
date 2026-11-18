@@ -93,7 +93,7 @@ export default function StudentArrangementControl({
       className={"student-arrangement-control"+(inherited?" is-inherited":"")+
         (isUnset?" is-unset":"")}
       onClick={event=>event.stopPropagation()}>
-    <button type="button" ref={triggerRef} className="student-arrangement-trigger"
+    <button type="button" ref={triggerRef} className="planning-icon-control student-arrangement-trigger"
       disabled={!plan.ready} aria-expanded={open} aria-controls={menuId}
       aria-label={studentName+": "+caption+" arrangement"+(inherited?" (same as course)":"")+". Change arrangement"}
       title={studentName+" · "+caption+" arrangement"+(inherited?" (same as course)":"")}
