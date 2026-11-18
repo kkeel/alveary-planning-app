@@ -2,11 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import type { CountryFilter } from "../courses/country-filter.mjs";
+import type { DetailMode as CourseDetailMode } from "./DetailViewSwitch";
 import { useDemoPlan } from "./DemoPlanContext";
 
 type DetailMode = "expanded" | "compact";
 type PlanningDeskState = {
-  listDetails: DetailMode;
+  listDetails: CourseDetailMode;
   thinkDetails: DetailMode;
   planDetails: DetailMode;
   thinkTankIds: string[];
@@ -27,7 +28,7 @@ type PlanningDeskState = {
 type PlanningDeskContextValue = PlanningDeskState & {
   ready: boolean;
   setCourseMode: (mode: "browse" | "plan") => void;
-  setListDetails: (mode: DetailMode) => void;
+  setListDetails: (mode: CourseDetailMode) => void;
   setThinkDetails: (mode: DetailMode) => void;
   setPlanDetails: (mode: DetailMode) => void;
   setGrades: Dispatch<SetStateAction<number[]>>;
@@ -51,7 +52,7 @@ type PlanningDeskContextValue = PlanningDeskState & {
 const keyPrefix = "alveary:shared-planning-desk-preview:2027-28:";
 const defaults: PlanningDeskState = {
   // Browsing should reveal the curriculum; planning starts with a calm summary.
-  listDetails: "expanded", thinkDetails: "compact", planDetails: "compact",
+  listDetails: "detailed", thinkDetails: "compact", planDetails: "compact",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
@@ -96,7 +97,10 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       if (raw) {
         const saved = JSON.parse(raw) as Partial<PlanningDeskState>;
         setValue({
-          listDetails: saved.listDetails === "compact" ? "compact" : "expanded",
+          // Older saved "expanded" showed every description: migrate it to
+          // Detailed. The new Expanded (topics-only) persists as "topics".
+          listDetails: saved.listDetails === "compact" ? "compact" :
+            saved.listDetails === "topics" ? "topics" : "detailed",
           thinkDetails: saved.thinkDetails === "expanded" ? "expanded" : "compact",
           planDetails: saved.planDetails === "expanded" ? "expanded" : "compact",
           thinkTankIds: Array.isArray(saved.thinkTankIds) ? saved.thinkTankIds.filter((x): x is string => typeof x === "string") : [],

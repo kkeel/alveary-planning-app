@@ -45,8 +45,16 @@ export default function StudentPriorityControl({
     };
   },[open]);
   function choose(priority:Priority|"inherit"|"Not set"){
-    plan.setAssignmentPriority(courseId,studentId,topicId,
-      priority==="inherit" ? null : priority);
+    // Choosing the inherited value is equivalent to Same as plan.
+    // Remove a redundant saved override so future parent edits flow through.
+    const withoutThis=plan.assignmentPriorities.filter(p=>!(
+      p.courseId===courseId && p.studentId===studentId && p.topicId===topicId));
+    const inheritedValue=effectivePlanningPriority(
+      plan.sharedPriorities,withoutThis,courseId,topicId,studentId);
+    const next=priority==="inherit" ||
+      (priority==="Not set"?null:priority)===inheritedValue
+      ? null : priority;
+    plan.setAssignmentPriority(courseId,studentId,topicId,next);
     onChanged?.();
     setOpen(false);
     triggerRef.current?.focus();

@@ -542,3 +542,27 @@
 .cx-course.cx-status-idea > .cx-course-head .cx-course-disclosure:hover:not(:disabled) {
   background:var(--cx-subject-soft);
 }
+
+/* A selection-tinted row should not contain a stark white *unset* priority
+   tag. Use the same subject wash as its current Think Tank/My Plan status. */
+.cx-course:is(.cx-status-full,.cx-status-partial,.cx-status-inherited,.cx-status-idea,.cx-context-inherited)
+  > .cx-course-head .priority-control:not(.has-priority) .priority-control-trigger,
+.cx-course--topic:is(.cx-idea-tone-full,.cx-idea-tone-inherited)
+  > .cx-course-head .priority-control:not(.has-priority) .priority-control-trigger {
+  background:var(--cx-subject-pale);
+  border-color:var(--cx-subject-medium);
+  color:color-mix(in srgb,var(--cx-subject) 55%,#3a5143);
+}
+.cx-topic-elsewhere {
+  display:inline-flex; align-items:center; gap:4px;
+  max-width:100%; margin-left:7px; padding:2px 5px;
+  border:1px solid #dfe7da; border-radius:4px;
+  background:#f6f8f3; color:#597260;
+  font-size:10px; font-weight:500; line-height:1.25;
+  vertical-align:middle; white-space:nowrap;
+}
+.cx-topic-elsewhere svg { flex:none; }
+@media(max-width:660px) {
+  .cx-topic-elsewhere { margin-left:4px; padding:2px 3px; }
+  .cx-topic-elsewhere span { display:none; }
+}

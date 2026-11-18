@@ -1,6 +1,7 @@
 import type { SavedCourse, PlanningStudent } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
 import { isTopicAssigned } from "./topic-assignment.mjs";
+import { buildTopicPresence } from "./topic-presence.mjs";
 
 const titles = new Map(catalog.courses.map(course => [course.id, course.title]));
 
@@ -52,4 +53,31 @@ export function hasSharedTopic(index: TopicSharingIndex, course: SavedCourse): b
   return course.topics.some(topic => topic.included &&
     (index.get(topic.topicEditionId) ?? []).some(use => use.courseId === course.courseId) &&
     otherUses(index, topic.topicEditionId, course.courseId).length > 0);
+}
+
+/** A course-list cue for repeated source topic editions, including
+ * unassigned Think Tank ideas. It describes OTHER parent contexts only;
+ * no selection or assignment is copied across contexts. */
+export type TopicPresence = {
+  courseId: string;
+  courseTitle: string;
+  location: "Think Tank" | "My Plan";
+};
+export type TopicPresenceIndex = Map<string, TopicPresence[]>;
+export function buildTopicPresenceIndex(
+  courses: SavedCourse[], students: PlanningStudent[],
+): TopicPresenceIndex {
+  const entries=buildTopicPresence(courses,students);
+  const index:TopicPresenceIndex=new Map();
+  for(const [editionId,uses] of entries) {
+    index.set(editionId,uses.map(use=>({
+      ...use, courseTitle:titles.get(use.courseId)??"Another course",
+    })));
+  }
+  return index;
+}
+export function otherTopicPresence(
+  index: TopicPresenceIndex, editionId:string, courseId:string,
+): TopicPresence[] {
+  return (index.get(editionId)??[]).filter(place=>place.courseId!==courseId);
 }

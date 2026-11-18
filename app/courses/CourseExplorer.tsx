@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Info, Lightbulb, Link2, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
@@ -19,6 +19,7 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import SharedPriorityEditor from "../components/SharedPriorityEditor";
+import { buildTopicPresenceIndex, otherTopicPresence, type TopicPresenceIndex } from "../components/topic-sharing";
 import { coursePriorityRollup, topicPriorityRollup } from "../components/shared-priority.mjs";
 import { useDemoPlan, type PlanningStudent, type SavedCourse, type SharedPriority, type AssignmentPriority } from "../components/DemoPlanContext";
 
@@ -118,6 +119,7 @@ type CourseRowProps = {
   students: readonly PlanningStudent[];
   sharedPriorities: readonly SharedPriority[];
   assignmentPriorities: readonly AssignmentPriority[];
+  topicPresence: TopicPresenceIndex;
   planningTarget: PlanTarget | null;
   onStartPlan: (courseId: string, topicId: string | null) => void;
   onEndPlan: () => void;
@@ -149,15 +151,18 @@ function CourseRow({
   students,
   sharedPriorities,
   assignmentPriorities,
+  topicPresence,
   planningTarget,
   onStartPlan,
   onEndPlan,
 }: CourseRowProps) {
   const [disclosureOverride, setDisclosureOverride] = useState<{
-    revision: number; expanded: boolean;
+    revision: number; mode: DetailMode;
   } | null>(null);
-  const isExpanded = disclosureOverride?.revision === detailRevision
-    ? disclosureOverride.expanded : detailMode === "expanded";
+  const visibleMode: DetailMode = disclosureOverride?.revision === detailRevision
+    ? disclosureOverride.mode : detailMode;
+  const isExpanded = visibleMode !== "compact";
+  const showFullDetails = visibleMode === "detailed";
   const disclosureRef = useRef<HTMLButtonElement>(null);
   const beforeToggleTop = useRef<number | null>(null);
   const detailsId = useId(); // unique for each occurrence, not the shared curriculum ID
@@ -170,6 +175,12 @@ function CourseRow({
   const sourceChoice = sourceChoiceForRow(course.id, parentCourseId);
   const sourceCourseId = sourceChoice.courseId;
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
+  const presentElsewhere=nested ? otherTopicPresence(topicPresence,course.editionId,sourceCourseId) : [];
+  const otherPlan=presentElsewhere.some(place=>place.location==="My Plan");
+  const presenceLabel=otherPlan ? "Also in My Plan" : "Also in Think Tank";
+  const presenceDescription=presentElsewhere.map(place=>
+    place.location+" in "+place.courseTitle).join("; ")+
+    ". Choose students independently for this course.";
   const status = listRowStatus(parentChoice, students, sourceChoice.topicId,
     isCombined, planned.includes(sourceCourseId));
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
@@ -206,21 +217,27 @@ function CourseRow({
 
   function toggleDetails() {
     beforeToggleTop.current = disclosureRef.current?.getBoundingClientRect().top ?? null;
-    setDisclosureOverride({revision:detailRevision,expanded:!isExpanded});
+    const nextMode: DetailMode = showFullDetails
+      ? detailMode === "topics" ? "topics" : "compact"
+      : "detailed";
+    setDisclosureOverride({revision:detailRevision,mode:nextMode});
   }
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics, mode, planned, onPlannedToggle, onRemovePlan,
     parentCourseId: sourceCourseId,
     parentSubject: parentSubject ?? course.subject,
-    detailMode, detailRevision, savedCourses, students,
-    sharedPriorities, assignmentPriorities, planningTarget,
+    // Expanded exposes topic rows but keeps their description panels closed.
+    // Detailed (or a parent manually opened in detail) reveals all topic detail.
+    detailMode: showFullDetails ? "detailed" : "compact", detailRevision,
+    savedCourses, students, sharedPriorities, assignmentPriorities, topicPresence, planningTarget,
     onStartPlan, onEndPlan,
   };
 
   return <div style={subjectVars} className={"cx-course" +
     (nested ? " cx-course--topic" : "") +
     (isExpanded ? " is-expanded" : "") +
+    (visibleMode === "topics" ? " is-topics-only" : "") +
     (mode === "plan" && status.planTone !== "none" ? " cx-status-" + status.planTone : "") +
     (mode === "plan" && status.ideaActive ? " cx-status-idea cx-idea-tone-" + status.ideaTone : "") +
     (mode === "plan" && status.contextTone !== "none" ? " cx-context-" + status.contextTone : "")}>
@@ -228,9 +245,14 @@ function CourseRow({
       <button ref={disclosureRef} type="button" className="cx-course-disclosure"
         aria-expanded={canExpand ? isExpanded : undefined}
         aria-controls={canExpand ? detailsId : undefined}
-        disabled={!canExpand} title={canExpand ? (isExpanded ? "Hide details" : "View details") : undefined}
+        disabled={!canExpand} title={canExpand ? (showFullDetails ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
+          {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere" role="img"
+            title={presenceDescription} aria-label={presenceDescription}>
+            <Link2 size={12} aria-hidden="true"/>
+            <span>{presenceLabel}</span>
+          </span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
             {choiceTags.map(tag => <span className="cx-choice-tag" key={tag}>{tag}</span>)}
           </span> : null}
@@ -238,14 +260,14 @@ function CourseRow({
       </button>
       <div className="cx-course-actions">
         {canExpand && <button type="button" className={"cx-info-action" +
-          (isExpanded ? " is-open" : "") +
+          (showFullDetails ? " is-open" : "") +
           (mode === "plan" && (status.ideaActive || status.planActive)
             ? " is-member" : "")}
           aria-controls={detailsId} aria-expanded={isExpanded}
-          aria-label={(isExpanded ? "Hide" : "View") + " details for " + course.title}
-          title={(isExpanded ? "Hide" : "View") + " description and topics"}
+          aria-label={(showFullDetails ? "Hide" : "View") + " details for " + course.title}
+          title={(showFullDetails ? "Hide" : "View") + " description and topics"}
           onClick={toggleDetails}>
-          <span className="cx-info-word">{isExpanded ? "Hide" : "View"}</span>
+          <span className="cx-info-word">{showFullDetails ? "Hide" : "View"}</span>
           <Info size={16} strokeWidth={1.8} aria-hidden="true"/>
         </button>}
         {mode === "plan" && <>
@@ -316,8 +338,8 @@ function CourseRow({
           <StudentAssignmentEditor course={parentChoice}
             onClose={onEndPlan} onCancel={onEndPlan}/>}
     </div>}
-    {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
-      {!isCombined && <div className="cx-course-meta">
+    {canExpand && (showFullDetails || (isExpanded && children.length > 0)) && <div className="cx-course-details" id={detailsId}>
+      {showFullDetails && !isCombined && <div className="cx-course-meta">
         {course.schedules.length > 0 && <div className="cx-schedule-list">
           {course.schedules.map(schedule => <span key={schedule.id} className="cx-schedule-item">
             {schedule.text}
@@ -325,8 +347,8 @@ function CourseRow({
         </div>}
         <span className="cx-grade-detail">{course.gradeDisplay || gradeLabel(course.grades)}</span>
       </div>}
-      {course.description && <p className="cx-description">{course.description}</p>}
-      {course.tips && <TipCallout>{course.tips}</TipCallout>}
+      {showFullDetails && course.description && <p className="cx-description">{course.description}</p>}
+      {showFullDetails && course.tips && <TipCallout>{course.tips}</TipCallout>}
       {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
         <div className="cx-topic-heading">Topics</div>
         {children.map(child => <CourseRow key={child.id} course={child} nested {...childProps} />)}
@@ -359,6 +381,8 @@ export default function CourseExplorer() {
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
   const planned = desk.thinkTankIds;
+  const topicPresence = useMemo(() => buildTopicPresenceIndex(
+    cloud.courses,cloud.students),[cloud.courses,cloud.students]);
   function updateDetailMode(next: DetailMode) {
     if (desk.listDetails === next) return;
     desk.setListDetails(next);
@@ -507,6 +531,7 @@ export default function CourseExplorer() {
     students: cloud.students,
     sharedPriorities: cloud.sharedPriorities,
     assignmentPriorities: cloud.assignmentPriorities,
+    topicPresence,
     planningTarget,
     onStartPlan: startDirectPlan,
     onEndPlan: () => setPlanningTarget(null),

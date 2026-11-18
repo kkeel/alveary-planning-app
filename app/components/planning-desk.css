@@ -1714,9 +1714,9 @@
   margin-left:4px; border:1px solid #ffffffbb; border-radius:50%;
   vertical-align:middle; box-shadow:0 0 0 1px #56735a24;
 }
-.pd-student-priority-dot.is-core { background:#aab28e; }
-.pd-student-priority-dot.is-high { background:#5e806a; }
-.pd-student-priority-dot.is-additional { background:#ad98b6; }
+.pd-student-priority-dot.is-core { background:#596e5e; }
+.pd-student-priority-dot.is-high { background:#adb58f; }
+.pd-student-priority-dot.is-additional { background:#e8e9e2; border-color:#cbd2c7; }
 .pd-student-priority-dot.is-unset {
   background:transparent; border:1.5px solid #92a093; box-shadow:none;
 }
@@ -1742,4 +1742,36 @@
 }
 .student-arrangement-control.is-align-start .student-arrangement-popover {
   right:auto; left:0;
+}
+
+/* Enough actual space for two student cards well before the large desktop
+   breakpoint; narrow mini desks retain one readable, unwrapped column. */
+@container student-editor (min-width:470px) {
+  .plan-editor .plan-student-list {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container student-editor (min-width:960px) {
+  .plan-editor .plan-student-list {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+/* Keep the group form directly beneath + Group and before student choices. */
+.plan-editor .plan-group-form {
+  margin:4px 0 11px;
+}
+/* The shared-course chooser is a brief optional context switch, not an
+   explanatory card that competes with the actual student editor. */
+.pd-topic-context-switch {
+  padding:8px 10px; margin:4px 0 10px;
+  background:#fbfcf9;
+}
+.pd-topic-context-switch p {
+  margin:0 0 5px; font-size:10px; line-height:1.35;
+  color:#718471;
+}
+/* Subject-grouped rows always show priority before the small info control. */
+.myplan-row .pd-idea-heading > .priority-control,
+.pd-idea:not(.myplan-row) .pd-idea-heading > .priority-control {
+  flex:0 0 auto;
 }

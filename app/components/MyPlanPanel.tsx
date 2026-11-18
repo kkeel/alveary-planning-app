@@ -230,15 +230,15 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                       {open && item && <PlanningScheduleGradeMeta course={item}/>}
                     </span>
                   </button>
-                  <button type="button" className="pd-row-tool pd-mini-info-action"
+                  <SharedPriorityEditor courseId={course.courseId}
+                    selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
+                        <button type="button" className="pd-row-tool pd-mini-info-action"
                     aria-label={(open?"Hide":"View")+" details for "+title}
                     title={open?"Hide details":"View details"}
                     aria-expanded={open} aria-controls={detailsId}
                     onClick={event=>toggleDetails(course.courseId,event.currentTarget)}>
                     <Info size={15} aria-hidden="true"/>
                   </button>
-                  <SharedPriorityEditor courseId={course.courseId}
-                    selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
                   <div className="pd-more-anchor">
                   <button type="button" className="pd-more"
                     aria-label={"More options for " + title}
