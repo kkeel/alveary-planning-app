@@ -54,7 +54,7 @@ assert.ok(plan.includes("focusCourseId, focusRevision"),
 // My Plan adds student data, retains checkmarks, and provides normal course
 // grade/scheduling information, plus student names per planned topic.
 assert.ok(plan.includes("<SquareCheckBig") && topics.includes("<SquareCheckBig"));
-assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements)"));
+assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements,demo.sharedArrangements)"));
 assert.ok(plan.includes("{open && item && <PlanningScheduleGradeMeta course={item}/>}")
 );
 assert.ok(topics.includes("const assignedNames = mode === \"plan\" && savedChoice && !isRemoved"));
