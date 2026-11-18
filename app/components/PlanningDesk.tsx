@@ -22,6 +22,7 @@ import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
 import SharedArrangementEditor from "./SharedArrangementEditor";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
@@ -51,22 +52,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const pendingThinkAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [courseInfoId, setCourseInfoId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!openMenu) return;
-    const outside = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) ||
-          !event.target.closest(".pd-more-anchor")) setOpenMenu(null);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenu(null);
-    };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [openMenu]);
+  const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
@@ -307,13 +293,20 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <Info size={15} aria-hidden="true"/>
                         </button>
                         <div className="pd-more-anchor">
-                        <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
+                        <button type="button" className="pd-more"
+                          ref={element=>{if(element) moreButtons.current.set(idea.id,element);
+                            else moreButtons.current.delete(idea.id);}}
+                          aria-controls={"pd-think-menu-"+idea.id}
+                          aria-label={"More options for " + idea.title}
                           title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
-                                            {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
-                        aria-label={"More options for "+idea.title}>
+                                            <FloatingChoiceMenu open={openMenu===itemMenu}
+                        triggerRef={{current:moreButtons.current.get(idea.id)??null}}
+                        onDismiss={()=>setOpenMenu(null)}
+                        id={"pd-think-menu-"+idea.id} className="floating-icon-menu"
+                        label={"More options for "+idea.title}>
                         <Link href={"/books?course="+encodeURIComponent(idea.id)}
                           onClick={closeMobileDrawer}
                           title={"View books for "+idea.title} aria-label={"View books for "+idea.title}>
@@ -354,7 +347,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <Trash2 size={17} aria-hidden="true"/>
                           <span className="pd-sr-only">Remove idea</span>
                         </button>
-                      </div>}
+                      </FloatingChoiceMenu>
                         </div>
 </div>
                       {reviewOpen && <div className="pd-review pd-think-review" id={reviewId}
