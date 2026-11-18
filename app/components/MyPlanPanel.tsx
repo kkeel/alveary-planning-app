@@ -14,7 +14,6 @@ import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
-import { selectionTopicCount } from "./planning-topic-sections.mjs";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
@@ -24,14 +23,6 @@ import catalog from "../courses/catalog-preview.json";
 
 type CatalogCourse = (typeof catalog.courses)[number];
 const lookup = new Map(catalog.courses.map(course => [course.id, course]));
-const byEdition=new Map(catalog.courses.map(course=>[course.editionId,course]));
-const childrenByParent=new Map<string,{id:string}[]>();
-for(const connection of catalog.topicLinks){
- const topic=byEdition.get(connection.childEditionId);
- if(!topic) continue;
- childrenByParent.set(connection.parentEditionId,
-   [...(childrenByParent.get(connection.parentEditionId)??[]),topic]);
-}
 const compare = (a: SavedCourse, b: SavedCourse) => {
   const x = lookup.get(a.courseId), y = lookup.get(b.courseId);
   return (x?.presentationSort ?? "").localeCompare(y?.presentationSort ?? "") ||
@@ -205,12 +196,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const infoOpen = infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
               const detailsId = "pd-myplan-details-" + course.courseId;
-              const topicCount=item?.type === "Combined Course"
-                ? selectionTopicCount(course,
-                    childrenByParent.get(item.editionId)??[],demo.students,"plan")
-                : {selected:0,total:0};
-              const showTopicCount=topicCount.total>1 &&
-                topicCount.selected<topicCount.total;
               const shared = hasSharedTopic(sharedTopics, course);
               const menuOpen = openMenuId === course.courseId;
               const title = item?.title ?? "Saved course";
@@ -238,9 +223,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>{title}
-                      {showTopicCount && <small className="pd-topic-count-note">
-                        {topicCount.selected} of {topicCount.total} topics
-                      </small>}
                       <small className="myplan-summary">
                         {studentSummary(course,demo.students,demo.assignmentArrangements,demo.assignmentPriorities)}
                         {shared && <span className="pd-course-shared"
@@ -270,13 +252,17 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                 {menuOpen && <div className="pd-inline-actions" role="group"
                   aria-label={"More options for " + title}>
                   <Link href={"/books?course="+encodeURIComponent(course.courseId)}
-                    onClick={()=>setOpenMenuId(null)}>
-                    <BookOpen size={14} aria-hidden="true"/> View books
+                    onClick={()=>setOpenMenuId(null)}
+                    title={"View books for "+title} aria-label={"View books for "+title}>
+                    <BookOpen size={17} aria-hidden="true"/>
+                    <span className="pd-sr-only">View books</span>
                   </Link>
                   <button type="button" onClick={event=>
-                    toggleStudentEdit(course.courseId,event.currentTarget)}>
-                    <UsersRound size={14} aria-hidden="true"/>
-                    {editing ? "Close students" : "Edit students"}
+                    toggleStudentEdit(course.courseId,event.currentTarget)}
+                    title={editing?"Close student editor":"Edit students"}
+                    aria-label={editing?"Close student editor":"Edit students"} aria-expanded={editing}>
+                    <UsersRound size={17} aria-hidden="true"/>
+                    <span className="pd-sr-only">{editing ? "Close students" : "Edit students"}</span>
                   </button>
                   <button type="button" onClick={() => {
                     demo.setStage(course.courseId,"idea");
@@ -285,7 +271,10 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     setEditingStudentsId(null);
                     setEditingTopicCourseId(null);
                     setOpenMenuId(null);
-                  }}><Lightbulb size={13} aria-hidden="true"/> Return to Think Tank</button>
+                  }} title="Return to Think Tank" aria-label="Return to Think Tank">
+                    <Lightbulb size={17} aria-hidden="true"/>
+                    <span className="pd-sr-only">Return to Think Tank</span>
+                  </button>
                 </div>}
                 {open && <div className="pd-review pd-think-review myplan-review"
                   id={detailsId} role="region" aria-label={"Details for " + title}>
