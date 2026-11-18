@@ -494,3 +494,5 @@ p { line-height: 1.65; }
 @media print {
   .shared-priority-editor,.cx-priority-quick { display:none!important; }
 }
+
+.shared-priority-heading-summary { display:block; margin-top:3px; color:#68806b; font-size:11px; font-weight:550; line-height:1.35; }
