@@ -66,7 +66,8 @@ test("setting priority on an unchosen item establishes an idea rather than an as
 test("Desk controls keep small i buttons and move books/student editing to More",()=>{
   for(const src of [desk,plan]) {
     assert.match(src,/pd-mini-info-action/);
-    assert.match(src,/pd-inline-actions/);
+    assert.match(src,/FloatingChoiceMenu/);
+    assert.match(src,/className="floating-icon-menu"/);
     assert.match(src,/View books/);
   }
   assert.match(topic,/pd-topic-info-action/);
@@ -95,8 +96,8 @@ test("Arrangement offers combined, separate, later and topic inheritance inline"
 });
 test("More menus remain one-row icons and My Plan shows only student-level topic counts",()=>{
   const css=read("app/components/planning-desk.css");
-  assert.match(css,/\.pd-idea \.pd-inline-actions,[\s\S]*?flex-wrap:nowrap/);
-  assert.match(css,/\.pd-think-review \.pd-topic-menu/);
+  assert.match(css,/\.priority-control-popover\.floating-icon-menu/);
+  assert.match(topic,/className="floating-icon-menu pd-topic-menu"/);
   for(const src of [desk,plan,topic]) assert.match(src,/pd-sr-only/);
   assert.doesNotMatch(plan,/showTopicCount|selectionTopicCount/);
   assert.match(plan,/studentSummary\(course,demo\.students/);
@@ -109,7 +110,7 @@ test("Course menus anchor below the ellipsis and the small info controls stay ce
  assert.match(desk,/pd-more-anchor/);
  assert.match(plan,/pd-more-anchor/);
  assert.match(css,/\.pd-more-anchor\s*\{/);
- assert.match(css,/\.pd-more-anchor > \.pd-inline-actions/);
+ assert.match(floating,/createPortal/);
  assert.match(css,/\.pd-topic-icon\.pd-topic-info-action/);
  assert.match(topic,/pd-topic-info-action/);
 });
