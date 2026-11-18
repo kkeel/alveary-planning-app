@@ -4,20 +4,14 @@ This document covers the 2027–28 Alveary Course List, Think Tank, My Plan, and
 
 ## Sizes and spacing
 
-| Placement | Square target | Typical glyph | Image artwork |
-| --- | --- | --- | --- |
-| Course List — course row | 34px | 18px | 21px |
-| Course List — nested topic | 29px | 16px | 18px |
-| Mini/full desk — course row | 30px | 17px | 20px |
-| Mini/full desk — topic row | 27px | 15px | 18px |
-| Student editor — shared toolbar | 30px | 18px | 20px |
-| Student editor — per-student row | 28px | 17px | 19px |
+All primary course/topic actions in the Course List, Think Tank, and My Plan now use the **same 27px visible square**, matching the established Think Tank topic controls. In-line student editor tools also use the same visual size. Icons and their wrapping priority/arrangement controls share the `--planning-icon-size`, `--planning-icon-glyph`, and `--planning-icon-art` variables from `app/planning-icon-controls.css`; don't redefine them in individual components.
 
-At a narrow viewport (up to 760px), Course List controls reduce to **31px for courses** and **27px for topics**. This is a density adjustment, not a new behavior rule.
+**Exceptions are functional, not visual-size variants:**
+- **+ All** keeps the same height but grows horizontally with the full word and spacing so no text is clipped, even in a narrow List view.
+- **View/Hide + i** keeps its readable word on wider Course List screens and becomes a square on small screens.
+- **More (···)** is unboxed at rest. The three dots retain the same sized pointer and keyboard focus target with a neutral hover, open and focus treatment.
 
-All actionable glyphs use `planning-icon-control` and take their square size from their nearest containing row. The priority and arrangement wrappers and the overflow `…` anchor occupy exactly one square slot. This avoids the mismatched tag/arrangement/info widths caused by earlier CSS layering.
-
-The Course List **View/Hide + i** control is the only labeled exception: it shares the same height, icon, and focus behavior but remains wide enough for its word on desktop. On small screens, the word is hidden and the control becomes a square.
+Avoid surrounding the dots with a permanent bordered box. Never let a long label force the icon itself smaller.
 
 ## Palette and states
 
@@ -42,3 +36,10 @@ Historical `Later` values remain readable by the application but are interpreted
 Open a combined History course in Compact, Expanded, and Detailed; compare the course icon toolbar to nested topic toolbars. Open the same item in Think Tank and My Plan. Confirm size within each surface, neutral hover on each independent button, meaningful subject tint where a selection is present, and no jumps when a popover opens.
 
 For arrangement, compare an untouched course with one explicitly set Separate; the circles should have identical shape but clearly different visual strength. Set Combined on the course, leave one topic inherited, override another to Separate, then clear the override and verify the former follows the course again. Finally check a previously saved Later setting does not block the current course selection.
+
+## Planning information density
+
+Compact shows course rows only, Expanded shows course and topic rows with short published schedule summaries, and Detailed shows all guidance. Course List, Think Tank and My Plan use the same labels. Each planning surface saves its own choice; the default for a new preference is Expanded.
+
+A member may click a title or info icon for one course or topic without changing their saved display mode. Detailed guidance appears directly on that item, not behind another "Description & tips" row. Scheduling summaries are descriptive only and never replace the exact grade-specific recommendation text (including placement and teacher-attention symbols), which stays available on demand.
+
