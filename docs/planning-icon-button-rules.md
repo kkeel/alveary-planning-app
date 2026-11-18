@@ -88,3 +88,15 @@ A topic appearing under more than one published combined parent has a small **�
 - The arrow uses the current **subject's active text color** once this occurrence is selected in My Plan or Think Tank, whether directly or inherited from a whole-course action.
 - The tooltip/accessibility label still explains the shared curriculum connection and lists any selections under other parents. No visible "↔ My Plan" or "↔ Think Tank" text remains.
 - Inheritance, student assignments, course highlights, subject rails and toolbar selection colors stay governed by the existing `listRowStatus`; this change is a topic-title indicator only.
+
+## Full Planning Desk scroll boundary and shared-topic provenance
+
+The full two-column Planning Desk also keeps its **Compact / Expanded / Detailed** selector outside the independently scrolling `.pd-full-column-body` (between each column title and its scroll viewport). It must not use a sticky overlay within the subject list; that allowed labels to appear behind the controls. The introduction scrolls within its column, while the column title and mode selector remain in place.
+
+Shared-topic arrows in the Course List have **two independent meanings** when combined with the existing row state:
+
+- **Neutral ↔**: the topic occurs in multiple published courses but is not currently selected in Think Tank or My Plan under any parent.
+- **Subject-colored ↔**: the topic occurs in multiple courses and is selected in Think Tank or My Plan through *at least one* parent, even if the currently displayed parent is not selected.
+- **Highlighted row + subject-colored ↔**: the topic is selected in the currently displayed parent context. This does **not** imply it was also selected elsewhere. Student assignments always remain independent by parent.
+
+The arrow tooltip names the **actual published parent courses**, and separately names any parent contexts where the topic has been saved, with Think Tank / My Plan status. Tooltip text is informational only, and never propagates selections between courses.
