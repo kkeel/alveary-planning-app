@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import FloatingChoiceMenu from "./FloatingChoiceMenu";
-import { Check, Clock3 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "./arrangement-inheritance.mjs";
 
@@ -26,7 +26,7 @@ export function ArrangementPlaceholderSymbol({size=19}:{size?:number}) {
 export function ArrangementSymbol({value, size=19}:{
  value: Arrangement | "Both"; size?:number;
 }) {
-  if (value==="Later") return <Clock3 size={size} aria-hidden="true"/>;
+  if (value==="Later") return <ArrangementPlaceholderSymbol size={size}/>;
   return <svg width={size} height={size} viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="1.8"
       strokeLinecap="round" aria-hidden="true">
@@ -62,7 +62,7 @@ export default function StudentArrangementControl({
     item.topicId===topicId);
   const selected:Choice=specific?.arrangement==="Later"
     ? "inherit" : specific?.arrangement??"inherit";
-  const inherited=!specific;
+  const inherited=!specific || specific.arrangement==="Later";
   // No member has to make this choice. Historical "Later" entries are
   // presented as unset; clear/inherit removes them without a data migration.
   // Combined and Separate retain their full-strength symbols.
