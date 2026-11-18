@@ -25,7 +25,7 @@ for (const marker of [
   'className="pd-subject-items pd-think-course-list"',
   'className={"pd-idea myplan-row" + (open ? " is-open" : "")}',
   'className="pd-idea-review"',
-  'className="pd-row-tool pd-mini-info-action"',
+  'className="planning-icon-control pd-row-tool pd-mini-info-action"',
   'className="pd-review pd-think-review myplan-review"',
   '<CourseInfoDisclosure course={item}/>',
   'className="pd-think-description-section"',
@@ -78,20 +78,20 @@ assert.ok(editor.includes('<input type="checkbox" checked={isAssigned}'));
 assert.ok(arrangement.includes("plan.setAssignmentArrangement"));
 assert.ok(studentPriority.includes("plan.setAssignmentPriority"));
 assert.ok(editor.includes("<StudentPriorityControl"));
-assert.ok(plan.includes('className="pd-row-tool pd-mini-info-action"'),
+assert.ok(plan.includes('className="planning-icon-control pd-row-tool pd-mini-info-action"'),
   "Keep the small i button as an explicit information affordance");
 assert.ok(plan.includes('href={"/books?course="+encodeURIComponent(course.courseId)}'));
 assert.ok(topics.includes('href={"/books?course="+encodeURIComponent(topic.id)}'));
 
 // More ... hosts Books, Edit Students, and Return to Think Tank.
 // It must not appear as an extra footer in expanded details.
-assert.ok(plan.includes('className="pd-more"'));
+assert.ok(plan.includes('className="planning-icon-control pd-more"'));
 assert.ok(plan.includes('<MoreHorizontal size={16}'));
 assert.ok(plan.includes('className="floating-icon-menu"'));
 assert.ok(plan.includes("demo.setStage(course.courseId,\"idea\")"));
 assert.ok(plan.includes("Return to Think Tank"));
 assert.ok(!plan.includes('pd-myplan-toolbar-edit'));
-assert.ok(topics.includes('className="pd-topic-icon pd-topic-info-action"'));
+assert.ok(topics.includes('className="planning-icon-control pd-topic-icon pd-topic-info-action"'));
 assert.ok(!topics.includes('className="pd-topic-icon pd-topic-edit"'));
 assert.ok(!plan.includes('className="pd-review-actions"'));
 
