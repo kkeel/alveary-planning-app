@@ -212,7 +212,7 @@ Deno.serve(async (req: Request) => {
       "load", "import", "set_choice", "remove_choice", "set_stage",
       "set_topic", "set_course_student", "set_topic_student",
       "toggle_idea", "clear_plan", "prepare_plan",
-      "set_assignment_priority", "set_assignment_arrangement", ...manageActions,
+      "set_assignment_priority", "set_assignment_arrangement", "set_shared_priority", ...manageActions,
     ]);
     if (typeof p.action !== "string" || !actions.has(p.action)) {
       return response(req, 400, { error: "invalid_action" });
@@ -236,7 +236,7 @@ Deno.serve(async (req: Request) => {
     const priority = p.priority === null || p.priority === "" || p.priority === undefined
       ? null : typeof p.priority === "string" &&
         ["Core", "High Interest", "Additional",
-          ...(p.action === "set_assignment_priority" ? ["Not set"] : [])].includes(p.priority)
+          ...(["set_assignment_priority","set_shared_priority"].includes(p.action) ? ["Not set"] : [])].includes(p.priority)
         ? p.priority : undefined;
     const arrangement = typeof p.arrangement === "string" &&
       ["Combined", "Separate", "Both", "Later"].includes(p.arrangement)
@@ -269,6 +269,9 @@ Deno.serve(async (req: Request) => {
       (p.action === "set_assignment_priority" &&
         (priority === undefined || (priority === "Not set" && !topicId) ||
          (p.topicId != null && !topicId))) ||
+      (p.action === "set_shared_priority" &&
+        (priority === undefined || (priority === "Not set" && !topicId) ||
+         (p.topicId != null && !topicId))) ||
       (p.action === "set_assignment_arrangement" &&
         (assignmentArrangement === undefined || (p.topicId != null && !topicId)))
     ) return response(req, 400, { error: "invalid_request" });
@@ -289,6 +292,22 @@ Deno.serve(async (req: Request) => {
         p_priority: priority,
       });
       assertDatabase(savePriorityError, "priority_save_failed");
+    }
+
+    // Shared defaults require the same verified JWT, Memberstack entitlement and
+    // workspace membership path as every private planning mutation.
+    if (p.action === "set_shared_priority") {
+      const { error: sharedWriteError } = await admin.rpc("demo_plan_shared_priorities", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "set",
+        p_course_id: courseId,
+        p_topic_id: topicId,
+        p_priority: priority,
+      });
+      assertDatabase(sharedWriteError, "shared_priority_save_failed");
     }
 
     // A private course default or child-topic arrangement is keyed to the
@@ -322,14 +341,16 @@ Deno.serve(async (req: Request) => {
         p_topic_id: topicId,
       })
       : (manage || p.action === "set_assignment_priority" ||
-          p.action === "set_assignment_arrangement")
+          p.action === "set_assignment_arrangement" ||
+          p.action === "set_shared_priority")
       ? await admin.rpc("demo_plan_manage", {
         p_auth_user_id: caller.user.id,
         p_member_id: memberId,
         p_workspace_id: workspaceId,
         p_school_year: year,
         p_action: p.action === "set_assignment_priority" ||
-          p.action === "set_assignment_arrangement" ? "load" : p.action,
+          p.action === "set_assignment_arrangement" ||
+          p.action === "set_shared_priority" ? "load" : p.action,
         p_course_id: courseId,
         p_student_ids: studentIds,
         p_student_id: student,
@@ -374,6 +395,16 @@ Deno.serve(async (req: Request) => {
       });
     assertDatabase(prioritiesError, "priority_read_failed");
     if (!Array.isArray(assignmentPriorities)) throw new Error("priority_response_unrecognized");
+    const { data: sharedPriorities, error: sharedPrioritiesError } =
+      await admin.rpc("demo_plan_shared_priorities", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "load",
+      });
+    assertDatabase(sharedPrioritiesError, "shared_priority_read_failed");
+    if (!Array.isArray(sharedPriorities)) throw new Error("shared_priority_response_unrecognized");
     const { data: assignmentArrangements, error: arrangementsError } =
       await admin.rpc("demo_plan_arrangements", {
         p_auth_user_id: caller.user.id,
@@ -389,6 +420,7 @@ Deno.serve(async (req: Request) => {
     return response(req, 200, {
       ...(plan as object),
       assignmentPriorities,
+      sharedPriorities,
       assignmentArrangements,
     });
   } catch (error) {
