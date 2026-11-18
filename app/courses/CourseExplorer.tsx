@@ -72,6 +72,18 @@ type DisplayRow =
   | { kind: "choice"; sort: string; group: ChoiceGroup; options: ChoiceOption[] };
 
 const catalog = sourceCatalog as Catalog;
+// A linked topic appearing in multiple distinct parent courses is shared
+// curriculum, whether or not anyone has saved it for their household.
+const sharedTopicEditions = (() => {
+  const parentsByTopic = new Map<string, Set<string>>();
+  for (const link of catalog.topicLinks) {
+    const parents = parentsByTopic.get(link.childEditionId) ?? new Set<string>();
+    parents.add(link.parentEditionId);
+    parentsByTopic.set(link.childEditionId, parents);
+  }
+  return new Set([...parentsByTopic].filter(([, parents]) => parents.size > 1)
+    .map(([editionId]) => editionId));
+})();
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const comparePlan = (a: Plan, b: Plan) =>
   compareText(a.presentationSort, b.presentationSort) ||
@@ -177,13 +189,22 @@ function CourseRow({
   const sourceCourseId = sourceChoice.courseId;
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
   const presentElsewhere=nested ? otherTopicPresence(topicPresence,course.editionId,sourceCourseId) : [];
-  const otherPlan=presentElsewhere.some(place=>place.location==="My Plan");
-  const presenceLabel=otherPlan ? "My Plan" : "Think Tank";
-  const presenceDescription=presentElsewhere.map(place=>
-    place.location+" in "+place.courseTitle).join("; ")+
-    ". Choose students independently for this course.";
   const status = listRowStatus(parentChoice, students, sourceChoice.topicId,
     isCombined, planned.includes(sourceCourseId));
+  const hasSharedTopic = nested && (sharedTopicEditions.has(course.editionId) ||
+    presentElsewhere.length > 0);
+  // An arrow shows a curriculum connection. Color refers ONLY to this
+  // particular parent context, never to a saved use in a different course.
+  const selectedHere = mode === "plan" && (status.planActive || status.ideaActive);
+  const presenceDescription = [
+    "Shared topic: also offered through another course.",
+    selectedHere
+      ? "Selected here in " + (status.planActive ? "My Plan" : "Think Tank") + "."
+      : "Not selected through this course.",
+    ...presentElsewhere.map(place =>
+      "Also selected in " + place.location + " under " + place.courseTitle + "."),
+    "Students and assignments are chosen separately for each course.",
+  ].join(" ");
   // A course or topic is visually selected if it is in Think Tank OR My Plan.
   // This is presentation-only; shared-topic provenance and assignment logic stay intact.
   const hasPlanningSelection = mode === "plan" && (status.ideaActive || status.planActive);
@@ -253,11 +274,9 @@ function CourseRow({
         disabled={!canExpand} title={canExpand ? (showFullDetails ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
-          {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere" role="img"
-            title={presenceDescription} aria-label={presenceDescription}>
-            <span aria-hidden="true">↔</span>
-            <span>{presenceLabel}</span>
-          </span>}
+          {hasSharedTopic && <span className={"cx-topic-elsewhere" +
+             (selectedHere ? " is-active" : "")} role="img"
+             title={presenceDescription} aria-label={presenceDescription}>↔</span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
             {choiceTags.map(tag => <span className="cx-choice-tag" key={tag}>{tag}</span>)}
           </span> : null}

@@ -79,3 +79,12 @@ Do **not** position the portable Compact / Expanded / Detailed switch as `positi
 The portable Planning Desk uses a **fixed top area**: title, a distinct Think Tank / My Plan tab group, then a separate Compact / Expanded / Detailed switch. The two groups are spaced rather than drawn as one large tinted box. A full-width divider sits under them. Only **below that divider** does `.pd-body` scroll; if there is at least one chosen course/topic, its short introduction appears at the beginning of the scrollable content, before the subject headings.
 
 The first visit defaults to **My Plan**. The existing browser-scoped Planning Desk preference saves explicit tab selections using `tabExplicit`. A legacy saved Think Tank tab from the old default is migrated to My Plan once (there was no way to distinguish an old automatic Think Tank default from a deliberate Think Tank choice), then every new choice is remembered. Think Tank and My Plan preserve their separate density preferences independently. The existing default density remains Expanded, as the user has been reviewing, unless the member chooses Compact or Detailed.
+
+## Course List shared-topic cue — arrow only
+
+A topic appearing under more than one published combined parent has a small **↔** after its title. This is a relationship cue, *not* another My Plan / Think Tank membership badge.
+
+- The arrow is **neutral gray-green** when this particular parent/topic occurrence is not selected, even if the same curriculum topic is saved under a different parent.
+- The arrow uses the current **subject's active text color** once this occurrence is selected in My Plan or Think Tank, whether directly or inherited from a whole-course action.
+- The tooltip/accessibility label still explains the shared curriculum connection and lists any selections under other parents. No visible "↔ My Plan" or "↔ Think Tank" text remains.
+- Inheritance, student assignments, course highlights, subject rails and toolbar selection colors stay governed by the existing `listRowStatus`; this change is a topic-title indicator only.

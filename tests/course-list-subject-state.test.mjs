@@ -184,6 +184,35 @@ assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head\
 assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+\.priority-control:not\(\.shared-arrangement-control\):not\(\.has-priority\)/);
 assert.match(listCss,/button\.planning-icon-control\.cx-info-action:not\(\.is-open\)/);
 assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+button\.planning-icon-control\.cx-info-action\.is-open/);
+// A shared-edition arrow is a relationship cue; it does not claim the
+// occurrence is selected merely because another parent is saved.
+const parentsByTopic=new Map();
+for(const link of catalog.topicLinks) {
+ const parents=parentsByTopic.get(link.childEditionId)??new Set();
+ parents.add(link.parentEditionId);
+ parentsByTopic.set(link.childEditionId,parents);
+}
+assert.ok(parentsByTopic.get(us.topicEditionId).size>1,
+  "shared History topic is published through multiple parent courses");
+assert.equal(hasTint(grade9,us.topicId),false,
+  "untouched instance stays neutral even if edition is selected elsewhere");
+assert.equal(hasTint(older,shared.topicId),true,
+  "the instance chosen under its own parent has the highlighted arrow");
+assert.equal(hasTint(allIdea,us.topicId),true,
+  "whole-course Think Tank idea highlights the inherited shared topic arrow");
+assert.equal(hasTint(topicPlan,us.topicId),true,
+  "topic-level My Plan selection highlights that exact shared topic arrow");
+assert.match(explorer,/const sharedTopicEditions = \(\(\) => \{/);
+assert.match(explorer,/parents\.size > 1/);
+assert.match(explorer,/const hasSharedTopic = nested && \(sharedTopicEditions\.has\(course\.editionId\)/);
+assert.match(explorer,/const selectedHere = mode === "plan" && \(status\.planActive \|\| status\.ideaActive\)/);
+assert.match(explorer,/\{hasSharedTopic && <span className=\{"cx-topic-elsewhere" \+/);
+assert.match(explorer,/\(selectedHere \? " is-active" : ""\)/);
+assert.doesNotMatch(explorer,/\{presenceLabel\}/,
+  "visible My Plan / Think Tank labels should not compete with row status");
+assert.match(listCss,/\.cx-topic-elsewhere\.is-active \{\s*color:var\(--cx-subject\);/);
+assert.match(listCss,/\.cx-topic-elsewhere \{[\s\S]*?border:0;[\s\S]*?background:transparent;/);
+
 // Row tint/rail rules remain separate from this toolbar-only addition.
 assert.match(listCss,/\.cx-course\.cx-status-full \{\s*box-shadow:inset 3px 0 0 var\(--cx-subject\);/);
 
