@@ -86,7 +86,7 @@ A topic appearing under more than one published combined parent has a small **�
 
 - The arrow is **neutral gray-green** when this particular parent/topic occurrence is not selected, even if the same curriculum topic is saved under a different parent.
 - The arrow uses the current **subject's active text color** once this occurrence is selected in My Plan or Think Tank, whether directly or inherited from a whole-course action.
-- The tooltip/accessibility label still explains the shared curriculum connection and lists any selections under other parents. No visible "↔ My Plan" or "↔ Think Tank" text remains.
+- The tooltip/accessibility label is just **"Included in:"** followed by the published course names on separate lines. No visible "↔ My Plan" or "↔ Think Tank" text remains.
 - Inheritance, student assignments, course highlights, subject rails and toolbar selection colors stay governed by the existing `listRowStatus`; this change is a topic-title indicator only.
 
 ## Full Planning Desk scroll boundary and shared-topic provenance
@@ -99,4 +99,8 @@ Shared-topic arrows in the Course List have **two independent meanings** when co
 - **Subject-colored ↔**: the topic occurs in multiple courses and is selected in Think Tank or My Plan through *at least one* parent, even if the currently displayed parent is not selected.
 - **Highlighted row + subject-colored ↔**: the topic is selected in the currently displayed parent context. This does **not** imply it was also selected elsewhere. Student assignments always remain independent by parent.
 
-The arrow tooltip names the **actual published parent courses**, and separately names any parent contexts where the topic has been saved, with Think Tank / My Plan status. Tooltip text is informational only, and never propagates selections between courses.
+The arrow tooltip lists only **"Included in:"** and the published parent course names, in natural grade order. The icon and row colors already convey selection state, so the tooltip must not repeat Think Tank / My Plan status or assignment explanations.
+
+### Hover copy simplification
+
+The shared-topic arrow tooltip is deliberately minimal: `Included in:\n<Course 1>\n<Course 2>`. Do not add selection status, assignments, instructions, or generic prose. The arrow and row styling cover those meanings visually.
