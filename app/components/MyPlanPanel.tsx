@@ -223,6 +223,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <SharedPriorityEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
+                  <div className="pd-more-anchor">
                   <button type="button" className="pd-more"
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
@@ -230,8 +231,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     onClick={() => setOpenMenuId(menuOpen ? null : course.courseId)}>
                     <MoreHorizontal size={16} aria-hidden="true"/>
                   </button>
-                </div>
-                {menuOpen && <div className="pd-inline-actions" role="group"
+                                {menuOpen && <div className="pd-inline-actions" role="group"
                   aria-label={"More options for " + title}>
                   <Link href={"/books?course="+encodeURIComponent(course.courseId)}
                     onClick={()=>setOpenMenuId(null)}
@@ -258,6 +258,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <span className="pd-sr-only">Return to Think Tank</span>
                   </button>
                 </div>}
+                  </div>
+</div>
                 {open && <div className="pd-review pd-think-review myplan-review"
                   id={detailsId} role="region" aria-label={"Details for " + title}>
                   {item && (item.description || item.tips) && <div className="pd-think-description-section">
