@@ -69,7 +69,7 @@ assert.ok(plan.includes("toggleStudentEdit(course.courseId,event.currentTarget)"
 assert.ok(plan.includes("<StudentAssignmentEditor course={course}"));
 assert.ok(topics.includes('className="pd-topic-icon pd-topic-edit"'));
 assert.ok(topics.includes("<SharedTopicStudentEditor"));
-assert.ok(editor.includes('<input type="checkbox" checked={assigned.has(student.id)}'));
+assert.ok(editor.includes('<input type="checkbox" checked={isAssigned}'));
 assert.ok(editor.includes("demo.setAssignmentArrangement"));
 assert.ok(studentPriority.includes("plan.setAssignmentPriority"));
 assert.ok(editor.includes("<StudentPriorityControl"));
