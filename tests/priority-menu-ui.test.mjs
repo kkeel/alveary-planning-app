@@ -140,7 +140,8 @@ test("Shared arrangement controls exist at every optional planning stage",()=>{
   assert.match(sharedArrangement,/FloatingChoiceMenu/);
 });
 test("Only saved member choices populate the authenticated Think Tank",()=>{
-  assert.match(desk,/Retire leftover local-only bookmarks/);
+  assert.match(desk,/browser bookmarks into delete requests/);
+  assert.doesNotMatch(desk,/for\s*\(const id of desk\.thinkTankIds\)/);
   assert.match(desk,/cloud\.courses\s*\.filter\(choice=>pendingIdeaCount/);
   assert.match(course,/signedIn \? \[\] : desk\.thinkTankIds/);
 });
