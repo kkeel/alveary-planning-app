@@ -45,8 +45,9 @@ export default function SharedTopicStudentEditor({
 
   return <div className="pd-topic-context-editor">
     {contexts.length > 1 && <div className="pd-topic-context-switch">
-      <label htmlFor={selectId}>Edit students in course context</label>
-      <select id={selectId} value={active.courseId}
+      <label htmlFor={selectId}>↔ Shared course options</label>
+      <p id={selectId+"-help"}>Choose a course to edit</p>
+      <select id={selectId} aria-describedby={selectId+"-help"} value={active.courseId}
         onChange={event => setActiveCourseId(event.target.value)}>
         {contexts.map(context => {
           const group = demo.courses.find(course => course.courseId === context.courseId);
@@ -60,8 +61,7 @@ export default function SharedTopicStudentEditor({
           </option>;
         })}
       </select>
-      <p>Changes below apply only to this course context. You can switch to
-        another saved course above to edit its assignments.</p>
+
     </div>}
     <StudentAssignmentEditor
       course={selectedCourse} topicId={active.topicId}
