@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound, Trash2, CircleMinus } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
@@ -195,21 +195,27 @@ export default function CourseTopicReview({
       {menuOpen && <div className="pd-topic-menu" role="group"
         aria-label={"More options for " + topic.title}>
         <Link href={"/books?course="+encodeURIComponent(topic.id)}
-          onClick={()=>setTopicMenuId(null)}>
-          <BookOpen size={14} aria-hidden="true"/> View books
+          onClick={()=>setTopicMenuId(null)} title={"View books for "+topic.title}
+          aria-label={"View books for "+topic.title}>
+          <BookOpen size={17} aria-hidden="true"/>
+          <span className="pd-sr-only">View books</span>
         </Link>
         {mode==="plan" && savedChoice && !isRemoved &&
-          <button type="button" onClick={()=>{
+          <button type="button" title={editing?"Close students":"Edit students"}
+            aria-label={editing?"Close students":"Edit students"} aria-expanded={editing}
+            onClick={()=>{
             setEditingTopicId(editing?null:topic.id);
             onTopicEditingChange?.(!editing);
             setTopicMenuId(null);
           }}>
-            <UsersRound size={14} aria-hidden="true"/>
-            {editing?"Close students":"Edit students"}
+            <UsersRound size={17} aria-hidden="true"/>
+            <span className="pd-sr-only">{editing?"Close students":"Edit students"}</span>
           </button>}
         {mode==="think" && demo.ready && savedChoice &&
           (planning || !assignedInThisCourse(topic)) &&
-          <button type="button" onClick={()=>{
+          <button type="button" title={planning?"Close students":"Add / edit students"}
+            aria-label={planning?"Close students":"Add / edit students"} aria-expanded={planning}
+            onClick={()=>{
             if(planning) finishPlanningTopic();
             else {
               if(isRemoved) demo.setTopic(parent.id,topic.id,true);
@@ -218,8 +224,8 @@ export default function CourseTopicReview({
             }
             setTopicMenuId(null);
           }}>
-            <UsersRound size={14} aria-hidden="true"/>
-            {planning?"Close students":"Add / edit students"}
+            <UsersRound size={17} aria-hidden="true"/>
+            <span className="pd-sr-only">{planning?"Close students":"Add / edit students"}</span>
           </button>}
         {mode === "think" && !isOther && <button type="button"
           onClick={() => {
@@ -227,7 +233,10 @@ export default function CourseTopicReview({
             else onToggleTopic(topic.id,false);
             setTopicMenuId(null);
           }} aria-label={"Remove " + topic.title + " from Think Tank"}
-             title="Remove this idea"><Lightbulb size={14} aria-hidden="true"/> Remove idea</button>}
+             title="Remove this idea">
+             <Trash2 size={17} aria-hidden="true"/>
+             <span className="pd-sr-only">Remove idea</span>
+           </button>}
         <button type="button"
           aria-label={(isRemoved ? "Include " : "Exclude ") + topic.title +
             (isRemoved ? " in " : " from ") + parent.title}
@@ -235,9 +244,9 @@ export default function CourseTopicReview({
           onToggleTopic(topic.id,isRemoved);
           setTopicMenuId(null);
         }}>
-          {isRemoved ? <Plus size={14} aria-hidden="true"/> :
-            <span aria-hidden="true">−</span>}
-          {isRemoved ? "Include topic" : "Exclude topic"}
+          {isRemoved ? <Plus size={17} aria-hidden="true"/> :
+            <CircleMinus size={17} aria-hidden="true"/>}
+          <span className="pd-sr-only">{isRemoved ? "Include topic" : "Exclude topic"}</span>
         </button>
       </div>}
       <TopicOtherUses topicEditionId={topic.editionId}

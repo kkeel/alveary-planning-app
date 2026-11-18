@@ -1,15 +1,13 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { Settings2, UsersRound, X } from "lucide-react";
+import { UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
-import { courseArrangement, topicArrangementOverride } from "./arrangement-inheritance.mjs";
 import SharedPriorityEditor from "./SharedPriorityEditor";
 import StudentPriorityControl from "./StudentPriorityControl";
+import StudentArrangementControl from "./StudentArrangementControl";
 import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
-
-const arrangements = ["Combined", "Separate", "Later"] as const;
 
 export default function StudentAssignmentEditor({
   course, topicId, onAssigned, onClose, onCancel,
@@ -21,7 +19,6 @@ export default function StudentAssignmentEditor({
   // the source of truth; a topic checkbox never creates a standalone choice.
   const topicChoice = topicId ? course.topics.find(topic =>
     topic.topicId === topicId && topic.included) : null;
-  const [detailsStudentId, setDetailsStudentId] = useState<string | null>(null);
   const [groupEditing, setGroupEditing] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [groupName, setGroupName] = useState("");
@@ -118,31 +115,48 @@ export default function StudentAssignmentEditor({
   return <div className="plan-editor">
     <div className="plan-assign-head">
       <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>
-      <div className="plan-assign-head-tools">
-        <div className="pd-assignment-quick-actions">
-          {(onCancel || onClose) && <button type="button" className="pd-cancel-action"
-            onClick={() => (onCancel ?? onClose)?.()}
-            title={hasSavedEdits
-              ? "Close editing; earlier changes are already saved"
-              : "Cancel editing without changing this assignment"}>
-            {hasSavedEdits ? "Close" : "Cancel"}
-          </button>}
-          {onClose && <button type="button" className="pd-done-action"
-            onClick={finishEditing} title="Finish student editing and save this selection to My Plan">
-            Done
-          </button>}
-        </div>
-        <div className="plan-assign-secondary-tools">
-          <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
-            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}
-            displayPriority={displayPriority}/>
-          <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
-            onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
-            {addingStudent ? "Cancel adding" : "+ Add student"}
-          </button>
-        </div>
+      <div className="pd-assignment-quick-actions">
+        {(onCancel || onClose) && <button type="button" className="pd-cancel-action"
+          onClick={() => (onCancel ?? onClose)?.()}
+          title={hasSavedEdits
+            ? "Close editing; earlier changes are already saved"
+            : "Cancel editing without changing this assignment"}>
+          {hasSavedEdits ? "Close" : "Cancel"}
+        </button>}
+        {onClose && <button type="button" className="pd-done-action"
+          onClick={finishEditing} title="Finish student editing and save this selection to My Plan">
+          Done
+        </button>}
       </div>
     </div>
+    <div className="plan-assign-layout">
+      <div className="plan-assign-main">
+        <div className="plan-group-shortcuts" aria-label="Choose students and set priority">
+          <button type="button" className="plan-select-all"
+            disabled={!demo.students.length}
+            onClick={() => assign(demo.students.map(student => student.id))}
+            title={topicId ? "Assign this topic to every student" :
+              "Assign the included course to every student"}>
+            All
+          </button>
+          {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
+            <button type="button" onClick={() => assign(group.studentIds)}
+              disabled={!group.studentIds.length}>{group.name}</button>
+            <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
+              aria-label={"Edit " + group.name}>Edit</button>
+          </div>)}
+          <button type="button" className="plan-group-create" onClick={() => openGroup()}>
+            + Group
+          </button>
+          <button type="button" className="plan-add-student-action"
+            aria-expanded={addingStudent}
+            onClick={() => { setAddingStudent(value => !value); setStudentError(null); }}>
+            {addingStudent ? "Cancel adding" : "+ Student"}
+          </button>
+          <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
+            selectedTopicIds={topicId ? [] : course.topics.filter(t => t.included).map(t => t.topicId)}
+            displayPriority={displayPriority}/>
+        </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
       <label htmlFor={fieldId+"-student"}>Name or nickname</label>
       <input id={fieldId+"-student"} value={studentName} maxLength={60} required
@@ -161,51 +175,27 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
-    <div className={"plan-assign-layout" + (detailsStudentId ? " has-details" : "")}>
-      <div className="plan-assign-main">
-        {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose students">
-          <button type="button" className="plan-select-all"
-            onClick={() => assign(demo.students.map(student => student.id))}
-            title={topicId ? "Assign this topic to every student" :
-              "Assign the included course to every student"}>
-            All
-          </button>
-          {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
-            <button type="button" onClick={() => assign(group.studentIds)}
-              disabled={!group.studentIds.length}>{group.name}</button>
-            <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
-              aria-label={"Edit " + group.name}>Edit</button>
-          </div>)}
-          <button type="button" className="plan-group-create" onClick={() => openGroup()}>
-            + Group
-          </button>
-        </div>}
+
         <div className="plan-student-list" aria-label="Assign individual students">
           {demo.students.map(student => {
             const isAssigned=assigned.has(student.id);
-            const hasTopicChoices=!topicId && effectiveTopicCount(course,student.id)>0;
-            return <div className={"plan-student-row" +
-              (isAssigned?" is-assigned":"") + (detailsStudentId===student.id?" is-editing":"")}
+            return <div className={"plan-student-row" + (isAssigned?" is-assigned":"")}
               key={student.id}>
               <label className="plan-student-check">
                 <input type="checkbox" checked={isAssigned}
                   onChange={event=>setStudentAssignments([student.id],event.target.checked)}/>
                 <span>{student.displayName}</span>
               </label>
-              <div className="plan-student-tools">
-                {isAssigned && <StudentPriorityControl
-                  courseId={course.courseId} topicId={topicId??null}
+              {isAssigned && <div className="plan-student-tools">
+                <StudentPriorityControl
+                  courseId={course.courseId} topicId={topicId ?? null}
                   studentId={student.id} studentName={student.displayName}
-                  onChanged={()=>setHasSavedEdits(true)}/>} 
-                <button type="button" className="plan-student-settings"
-                  title={"Other choices for "+student.displayName}
-                  aria-label={"Other choices for "+student.displayName}
-                  aria-expanded={detailsStudentId===student.id}
-                  disabled={!isAssigned&&!hasTopicChoices}
-                  onClick={()=>setDetailsStudentId(id=>id===student.id?null:student.id)}>
-                  <Settings2 size={15} aria-hidden="true"/>
-                </button>
-              </div>
+                  onChanged={() => setHasSavedEdits(true)}/>
+                <StudentArrangementControl
+                  courseId={course.courseId} topicId={topicId ?? null}
+                  studentId={student.id} studentName={student.displayName}
+                  onChanged={() => setHasSavedEdits(true)}/>
+              </div>}
             </div>;
           })}
         </div>
@@ -246,54 +236,6 @@ export default function StudentAssignmentEditor({
           </p>
         </div>}
       </div>
-      {detailsStudentId && (()=>{
-        const student=demo.students.find(s=>s.id===detailsStudentId);
-        if(!student || (!assigned.has(student.id) &&
-          (topicId || effectiveTopicCount(course,student.id)===0))) return null;
-        const arrangement=courseArrangement(demo.assignmentArrangements,course.courseId,student.id);
-        const topicArrangement=topicId ? topicArrangementOverride(
-          demo.assignmentArrangements,course.courseId,student.id,topicId) : "inherit";
-        return <section className="plan-student-detail" aria-label={"Other choices for "+student.displayName}>
-          <div className="plan-student-detail-head">
-            <strong>{student.displayName} · Other choices</strong>
-            <button type="button" aria-label="Close other choices"
-              onClick={()=>setDetailsStudentId(null)}><X size={15}/></button>
-          </div>
-          {topicId && <div className="plan-student-detail-priority">
-            <span>Whole course</span>
-            <StudentPriorityControl courseId={course.courseId}
-              studentId={student.id} studentName={student.displayName}
-              onChanged={()=>setHasSavedEdits(true)}/>
-          </div>}
-          <label>Arrangement
-            <select value={arrangement} onChange={event=>{
-              setHasSavedEdits(true);
-              demo.setAssignmentArrangement(course.courseId,student.id,null,
-                event.target.value as "Combined"|"Separate"|"Later");
-            }}>
-              {arrangements.map(item=><option key={item} value={item}>
-                {item==="Later"?"Decide later":item}
-              </option>)}
-              {arrangement==="Both" && <option value="Both">Both (previous setting)</option>}
-            </select>
-          </label>
-          {topicId && <label>This topic
-            <select value={topicArrangement} onChange={event=>{
-              setHasSavedEdits(true);
-              demo.setAssignmentArrangement(course.courseId,student.id,topicId,
-                event.target.value==="inherit" ? null :
-                event.target.value as "Combined"|"Separate"|"Later");
-            }}>
-              <option value="inherit">Same as course</option>
-              {arrangements.map(item=><option key={item} value={item}>
-                {item==="Later"?"Decide later":item}
-              </option>)}
-              {topicArrangement==="Both" && <option value="Both">Both (previous setting)</option>}
-            </select>
-          </label>}
-          <small>Changes for {student.displayName} won't affect anyone else's settings.</small>
-        </section>;
-      })()}
     </div>
   </div>;
 }
