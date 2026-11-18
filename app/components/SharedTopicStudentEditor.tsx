@@ -2,7 +2,6 @@
 
 import { useId, useMemo, useState } from "react";
 import { useDemoPlan } from "./DemoPlanContext";
-import { isTopicAssigned } from "./topic-assignment.mjs";
 import { savedTopicContexts } from "./shared-topic-contexts.mjs";
 import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import catalog from "../courses/catalog-preview.json";
@@ -49,17 +48,9 @@ export default function SharedTopicStudentEditor({
       <p id={selectId+"-help"}>Choose a course to edit</p>
       <select id={selectId} aria-describedby={selectId+"-help"} value={active.courseId}
         onChange={event => setActiveCourseId(event.target.value)}>
-        {contexts.map(context => {
-          const group = demo.courses.find(course => course.courseId === context.courseId);
-          const studentNames = group ? demo.students.filter(student =>
-            isTopicAssigned(group, context.topicId, student.id)
-          ).map(student => student.displayName) : [];
-          return <option key={context.courseId} value={context.courseId}>
-            {names.get(context.courseId) ?? "Saved course"} — {studentNames.length
-              ? studentNames.join(", ") : "no students yet"}
-            {context.stage === "idea" ? " (Think Tank)" : ""}
-          </option>;
-        })}
+        {contexts.map(context => <option key={context.courseId} value={context.courseId}>
+          {names.get(context.courseId) ?? "Saved course"} ({context.stage === "idea" ? "Think Tank" : "My Plan"})
+        </option>)}
       </select>
 
     </div>}
