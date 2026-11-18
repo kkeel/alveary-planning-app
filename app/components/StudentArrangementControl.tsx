@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Check, Clock3 } from "lucide-react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "./arrangement-inheritance.mjs";
@@ -36,6 +36,9 @@ export default function StudentArrangementControl({
 }){
   const plan=useDemoPlan();
   const [open,setOpen]=useState(false);
+  const [opensUp,setOpensUp]=useState(false);
+  const [alignStart,setAlignStart]=useState(false);
+  const menuRef=useRef<HTMLDivElement>(null);
   const rootRef=useRef<HTMLDivElement>(null);
   const triggerRef=useRef<HTMLButtonElement>(null);
   const menuId=useId();
@@ -62,6 +65,21 @@ export default function StudentArrangementControl({
       document.removeEventListener("keydown",closeEscape);
     };
   },[open]);
+  useLayoutEffect(()=>{
+    if(!open || !triggerRef.current || !menuRef.current) return;
+    const trigger=triggerRef.current.getBoundingClientRect();
+    const menu=menuRef.current.getBoundingClientRect();
+    const scroller=triggerRef.current.closest(
+      ".pd-body, .pd-full-column-body, .cx-inline-assign");
+    const bounds=scroller?.getBoundingClientRect();
+    const top=Math.max(0,bounds?.top??0);
+    const bottom=Math.min(window.innerHeight,bounds?.bottom??window.innerHeight);
+    const left=Math.max(0,bounds?.left??0);
+    const below=bottom-trigger.bottom;
+    const above=trigger.top-top;
+    setOpensUp(below < menu.height+8 && above>below);
+    setAlignStart(trigger.right-menu.width < left+5);
+  },[open]);
   function choose(value:Choice){
     if(value==="Both") return; // legacy read-only value
     plan.setAssignmentArrangement(courseId,studentId,topicId,
@@ -78,7 +96,8 @@ export default function StudentArrangementControl({
     ...(selected==="Both"?[{value:"Both" as Choice,label:"Both (previous setting)",display:"Both" as const}]:[]),
   ];
   return <div ref={rootRef}
-      className={"student-arrangement-control"+(inherited?" is-inherited":"")}
+      className={"student-arrangement-control"+(inherited?" is-inherited":"")+
+        (opensUp?" is-flipped":"")+(alignStart?" is-align-start":"")}
       onClick={event=>event.stopPropagation()}>
     <button type="button" ref={triggerRef} className="student-arrangement-trigger"
       disabled={!plan.ready} aria-expanded={open} aria-controls={menuId}
@@ -87,7 +106,7 @@ export default function StudentArrangementControl({
       onClick={()=>setOpen(v=>!v)}>
       <ArrangementSymbol value={effective} size={19}/>
     </button>
-    {open && <div id={menuId} className="priority-control-popover student-arrangement-popover"
+    {open && <div ref={menuRef} id={menuId} className="priority-control-popover student-arrangement-popover"
       role="group" aria-label={"Arrangement for "+studentName}>
       <div className="priority-control-heading">{studentName}<span>Arrangement</span></div>
       {choices.map(item=><button type="button" key={item.value}
