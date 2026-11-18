@@ -97,7 +97,7 @@ const sharedTopicParentTitles = (() => {
     titles.set(link.childEditionId, options);
   }
   return new Map([...titles].map(([editionId, names]) =>
-    [editionId, [...names].sort()] as const));
+    [editionId, [...names].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))] as const));
 })();
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const comparePlan = (a: Plan, b: Plan) =>
@@ -214,16 +214,9 @@ function CourseRow({
   const selectedHere = mode === "plan" && (status.planActive || status.ideaActive);
   const selectedInAnyCourse = selectedHere || (mode === "plan" && presentElsewhere.length > 0);
   const publishedParentTitles = sharedTopicParentTitles.get(course.editionId) ?? [];
-  const presenceDescription = [
-    "Shared curriculum topic. Offered in: " + publishedParentTitles.join("; ") + ".",
-    selectedHere
-      ? "Selected under this course in " + (status.planActive ? "My Plan" : "Think Tank") + "."
-      : "Not selected under this course.",
-    ...presentElsewhere.map(place =>
-      "Also selected under " + place.courseTitle + " in " + place.location + "."),
-    !selectedInAnyCourse ? "Not yet selected in Think Tank or My Plan." : "",
-    "Student assignments stay separate for each course.",
-  ].filter(Boolean).join(" ");
+  // Keep the shared-curriculum tooltip short: just the published courses.
+  // Selection meaning belongs to the arrow color and row highlighting.
+  const presenceDescription = "Included in:\n" + publishedParentTitles.join("\n");
   // A course or topic is visually selected if it is in Think Tank OR My Plan.
   // This is presentation-only; shared-topic provenance and assignment logic stay intact.
   const hasPlanningSelection = mode === "plan" && (status.ideaActive || status.planActive);
