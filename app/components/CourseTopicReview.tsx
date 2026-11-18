@@ -9,6 +9,7 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -129,6 +130,11 @@ export default function CourseTopicReview({
       ? demo.students.filter(student =>
           isTopicAssigned(savedChoice, topic.id, student.id)).map(student => student.displayName)
       : [];
+    const topicStudents = mode === "plan" && savedChoice && !isRemoved ?
+      demo.students.filter(student=>isTopicAssigned(savedChoice,topic.id,student.id)) : [];
+    const displayPriority = topicStudents.length ? priorityRollup(topicStudents.map(student=>
+      effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+        parent.id,topic.id,student.id))) : undefined;
     // The selection marker belongs to the topic title, not the toolbar.
     // Keep both in the same hover/focus surface without tinting the row.
     const selectionMark = mode === "think" && isOther && assignedInThisCourse(topic)
@@ -166,7 +172,8 @@ export default function CourseTopicReview({
               {selectionMark}{topicTitle}
             </span>}
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
-          <SharedPriorityEditor courseId={parent.id} topicId={topic.id} compact/>}
+          <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
+            displayPriority={displayPriority} compact/>}
         <Link className="pd-topic-icon pd-topic-books"
           href={"/books?course=" + encodeURIComponent(topic.id)}
           aria-label={"View books for " + topic.title} title="View books">
