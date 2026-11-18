@@ -49,8 +49,8 @@ test("One source defines the neutral resting, hover, open, focus and reduced-mot
     "--planning-icon-hover-foreground","--planning-icon-open-background",
     "--planning-icon-focus-ring",
   ]) assert.ok(css.includes(value));
-  assert.match(css,/\.planning-icon-control\):not\(\.is-tone-full\)/);
-  assert.match(css,/\[aria-expanded="true"\]:not\(\.is-selected\)/);
+  assert.match(css,/\.planning-icon-control\):where\(:not\(\.is-tone-full\)/);
+  assert.match(css,/\[aria-expanded="true"\]:where\(:not\(\.is-selected\)/);
   assert.match(css,/:focus-visible/);
   assert.match(css,/prefers-reduced-motion:reduce/);
 });
