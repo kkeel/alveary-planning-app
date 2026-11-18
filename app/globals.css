@@ -564,3 +564,17 @@ p { line-height: 1.65; }
 .student-priority-control.is-inherited .priority-control-trigger {
   border-color:#e2e9df; background:#fbfcfa;
 }
+
+/* Compact, optional arrangement control; viewport-bound popovers are portaled
+   so no Planning Desk scrollbar clips their choices. */
+.shared-arrangement-control .priority-control-trigger {
+  border:1px solid #dde7d9; border-radius:4px;
+  color:#66816d; background:#fff;
+}
+.shared-arrangement-control.is-inherited .priority-control-trigger {
+  color:#879b8a;
+}
+.priority-control-popover.floating-choice-menu {
+  position:fixed; width:205px; right:auto; bottom:auto;
+  z-index:10020; overflow-x:hidden;
+}
