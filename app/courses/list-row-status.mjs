@@ -70,3 +70,12 @@ export function nextCourseIdeaAll(course,students) {
   const active=eligible.some(isIdea);
   return incomplete || !active;
 }
+
+/** Empty after the last Think Tank idea and last effective student is gone.
+ * When true the parent must be deleted, so every excluded topic and saved
+ * default is reset by ON DELETE CASCADE, rather than stored invisibly. */
+export function isUnusedSavedCourse(course,students){
+  return pendingIdeaCount(course,students)===0 &&
+    !course.topics.some(topic=>topic.included &&
+      topicHasAssignedStudent(course,topic.topicId,students));
+}
