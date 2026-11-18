@@ -101,17 +101,27 @@ test("Direct course/topic clicks stay saturated while neighboring controls are p
   assert.match(list,/button\.planning-icon-control\.cx-info-action\.is-open\s*\{[\s\S]*?background:var\(--cx-subject-pale\)/);
 });
 
-test("Planning density control remains sticky and mini desk controls inherit row backgrounds",()=>{
+test("Portable density control is attached to tabs, outside the scroller",()=>{
   const deskCss=read("app/components/planning-desk.css");
   const think=read("app/components/PlanningDesk.tsx");
   const plan=read("app/components/MyPlanPanel.tsx");
-  assert.match(deskCss,/\.pd-details-toolbar\s*\{\s*position:sticky;\s*top:0;\s*z-index:16;/);
-  assert.match(deskCss,/\.pd-desk \.pd-details-toolbar\s*\{\s*padding:7px 12px 9px;/);
-  assert.match(deskCss,/button\.planning-icon-control\.priority-control-trigger:not\(:hover\):not\(:focus-visible\):not\(\[aria-expanded="true"\]\)\s*\{\s*background:transparent !important;/);
+  assert.match(deskCss,/\.pd-desk-controls\s*\{\s*flex:0 0 auto;/);
+  assert.match(deskCss,/\.pd-desk \.pd-header-density\s*\{\s*display:flex;/);
+  const tabs=think.indexOf('className="pd-tabs"');
+  const density=think.indexOf('className="pd-header-density"',tabs);
+  const scrolling=think.indexOf('className="pd-body"',density);
+  assert.ok(tabs>0 && density>tabs && scrolling>density,
+    "tabs and mode switch must both precede the scroll viewport");
+  assert.match(think,/desk\.tab === "think"[\s\S]*?<DetailViewSwitch label="Think Tank"[\s\S]*?<DetailViewSwitch label="My Plan"/);
+  assert.match(think,/densityControlInHeader \/>/);
+  assert.match(plan,/\{!densityControlInHeader && <div className="pd-details-toolbar">/);
+  assert.match(plan,/\[desk\.planDetails, densityControlInHeader\]/);
   for(const source of [think,plan]) {
-    const intro=source.indexOf("pd-planning-guidance");
-    const switchAt=source.indexOf('className="pd-details-toolbar"',intro);
-    assert.ok(intro>=0 && switchAt>intro,
-      "Guidance should scroll away separately; the mode switch alone stays sticky");
+    assert.match(source,/pd-planning-guidance/);
+    assert.match(source,/className="pd-subject-list"/);
   }
+});
+test("Mini desk unset buttons inherit row backgrounds",()=>{
+  const deskCss=read("app/components/planning-desk.css");
+  assert.match(deskCss,/button\.planning-icon-control\.priority-control-trigger:not\(:hover\):not\(:focus-visible\):not\(\[aria-expanded="true"\]\)\s*\{\s*background:transparent !important;/);
 });

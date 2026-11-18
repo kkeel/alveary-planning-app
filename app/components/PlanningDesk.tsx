@@ -214,12 +214,18 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // Render one shared set of planning components in either the compact tabs
   // or two visible columns. List and Planning never mount both desk variants.
   const notices = null;
+  const changeThinkDensity = (next: typeof desk.thinkDetails) => {
+    desk.setThinkDetails(next);
+    setOpenThinkCourseId(assigningId);
+    setCourseInfoId(null);
+    setHiddenDetailedCourseIds([]);
+  };
   const thinkTankContent = <>
-          {ideas.length > 0 && <p className="pd-intro pd-planning-guidance">Ideas to consider for your school year.</p>}
-          <div className="pd-details-toolbar">
+          {variant === "full" && <div className="pd-details-toolbar">
             <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
-              onChange={next => { desk.setThinkDetails(next); setOpenThinkCourseId(assigningId); setCourseInfoId(null); setHiddenDetailedCourseIds([]); }}/>
-          </div>
+              onChange={changeThinkDensity}/>
+          </div>}
+          {ideas.length > 0 && <p className="pd-intro pd-planning-guidance">Ideas to consider for your school year.</p>}
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map(subject => {
               const list = orderedIdeas(subject);
@@ -480,15 +486,24 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
         </div>
       </header>
 
-      <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
-        <button role="tab" type="button" aria-selected={desk.tab === "think"}
-          className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
-          <Lightbulb size={14} aria-hidden="true"/> Think Tank <span>{ideas.length}</span>
-        </button>
-        <button role="tab" type="button" aria-selected={desk.tab === "plan"}
-          className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
-          <SquareCheckBig size={14} aria-hidden="true"/> My Plan <span>{plannedIds.size}</span>
-        </button>
+      <div className="pd-desk-controls">
+        <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
+          <button role="tab" type="button" aria-selected={desk.tab === "think"}
+            className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
+            <Lightbulb size={14} aria-hidden="true"/> Think Tank <span>{ideas.length}</span>
+          </button>
+          <button role="tab" type="button" aria-selected={desk.tab === "plan"}
+            className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
+            <SquareCheckBig size={14} aria-hidden="true"/> My Plan <span>{plannedIds.size}</span>
+          </button>
+        </div>
+        <div className="pd-header-density">
+          {desk.tab === "think"
+            ? <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
+                onChange={changeThinkDensity}/>
+            : <DetailViewSwitch label="My Plan" value={desk.planDetails}
+                onChange={next => desk.setPlanDetails(next)}/>}
+        </div>
       </div>
 
       <div className="pd-body">
@@ -498,7 +513,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <ArrowLeft size={14}/> Back to Course List
         </Link>}
         {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
-          focusRevision={focusPlanned?.revision} onBrowseCourses={closeMobileDrawer} />}
+          focusRevision={focusPlanned?.revision} onBrowseCourses={closeMobileDrawer}
+          densityControlInHeader />}
       </div>
     </aside>}
   </div>;

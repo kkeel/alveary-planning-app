@@ -1959,3 +1959,33 @@
   button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible):not([aria-expanded="true"]) {
   background:transparent;
 }
+
+
+/* Portable desk: the tabs and density switch are ONE stationary control
+ * section outside the scrolling .pd-body. Sticky positioning inside the
+ * scrolling subject list caused headers and rows to slip over the switch. */
+.pd-desk-controls {
+  flex:0 0 auto;
+  min-width:0;
+}
+.pd-desk-controls .pd-tabs {
+  margin-top:13px;
+  border-bottom:0;
+}
+.pd-desk .pd-header-density {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  min-width:0;
+  padding:5px 6px 8px;
+  background:#f4f6f0;
+  border:1px solid #e3e8dd;
+  border-top:0;
+}
+.pd-header-density .pd-detail-switch {
+  max-width:100%;
+}
+.pd-desk .pd-body {
+  /* Only the list and its short introductory copy scroll below the controls. */
+  position:relative;
+}

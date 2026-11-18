@@ -60,7 +60,7 @@ function studentSummary(course: SavedCourse,
 /** My Plan shares Think Tank's list, accordion, metadata and neutral disclosure
  * styling, but its selection symbol is a check and its student actions edit
  * existing assignments through the same editor used when first adding them. */
-export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, onBrowseCourses }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean; onBrowseCourses?: () => void }) {
+export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, onBrowseCourses, densityControlInHeader = false }: { focusCourseId?: string | null; focusRevision?: number; sideBySide?: boolean; onBrowseCourses?: () => void; densityControlInHeader?: boolean }) {
   const demo = useDemoPlan();
   const desk = usePlanningDesk();
   // One open course across all My Plan subjects, just as in Think Tank.
@@ -69,6 +69,15 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   const [hiddenDetailedCourseIds, setHiddenDetailedCourseIds] = useState<string[]>([]);
   const [editingStudentsId, setEditingStudentsId] = useState<string | null>(null);
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
+  // The portable desk owns the switch in its fixed header. When that
+  // external control changes the mode, clear local disclosures exactly as
+  // the in-column switch does, without clearing active student editors.
+  useEffect(() => {
+    if (!densityControlInHeader) return;
+    setOpenId(null);
+    setInfoId(null);
+    setHiddenDetailedCourseIds([]);
+  }, [desk.planDetails, densityControlInHeader]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
   const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
@@ -158,11 +167,11 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
-    {planned.length > 0 && <p className="pd-intro myplan-intro pd-planning-guidance">Your chosen courses, with details available when needed.</p>}
-    <div className="pd-details-toolbar">
+    {!densityControlInHeader && <div className="pd-details-toolbar">
       <DetailViewSwitch label="My Plan" value={desk.planDetails}
         onChange={next => { desk.setPlanDetails(next); setOpenId(editingStudentsId ?? editingTopicCourseId); setInfoId(null); setHiddenDetailedCourseIds([]); }}/>
-    </div>
+    </div>}
+    {planned.length > 0 && <p className="pd-intro myplan-intro pd-planning-guidance">Your chosen courses, with details available when needed.</p>}
     {!planned.length && <div className="pd-empty-state">
       <h3>Your plan starts here</h3>
       <p>Add students to a course or topic from the Course List to see it in My Plan.</p>
