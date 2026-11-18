@@ -261,9 +261,7 @@ function CourseRow({
       </button>
       <div className="cx-course-actions">
         {canExpand && <button type="button" className={"planning-icon-control cx-info-action" +
-          (showFullDetails ? " is-open" : "") +
-          (mode === "plan" && (status.ideaActive || status.planActive)
-            ? " is-member" : "")}
+          (showFullDetails ? " is-open" : "")}
           aria-controls={detailsId} aria-expanded={isExpanded}
           aria-label={(showFullDetails ? "Hide" : "View") + " details for " + course.title}
           title={(showFullDetails ? "Hide" : "View") + " description and topics"}
