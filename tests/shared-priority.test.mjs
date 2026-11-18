@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
  sharedCoursePriority, sharedTopicPriority, sharedTopicOverride,
- sharedCourseSummary, effectivePlanningPriority,
+ sharedCourseSummary, effectivePlanningPriority, priorityRollup,
 } from "../app/components/shared-priority.mjs";
 
 test("History course default changes only inherited topics; selected override stays",()=>{
@@ -42,4 +42,18 @@ test("Shared-topic parent context keeps different saved choices independent",()=
  {courseId:"single-ethics",topicId:"ethics",priority:"Core"}];
  assert.equal(sharedTopicPriority(shared,"combined-history","ethics"),"Additional");
  assert.equal(sharedTopicPriority(shared,"single-ethics","ethics"),"Core");
+});
+
+test("display rollups become Varied for different student priorities without modifying defaults",()=>{
+ const shared=[{courseId:"history",topicId:null,priority:"Core"},
+   {courseId:"history",topicId:"us",priority:"Additional"}];
+ const student=[{courseId:"history",topicId:"us",studentId:"hannah",priority:"High Interest"}];
+ const perStudent=["hannah","aj"].map(id=>effectivePlanningPriority(
+   shared,student,"history","us",id));
+ assert.equal(priorityRollup(perStudent),"Varied");
+ assert.equal(sharedTopicPriority(shared,"history","us"),"Additional");
+ assert.equal(sharedCoursePriority(shared,"history"),"Core");
+ assert.equal(priorityRollup(["Core","Core"]),"Core");
+ assert.equal(priorityRollup(["Core",null]),"Varied");
+ assert.equal(priorityRollup([]),null);
 });
