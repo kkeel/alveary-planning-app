@@ -19,6 +19,7 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import SharedPriorityEditor from "../components/SharedPriorityEditor";
+import SharedArrangementEditor from "../components/SharedArrangementEditor";
 import { buildTopicPresenceIndex, otherTopicPresence, type TopicPresenceIndex } from "../components/topic-sharing";
 import { coursePriorityRollup, topicPriorityRollup } from "../components/shared-priority.mjs";
 import { useDemoPlan, type PlanningStudent, type SavedCourse, type SharedPriority, type AssignmentPriority } from "../components/DemoPlanContext";
@@ -294,6 +295,9 @@ function CourseRow({
           <SharedPriorityEditor courseId={sourceCourseId}
             topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
             compact={nested} disabled={status.excluded} displayPriority={displayPriority}/>
+          <SharedArrangementEditor courseId={sourceCourseId}
+            topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
+            compact={nested} disabled={status.excluded}/>
           <button type="button" className={"cx-direct-plan-action" +
             (status.planActive ? " is-selected" : "") +
             (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
