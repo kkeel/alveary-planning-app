@@ -52,3 +52,13 @@ A member may click a title or info icon for one course or topic without changing
 - Expanded never opens course-level schedule, grade or description panels by default; single-topic courses have no blank detail rail. Combined-course topics sit immediately beneath the course identity.
 - Detailed keeps published recommendations and grade labels in the detail area **only once**, with no double separator, and opening a topic never leaves a persistent highlighted background behind its title.
 - Review the mobile mini desk: per-course closures in Detailed remain closed independently until reopened or the mode is changed.
+
+## Selected-row toolbar consistency (November 18 follow-up)
+
+The Course List uses its existing `listRowStatus` (parent-aware Think Tank/My Plan status) to add a **toolbar-only** `cx-has-planning-selection` class. This does not change selected rows, rails, topic inheritance, or saved member records.
+
+- **Unselected course/topic:** unchosen tools remain muted and white. **View + i** is plain, unboxed text.
+- **Selected whole course (Think Tank or My Plan):** course and included selected topic toolbars use the same *light subject tint* for lightbulb, tag, arrangement, and Plan/+All, whether each individual setting is filled or unset. **Hide + i** uses the same light tint.
+- **Selected single topic:** tint that topic's toolbar and its combined-course toolbar, but leave other unselected topics' toolbars neutral. Preserve shared edition/parent context.
+- **View + i:** always unboxed (resting and hover), regardless of selection; on opening, **Hide + i** becomes a highlighted control. On unselected rows, Hide uses the neutral open background.
+- Keep the existing selected-state semantics and aria attributes; this is visual consistency, not a change in what a button does.
