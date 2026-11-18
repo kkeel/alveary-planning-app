@@ -17,7 +17,7 @@ Avoid surrounding the dots with a permanent bordered box. Never let a long label
 
 Neutral tools share one border `#dbe5d8`, glyph `#68816d`, resting white background, neutral-hover background `#f0f3ee`, border `#cbd6c9`, and hover glyph `#4e6655`. Open controls use `#f1f5ed` and `#d3dcd1`; keyboard focus uses a **2px `#59836a`** ring with a 2px offset. Transitions are 120ms and disabled for reduced-motion preferences.
 
-**Selected statuses are deliberate exceptions**: a selected course lightbulb and student-assignment action may keep their subject tint. Core, High Interest, Additional illustrations and Varied remain the original artwork and symbols. A selected row does not cause neighboring neutral actions to adopt an unrelated status color.
+**Selected statuses are deliberate exceptions**: the exact directly chosen Think Tank lightbulb or +/+All My Plan action is saturated in the subject color; other controls on that selected course/topic row share the lighter subject background with a medium hover. Core, High Interest, Additional illustrations and Varied remain the original artwork and symbols. A selected row gives its neighboring toolbar actions that row's own **pale subject tint**, never the selected action's full saturation. Unchosen topics remain neutral.
 
 The title disclosure, priority, arrangement, information, and overflow controls keep separate clickable areas; a hover on one never paints the entire topic row.
 
@@ -58,7 +58,14 @@ A member may click a title or info icon for one course or topic without changing
 The Course List uses its existing `listRowStatus` (parent-aware Think Tank/My Plan status) to add a **toolbar-only** `cx-has-planning-selection` class. This does not change selected rows, rails, topic inheritance, or saved member records.
 
 - **Unselected course/topic:** unchosen tools remain muted and white. **View + i** is plain, unboxed text.
-- **Selected whole course (Think Tank or My Plan):** course and included selected topic toolbars use the same *light subject tint* for lightbulb, tag, arrangement, and Plan/+All, whether each individual setting is filled or unset. **Hide + i** uses the same light tint.
+- **Selected whole course (Think Tank or My Plan):** its directly clicked lightbulb or +All remains **fully saturated**. The other course and inherited topic controls use the **pale subject tint** (stronger on hover), whether each individual option is configured or unset. **Hide + i** uses the same light tint.
 - **Selected single topic:** tint that topic's toolbar and its combined-course toolbar, but leave other unselected topics' toolbars neutral. Preserve shared edition/parent context.
 - **View + i:** always unboxed (resting and hover), regardless of selection; on opening, **Hide + i** becomes a highlighted control. On unselected rows, Hide uses the neutral open background.
 - Keep the existing selected-state semantics and aria attributes; this is visual consistency, not a change in what a button does.
+
+## Final color / sticky-control refinement
+
+- **Full saturated subject color:** the originating lightbulb or + / +All only, at whichever course/topic level the member clicked. This follows existing `ideaTone === "full"` or `planTone === "full"` and does not change those statuses.
+- **Pale background:** every other button on that selected row, including Hide, arrangement, priority, and the *other* selection action. Hover strengthens to the medium subject wash. Individual topics not selected stay neutral even when a sibling is active.
+- **Mini Planning Desk:** unset buttons use transparent backgrounds so the color of the underlying row shows through rather than leaving white tiles. Active settings and hover/focus remain legible.
+- **Density switch:** Compact / Expanded / Detailed remains pinned directly below the Think Tank / My Plan tabs in the scrollable mini desk (and in the corresponding full Planning columns); the guidance sentence scrolls away with the content, not with the sticky controls.

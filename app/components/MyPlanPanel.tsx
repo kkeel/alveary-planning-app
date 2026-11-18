@@ -158,8 +158,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
+    {planned.length > 0 && <p className="pd-intro myplan-intro pd-planning-guidance">Your chosen courses, with details available when needed.</p>}
     <div className="pd-details-toolbar">
-      {planned.length > 0 && <p className="pd-intro myplan-intro">Your chosen courses, with details available when needed.</p>}
       <DetailViewSwitch label="My Plan" value={desk.planDetails}
         onChange={next => { desk.setPlanDetails(next); setOpenId(editingStudentsId ?? editingTopicCourseId); setInfoId(null); setHiddenDetailedCourseIds([]); }}/>
     </div>

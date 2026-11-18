@@ -21,8 +21,8 @@ assert.ok(css.includes(".pd-full-column-body .pd-empty-state { padding-inline:2p
   "Full Planning columns should reuse state but respect existing panel padding");
 
 // Don't repeat an introduction on top of a custom zero-state explanation.
-assert.ok(desk.includes('{ideas.length > 0 && <p className="pd-intro">'));
-assert.ok(plan.includes('{planned.length > 0 && <p className="pd-intro myplan-intro">'));
+assert.ok(desk.includes('{ideas.length > 0 && <p className="pd-intro pd-planning-guidance">'));
+assert.ok(plan.includes('{planned.length > 0 && <p className="pd-intro myplan-intro pd-planning-guidance">'));
 for (const source of [desk,plan]) {
   assert.ok(source.includes('className="pd-empty-state"'));
   assert.ok(source.includes('className="pd-empty-action" href="/courses"'));

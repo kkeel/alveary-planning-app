@@ -88,3 +88,30 @@ test("Labeled + All is content-width and More dots have an unboxed rest state",(
   assert.match(css,/border-color:transparent;\s*background:transparent;/);
   for(const component of [desk,myPlan,topics]) assert.match(component,/<MoreHorizontal/);
 });
+
+test("Direct course/topic clicks stay saturated while neighboring controls are pale",()=>{
+  const list=read("app/courses/course-explorer.css");
+  const first=list.indexOf("/* Selected course / topic toolbars share a consistent visual hierarchy.");
+  const generic=list.indexOf("background:var(--cx-subject-pale);",first);
+  const full=list.indexOf("button.planning-icon-control:is(.cx-idea-action,.cx-direct-plan-action).is-tone-full",first);
+  assert.ok(first>=0 && generic>first && full>generic,
+    "Saturated clicked actions must be defined after the generic pale toolbar rule");
+  assert.match(list,/\.cx-course\.cx-has-planning-selection > \.cx-course-head[\s\S]*?button\.planning-icon-control:is\(\.cx-idea-action,\.cx-direct-plan-action\)\.is-tone-full\s*\{\s*background:var\(--cx-subject\);/);
+  assert.match(list,/\.is-tone-full:hover:not\(:disabled\)\s*\{\s*background:color-mix/);
+  assert.match(list,/button\.planning-icon-control\.cx-info-action\.is-open\s*\{[\s\S]*?background:var\(--cx-subject-pale\)/);
+});
+
+test("Planning density control remains sticky and mini desk controls inherit row backgrounds",()=>{
+  const deskCss=read("app/components/planning-desk.css");
+  const think=read("app/components/PlanningDesk.tsx");
+  const plan=read("app/components/MyPlanPanel.tsx");
+  assert.match(deskCss,/\.pd-details-toolbar\s*\{\s*position:sticky;\s*top:0;\s*z-index:16;/);
+  assert.match(deskCss,/\.pd-desk \.pd-details-toolbar\s*\{\s*padding:7px 12px 9px;/);
+  assert.match(deskCss,/button\.planning-icon-control\.priority-control-trigger:not\(:hover\):not\(:focus-visible\):not\(\[aria-expanded="true"\]\)\s*\{\s*background:transparent !important;/);
+  for(const source of [think,plan]) {
+    const intro=source.indexOf("pd-planning-guidance");
+    const switchAt=source.indexOf('className="pd-details-toolbar"',intro);
+    assert.ok(intro>=0 && switchAt>intro,
+      "Guidance should scroll away separately; the mode switch alone stays sticky");
+  }
+});

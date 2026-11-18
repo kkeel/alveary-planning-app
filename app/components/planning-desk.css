@@ -1914,3 +1914,48 @@
   background:#f0f3ee;
   color:#4e6655;
 }
+
+
+/* The density controls belong to the scroll viewport, not the long subject
+ * list. Keep the explanatory copy in ordinary flow, and hold the switch
+ * directly beneath the fixed desk tabs while members scroll either column. */
+.pd-details-toolbar {
+  position:sticky;
+  top:0;
+  z-index:16;
+  justify-content:flex-start;
+  background:#fffefa;
+  padding:6px 0 9px;
+  margin:0 0 9px;
+  box-shadow:0 1px 0 #e2e9df;
+}
+.pd-desk .pd-details-toolbar {
+  padding:7px 12px 9px;
+}
+.pd-desk .pd-body > .pd-planning-guidance,
+.pd-desk .myplan-panel > .pd-planning-guidance {
+  padding-inline:12px;
+}
+.pd-full-column-body .pd-details-toolbar {
+  padding:6px 0 9px;
+}
+@media print {
+  .pd-details-toolbar { position:static; box-shadow:none; }
+}
+/* Unset mini-desk controls let their own course/topic row background show
+ * through instead of drawing mismatched white tiles. Filled selections still
+ * use their intended status styling, and hover/focus remain fully visible. */
+.pd-desk :is(.pd-idea-heading,.pd-topic-row)
+  button.planning-icon-control:not([aria-pressed="true"]):not(:hover):not(:focus-visible):not([aria-expanded="true"]) {
+  background:transparent;
+}
+.pd-desk :is(.pd-idea-heading,.pd-topic-row)
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible):not([aria-expanded="true"]) {
+  background:transparent !important;
+}
+.pd-desk :is(.pd-idea-heading,.pd-topic-row)
+  .shared-arrangement-control.is-unset
+  button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible):not([aria-expanded="true"]) {
+  background:transparent;
+}
