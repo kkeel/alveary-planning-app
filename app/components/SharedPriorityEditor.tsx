@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { Check, Layers3, Tag } from "lucide-react";
 import { useDemoPlan, type SharedPriority } from "./DemoPlanContext";
 import { sharedCoursePriority, sharedCourseSummary, sharedTopicOverride,
@@ -45,7 +46,6 @@ export default function SharedPriorityEditor({
   const plan = useDemoPlan();
   const [open,setOpen] = useState(false);
   const id = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const shared = plan.sharedPriorities;
   const courseValue = sharedCoursePriority(shared,courseId);
@@ -60,25 +60,6 @@ export default function SharedPriorityEditor({
   const activeValue = topicId === null ? courseValue : topicValue;
   const hasCustomTopics = topicId === null && selectedTopicIds.some(id =>
     sharedTopicOverride(shared,courseId,id) !== "inherit");
-
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-    document.addEventListener("pointerdown",onPointerDown);
-    document.addEventListener("keydown",onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown",onPointerDown);
-      document.removeEventListener("keydown",onKeyDown);
-    };
-  }, [open]);
 
   function change(choice: Choice) {
     const picked: SharedPriority["priority"] | null = choice === "inherit" ||
@@ -115,7 +96,7 @@ export default function SharedPriorityEditor({
       label:topicId === null ? "Clear priority" : "No priority"},
   ];
 
-  return <div ref={rootRef} className={"priority-control" +
+  return <div className={"priority-control" +
       (compact ? " is-compact" : "") +
       (shown ? " has-priority" : "") +
       (shown === "Varied" ? " is-varied" : "") +
@@ -129,8 +110,9 @@ export default function SharedPriorityEditor({
         shown === "High Interest" || shown === "Additional" ? shown : null}
         size={compact ? 18 : 21}/>
     </button>
-    {open && <div id={id} className="priority-control-popover" role="group"
-      aria-label={topicId === null ? "Course priority" : "Topic priority"}>
+    <FloatingChoiceMenu open={open} triggerRef={triggerRef}
+      onDismiss={()=>setOpen(false)} id={id}
+      label={topicId===null?"Course priority":"Topic priority"}>
       <div className="priority-control-heading">Priority <span>optional</span></div>
       {menuChoices.map(option=><button key={option.value} type="button"
         className="priority-option" aria-pressed={selectedChoice === option.value}
@@ -143,6 +125,6 @@ export default function SharedPriorityEditor({
       {hasCustomTopics && <p className="priority-control-note">
         Topics you've changed keep their own priorities.
       </p>}
-    </div>}
+    </FloatingChoiceMenu>
   </div>;
 }
