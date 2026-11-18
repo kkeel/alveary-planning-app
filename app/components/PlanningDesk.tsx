@@ -21,6 +21,7 @@ import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
@@ -315,6 +316,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           </span>
                         </button>
                         {savedChoice && <SharedPriorityEditor courseId={idea.id}
+                          selectedTopicIds={selectedTopicIds}/>}
+                        {savedChoice && <SharedArrangementEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
                         <button type="button" className="pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
