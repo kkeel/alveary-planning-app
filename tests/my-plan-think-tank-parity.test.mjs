@@ -22,7 +22,7 @@ assert.ok(plan.includes('"--pd-subject-color": subjectColor(subject)'));
 assert.ok(plan.includes('"--pd-subject-edge": subjectColor(subject) + "66"'));
 for (const marker of [
   'className="pd-subject-items pd-think-course-list"',
-  'className={"pd-idea myplan-row" + (open ? " is-open" : "")}',
+  'className={"pd-idea myplan-row" + (open ? " is-open" : "") +',
   'className="pd-idea-review"',
   'className="planning-icon-control pd-row-tool pd-mini-info-action"',
   'className="pd-review pd-think-review myplan-review"',
@@ -43,7 +43,7 @@ assert.ok(css.includes("background:transparent;"),
 // Only one open My Plan course across ALL subjects; the clickable title
 // and the small i button toggle the same accordion.
 assert.ok(plan.includes('const [openId, setOpenId] = useState<string | null>(null)'));
-assert.ok(plan.includes('desk.planDetails !== "compact" || openId === course.courseId;'));
+assert.ok(plan.includes('const open = Boolean('));
 assert.ok(!plan.includes("openOverrides"), "Remove per-row multi-open preferences");
 assert.ok(plan.includes("toggleDetails(course.courseId,event.currentTarget)"));
 assert.ok(plan.includes("rememberAnchor") && plan.includes("useLayoutEffect"));
@@ -54,7 +54,8 @@ assert.ok(plan.includes("focusCourseId, focusRevision"),
 // grade/scheduling information, plus student names per planned topic.
 assert.ok(plan.includes("<SquareCheckBig") && topics.includes("<SquareCheckBig"));
 assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements,demo.sharedArrangements)"));
-assert.ok(plan.includes("{open && item && <PlanningScheduleGradeMeta course={item}/>}")
+assert.ok(plan.includes("<PlanningScheduleGradeMeta course={item} detailed/>"));
+assert.ok(!plan.includes("{open && item && <PlanningScheduleGradeMeta course={item}/>}")
 );
 assert.ok(topics.includes("const assignedNames = mode === \"plan\" && savedChoice && !isRemoved"));
 assert.ok(topics.includes('assignedNames.map((name,index)=>')); 
@@ -101,4 +102,4 @@ assert.ok(css.includes(".pd-idea .pd-mini-info-action:hover,"));
 assert.ok(css.includes(".pd-idea .pd-more:hover,"));
 assert.ok(css.includes(".pd-think-review .pd-topic-row .pd-topic-title-button:hover,"));
 assert.ok(!css.includes(".pd-think-review .pd-topic-row:hover"));
-console.log("My Plan / Think Tank parity: single-open, student edits, metadata, menus, hover, neutral details: OK");
+console.log("My Plan / Think Tank parity: three modes, student edits, metadata, menus, neutral details: OK");
