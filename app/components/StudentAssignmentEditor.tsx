@@ -102,7 +102,13 @@ export default function StudentAssignmentEditor({
   return <div className="plan-editor">
     <div className="plan-assign-head">
       <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>
-      <div className="pd-assignment-quick-actions">
+      <div className="plan-assign-head-tools">
+        <div className="plan-assign-priority">
+          <span>Priority</span>
+          <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
+            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}/>
+        </div>
+        <div className="pd-assignment-quick-actions">
         <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
           onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
           {addingStudent ? "Cancel adding" : "+ Add student"}
@@ -116,6 +122,7 @@ export default function StudentAssignmentEditor({
         </button>}
         {onClose && <button type="button" className="pd-done-action"
           onClick={finishEditing} title="Finish student editing and save this selection to My Plan">Done</button>}
+        </div>
       </div>
     </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
@@ -136,7 +143,6 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
-    <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}/>
     {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
       <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
         title={topicId ? "Assign this topic to every student" :
@@ -204,8 +210,7 @@ export default function StudentAssignmentEditor({
     </button>
     {showPreferences && <div className="plan-preferences">
       <p className="plan-microcopy">
-        Individual student priorities and arrangements are optional customizations.
-        Leave a student priority unset to use the shared course or topic priority.
+        Only change a student here when their plan differs.
       </p>
       {demo.students.filter(student => assigned.has(student.id) ||
         (!topicId && effectiveTopicCount(course, student.id) > 0)).map(student => {
@@ -222,7 +227,7 @@ export default function StudentAssignmentEditor({
           : "inherit";
         return <div className="plan-preference-row" key={student.id}>
           <strong>{student.displayName}</strong>
-          <label>Student course priority
+          <label>{topicId ? "Course priority" : "Priority"}
             <select value={courseDefault ?? ""}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -230,11 +235,11 @@ export default function StudentAssignmentEditor({
                   (event.target.value || null) as
                     ReturnType<typeof coursePriority>);
               }}>
-              <option value="">Use shared default</option>
+              <option value="">Same as everyone</option>
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          {topicId && <label>Student priority for this topic
+          {topicId && <label>This topic
             <select value={topicSelection}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -243,13 +248,13 @@ export default function StudentAssignmentEditor({
                     event.target.value as "Core" | "High Interest" | "Additional" | "Not set");
               }}>
               <option value="inherit">
-                {"Use course default" + (courseDefault ? " (" + courseDefault + ")" : "")}
+                "Same as plan"
               </option>
-              <option value="Not set">Not set (override)</option>
+              <option value="Not set">No priority</option>
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>}
-          <label>Course default arrangement
+          <label>{topicId ? "Course arrangement" : "Arrangement"}
             <select value={arrangement}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -262,7 +267,7 @@ export default function StudentAssignmentEditor({
               {arrangement === "Both" && <option value="Both">Both (previous setting)</option>}
             </select>
           </label>
-          {topicId && <label>Arrangement for this topic
+          {topicId && <label>This topic arrangement
             <select value={topicArrangement}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -271,9 +276,7 @@ export default function StudentAssignmentEditor({
                     event.target.value as "Combined" | "Separate" | "Later");
               }}>
               <option value="inherit">
-                {"Use course default (" +
-                  (arrangement === "Later" ? "Decide later" :
-                    arrangement === "Both" ? "Both, previous setting" : arrangement) + ")"}
+                "Same as course"
               </option>
               {arrangements.map(item => <option key={item} value={item}>
                 {item === "Later" ? "Decide later (override)" : item}
