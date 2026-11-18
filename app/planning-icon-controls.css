@@ -149,8 +149,12 @@
   background:transparent;
 }
 .cx-course-actions button.planning-icon-control.cx-info-action.is-open {
-  background:var(--cx-subject-soft,#f1f5ed);
-  border-color:var(--cx-subject-medium,#d3dcd1);
+  background:var(--planning-icon-open-background);
+  border-color:var(--planning-icon-open-border);
+}
+.cx-course-actions button.planning-icon-control.cx-info-action.is-open.is-member {
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
 }
 @media (max-width:760px) {
   .cx-course-actions {
