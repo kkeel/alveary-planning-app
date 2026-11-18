@@ -222,7 +222,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const displayPriority=coursePriorityRollup(
                 demo.sharedPriorities,demo.assignmentPriorities,
                 course,demo.students,selectedTopicIds);
-              return <div className={"pd-idea myplan-row" + (open ? " is-open" : "") + (topicsOnly ? " is-topics-only" : "")}
+              return <div className={"pd-idea myplan-row" + (open ? " is-open" : "") + (topicsOnly ? " is-topics-only" : "") + (desk.planDetails === "detailed" ? " is-detailed" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
                   <button className="pd-idea-review" type="button" aria-expanded={open}
