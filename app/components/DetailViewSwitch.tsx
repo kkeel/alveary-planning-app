@@ -1,25 +1,29 @@
 "use client";
 
-import { AlignJustify, ListTree } from "lucide-react";
+import { AlignJustify, ListTree, BookOpenText } from "lucide-react";
 
-/** A small, consistent view choice across catalog and planning workspaces.
- * The setting controls initial row disclosure; individual titles can still
- * be opened or closed without changing the entire column. */
-export type DetailMode = "expanded" | "compact";
+/** Three levels of disclosure in the Course List. Local row disclosure stays
+ * independent, so a member can read just one course in greater detail. */
+export type DetailMode = "compact" | "topics" | "detailed";
 export default function DetailViewSwitch({
-  value, onChange, label, singleOpen = false,
+  value, onChange, label,
 }: { value: DetailMode; onChange: (next: DetailMode) => void; label: string;
   singleOpen?: boolean }) {
   return <div className="pd-detail-switch" role="group" aria-label={label + " details display"}>
-    <button type="button" className={value === "expanded" ? "is-current" : ""}
-      aria-pressed={value === "expanded"} title={singleOpen ? "Open one " + label + " course at a time" : "Expand all " + label + " entries"}
-      onClick={() => onChange("expanded")}>
-      <ListTree size={14} aria-hidden="true"/> Expanded
-    </button>
     <button type="button" className={value === "compact" ? "is-current" : ""}
-      aria-pressed={value === "compact"} title={"Show a compact " + label + " list"}
+      aria-pressed={value === "compact"} title={"Show just course titles in " + label}
       onClick={() => onChange("compact")}>
       <AlignJustify size={14} aria-hidden="true"/> Compact
+    </button>
+    <button type="button" className={value === "topics" ? "is-current" : ""}
+      aria-pressed={value === "topics"} title={"Show topic rows without descriptions in " + label}
+      onClick={() => onChange("topics")}>
+      <ListTree size={14} aria-hidden="true"/> Expanded
+    </button>
+    <button type="button" className={value === "detailed" ? "is-current" : ""}
+      aria-pressed={value === "detailed"} title={"Show all descriptions and tips in " + label}
+      onClick={() => onChange("detailed")}>
+      <BookOpenText size={14} aria-hidden="true"/> Detailed
     </button>
   </div>;
 }
