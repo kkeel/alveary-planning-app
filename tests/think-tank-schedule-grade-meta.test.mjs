@@ -19,7 +19,7 @@ assert.ok(status >= 0 && courseMeta > status && titleEnd > courseMeta,
 // Every nested topic owns its own recommendation in either planning column, visible only in details;
 // it is not copied onto its combined-course parent or the collapsed topic row.
 const topicInfo = topics.indexOf('{infoOpen && <div className="pd-topic-info"');
-const topicMeta = topics.indexOf('<PlanningScheduleGradeMeta course={topic}/>');
+const topicMeta = topics.indexOf('<PlanningScheduleGradeMeta course={topic} detailed/>');
 assert.ok(topicInfo >= 0 && topicMeta > topicInfo,
   "Topic schedule must appear in the opened topic detail disclosure");
 assert.match(topics,
@@ -28,8 +28,8 @@ assert.match(topics,
 
 assert.ok(meta.includes("schedule.text") && meta.includes("course.gradeDisplay"),
   "Use the Course List's existing published fields without generating a personal schedule");
-assert.ok(meta.includes("course.schedules.map("),
-  "Multiple published recommendations must all remain visible");
+assert.ok(meta.includes("schedules.map("),
+  "Multiple exact published recommendations must remain visible in Detailed mode");
 assert.ok(css.includes(".pd-schedule-grade-meta") && css.includes(".pd-schedule-grade-range.has-schedule"),
   "Metadata should remain styled as secondary information");
 
@@ -45,4 +45,4 @@ assert.ok(topic.schedules.length > 0 && topic.gradeDisplay);
 assert.equal(single?.type, "Single-Topic Course");
 assert.ok(single.schedules.length > 0 && single.gradeDisplay);
 
-console.log("Think Tank expanded schedule/grade metadata: OK");
+console.log("Think Tank condensed schedule and complete detailed metadata: OK");

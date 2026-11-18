@@ -5,7 +5,7 @@ import type { CountryFilter } from "../courses/country-filter.mjs";
 import type { DetailMode as CourseDetailMode } from "./DetailViewSwitch";
 import { useDemoPlan } from "./DemoPlanContext";
 
-type DetailMode = "expanded" | "compact";
+type DetailMode = CourseDetailMode;
 type PlanningDeskState = {
   listDetails: CourseDetailMode;
   thinkDetails: DetailMode;
@@ -51,8 +51,8 @@ type PlanningDeskContextValue = PlanningDeskState & {
 
 const keyPrefix = "alveary:shared-planning-desk-preview:2027-28:";
 const defaults: PlanningDeskState = {
-  // Browsing should reveal the curriculum; planning starts with a calm summary.
-  listDetails: "detailed", thinkDetails: "compact", planDetails: "compact",
+  // Expanded shows the curriculum structure without overwhelming new members.
+  listDetails: "topics", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
@@ -101,8 +101,12 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           // Detailed. The new Expanded (topics-only) persists as "topics".
           listDetails: saved.listDetails === "compact" ? "compact" :
             saved.listDetails === "topics" ? "topics" : "detailed",
-          thinkDetails: saved.thinkDetails === "expanded" ? "expanded" : "compact",
-          planDetails: saved.planDetails === "expanded" ? "expanded" : "compact",
+          // Previously "expanded" meant one open course. Preserve the user\'s
+          // preference as the new topics-only Expanded, while honoring compact.
+          thinkDetails: saved.thinkDetails === "detailed" ? "detailed" :
+            saved.thinkDetails === "compact" ? "compact" : "topics",
+          planDetails: saved.planDetails === "detailed" ? "detailed" :
+            saved.planDetails === "compact" ? "compact" : "topics",
           thinkTankIds: Array.isArray(saved.thinkTankIds) ? saved.thinkTankIds.filter((x): x is string => typeof x === "string") : [],
           excludedTopicIdsByCourse: normalizeExcludedTopics(saved.excludedTopicIdsByCourse),
           subjectOrder: Array.isArray(saved.subjectOrder) ? saved.subjectOrder.filter((x): x is string => typeof x === "string") : [],

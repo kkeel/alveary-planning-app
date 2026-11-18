@@ -16,6 +16,7 @@ import { effectiveArrangement } from "./arrangement-inheritance.mjs";
 import StudentPriorityDot from "./StudentPriorityDot";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
+import type { DetailMode } from "./DetailViewSwitch";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
 import catalog from "../courses/catalog-preview.json";
 
@@ -45,6 +46,7 @@ type Props = {
   parent: CatalogCourse;
   savedChoice?: SavedCourse;
   mode: "think" | "plan";
+  detailMode: DetailMode;
   excludedTopicIds?: string[];
   onToggleTopic: (topicId: string, included: boolean) => void;
   onTopicAssigned?: (sourceCourseId: string) => void;
@@ -54,7 +56,7 @@ type Props = {
 };
 
 export default function CourseTopicReview({
-  parent, savedChoice, mode, excludedTopicIds = [], onToggleTopic,
+  parent, savedChoice, mode, detailMode, excludedTopicIds = [], onToggleTopic,
   onTopicAssigned, onTopicDone, onTopicCancel, onTopicEditingChange,
 }: Props) {
   const demo = useDemoPlan();
@@ -123,10 +125,13 @@ export default function CourseTopicReview({
   }
 
   function renderTopic(topic: CatalogCourse, isRemoved = false, isOther = false) {
-    const infoOpen = infoTopicId === topic.id;
+    const infoOpen = detailMode === "detailed"
+      ? infoTopicId !== "hidden:" + topic.id : infoTopicId === topic.id;
     const hasDetails = Boolean(topic.description || topic.tips ||
       topic.schedules.length || topic.gradeDisplay || topic.grades.length);
-    const toggleInfo = () => setInfoTopicId(infoOpen ? null : topic.id);
+    const toggleInfo = () => setInfoTopicId(detailMode === "detailed"
+      ? (infoOpen ? "hidden:" + topic.id : null)
+      : (infoOpen ? null : topic.id));
     const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
     const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
@@ -284,7 +289,7 @@ export default function CourseTopicReview({
         </button>
       </FloatingChoiceMenu>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
-        <PlanningScheduleGradeMeta course={topic}/>
+        <PlanningScheduleGradeMeta course={topic} detailed/>
         {topic.description && <p>{topic.description}</p>}
         {topic.tips && <div className="pd-topic-tips">
           <PlacementSymbol size={17}/><p>{topic.tips}</p>

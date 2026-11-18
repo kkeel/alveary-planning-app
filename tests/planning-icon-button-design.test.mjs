@@ -25,11 +25,11 @@ test("one shared planning icon control class is used across all four surfaces",(
   assert.match(layout,/import "\.\/planning-icon-controls\.css"/);
 });
 
-test("Course List course/topic and desk course/topic each have one named size",()=>{
+test("Course List and desk course/topic controls share the topic-sized target",()=>{
   for(const [part,size] of [
-    [".cx-course-actions",34],
-    [".cx-course--topic .cx-course-actions",29],
-    [".pd-idea-heading",30],
+    [".cx-course-actions",27],
+    [".cx-course--topic .cx-course-actions",27],
+    [".pd-idea-heading",27],
     [".pd-topic-row",27],
   ]) {
     const i=css.indexOf(part+" {");
@@ -38,8 +38,7 @@ test("Course List course/topic and desk course/topic each have one named size",(
   }
   assert.match(css,/\.plan-group-shortcuts \{/);
   assert.match(css,/\.plan-student-tools \{/);
-  assert.match(css,/--planning-icon-size:28px/);
-  assert.match(css,/--planning-icon-size:30px/);
+  assert.match(css,/--planning-icon-size:27px/);
 });
 
 test("One source defines the neutral resting, hover, open, focus and reduced-motion states",()=>{
@@ -59,7 +58,7 @@ test("Selected subject colors and disclosure widths are preserved",()=>{
   assert.match(css,/:not\(\.is-selected\):not\(\.is-tone-full\):not\(\.is-tone-partial\)/);
   assert.match(css,/\.cx-course-actions button\.planning-icon-control\.cx-info-action \{/);
   assert.match(css,/background:var\(--cx-subject-pale\)/);
-  assert.match(css,/--planning-icon-glyph:18px/);
+  assert.match(css,/--planning-icon-glyph:15px/);
 });
 
 test("Unset arrangement is visually faint Separate, and not stored as Separate",()=>{
@@ -74,4 +73,18 @@ test("Unset arrangement is visually faint Separate, and not stored as Separate",
   assert.doesNotMatch(shared,/\["Combined","Separate","Later"\]/);
   assert.doesNotMatch(student,/\{value:"Later",label:"Decide later"/);
   assert.match(inheritance,/const chosen = value => value === "Later" \? null : value/);
+});
+
+test("Labeled + All is content-width and More dots have an unboxed rest state",()=>{
+  const list=read("app/courses/CourseExplorer.tsx");
+  const desk=read("app/components/PlanningDesk.tsx");
+  const myPlan=read("app/components/MyPlanPanel.tsx");
+  const topics=read("app/components/CourseTopicReview.tsx");
+  assert.match(list,/className="cx-plus-all">All/);
+  assert.match(css,/\.cx-direct-plan-action:has\(\.cx-plus-all\)/);
+  assert.match(css,/min-width:61px/);
+  assert.match(css,/white-space:nowrap/);
+  assert.match(css,/button\.planning-icon-control:is\(\.pd-more,\.pd-topic-more\)/);
+  assert.match(css,/border-color:transparent;\s*background:transparent;/);
+  for(const component of [desk,myPlan,topics]) assert.match(component,/<MoreHorizontal/);
 });
