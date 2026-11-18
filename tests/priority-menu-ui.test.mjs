@@ -66,7 +66,7 @@ test("Desk controls keep small i buttons and move books/student editing to More"
     assert.match(src,/pd-inline-actions/);
     assert.match(src,/View books/);
   }
-  assert.match(topic,/pd-topic-info/);
+  assert.match(topic,/pd-topic-info-action/);
   assert.match(topic,/pd-topic-menu/);
   assert.match(topic,/Edit students/);
   assert.doesNotMatch(topic,/className="pd-topic-icon pd-topic-edit"/);
@@ -99,4 +99,26 @@ test("More menus remain one-row icons and My Plan shows only student-level topic
   assert.match(plan,/studentSummary\(course,demo\.students/);
   assert.match(css,/@container student-editor \(min-width:670px\)/);
   assert.match(css,/repeat\(3,minmax\(0,1fr\)\)/);
+});
+
+test("Course menus anchor below the ellipsis and the small info controls stay centered",()=>{
+ const css=read("app/components/planning-desk.css");
+ assert.match(desk,/pd-more-anchor/);
+ assert.match(plan,/pd-more-anchor/);
+ assert.match(css,/\.pd-more-anchor\s*\{/);
+ assert.match(css,/\.pd-more-anchor > \.pd-inline-actions/);
+ assert.match(css,/\.pd-topic-icon\.pd-topic-info-action/);
+ assert.match(topic,/pd-topic-info-action/);
+});
+test("Mini roster stays one column; popover flips if it would be cut off",()=>{
+ const css=read("app/components/planning-desk.css");
+ assert.match(css,/\.plan-editor \.plan-student-list \{ grid-template-columns:minmax\(0,1fr\)/);
+ assert.match(arrangement,/setOpensUp/);
+ assert.match(arrangement,/scroller\?\.getBoundingClientRect/);
+ assert.match(css,/is-flipped \.student-arrangement-popover/);
+});
+test("Course List receives the same effective student rollups as My Plan",()=>{
+ assert.match(course,/topicPriorityRollup\(/);
+ assert.match(course,/coursePriorityRollup\(/);
+ assert.match(plan,/coursePriorityRollup\(/);
 });

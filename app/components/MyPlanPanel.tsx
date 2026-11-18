@@ -10,14 +10,13 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
+import { coursePriorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
-import { coursePriority } from "./priority-inheritance.mjs";
 import { courseArrangement } from "./arrangement-inheritance.mjs";
 import catalog from "../courses/catalog-preview.json";
 
@@ -30,8 +29,7 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"],
-  priorities: ReturnType<typeof useDemoPlan>["assignmentPriorities"]) {
+  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const includedCount = course.topics.filter(topic => topic.included).length;
@@ -40,9 +38,6 @@ function studentSummary(course: SavedCourse,
   return assigned.map((student, index) => {
     const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id);
     const topicsAssigned = effectiveTopicCount(course, student.id);
-    const defaultPriority = coursePriority(priorities, course.courseId,student.id);
-    const hasTopicOverrides = priorities.some(p => p.courseId === course.courseId &&
-      p.studentId === student.id && p.topicId !== null);
     return <span className="myplan-student-summary" key={student.id}>
       {index > 0 && <span className="myplan-student-separator"> / </span>}
       {student.displayName}
@@ -54,9 +49,6 @@ function studentSummary(course: SavedCourse,
         title="Combined arrangement" aria-label="Combined arrangement">
         <PlacementSymbol size={14}/>
       </span>}
-      {defaultPriority && <span> · {defaultPriority}</span>}
-      {hasTopicOverrides && <span className="myplan-topic-priorities"
-        title="Some topics have individual priority settings"> · Customized priorities</span>}
     </span>;
   });
 }
@@ -74,6 +66,22 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
+  useEffect(() => {
+    if (!openMenuId) return;
+    const outside = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) ||
+          !event.target.closest(".pd-more-anchor")) setOpenMenuId(null);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenuId(null);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [openMenuId]);
   const pendingAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
 
   // Changes autosave immediately. Keep a course with its last student removed
@@ -202,19 +210,9 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const selectedTopicIds = course.topics.filter(topic => topic.included &&
                 demo.students.some(student=>isTopicAssigned(course,topic.topicId,student.id)))
                 .map(topic=>topic.topicId);
-              const assignedPriorities = course.topics.filter(topic=>topic.included)
-                .flatMap(topic=>demo.students.filter(student=>
-                  isTopicAssigned(course,topic.topicId,student.id))
-                  .map(student=>effectivePlanningPriority(
-                    demo.sharedPriorities,demo.assignmentPriorities,
-                    course.courseId,topic.topicId,student.id)));
-              if (!assignedPriorities.length) for (const student of demo.students) {
-                if (course.studentIds.includes(student.id)) assignedPriorities.push(
-                  effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
-                    course.courseId,null,student.id));
-              }
-              const displayPriority = assignedPriorities.length ?
-                priorityRollup(assignedPriorities) : undefined;
+              const displayPriority=coursePriorityRollup(
+                demo.sharedPriorities,demo.assignmentPriorities,
+                course,demo.students,selectedTopicIds);
               return <div className={"pd-idea myplan-row" + (open ? " is-open" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -224,7 +222,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>{title}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.assignmentArrangements,demo.assignmentPriorities)}
+                        {studentSummary(course,demo.students,demo.assignmentArrangements)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
@@ -241,6 +239,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <SharedPriorityEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
+                  <div className="pd-more-anchor">
                   <button type="button" className="pd-more"
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
@@ -248,8 +247,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     onClick={() => setOpenMenuId(menuOpen ? null : course.courseId)}>
                     <MoreHorizontal size={16} aria-hidden="true"/>
                   </button>
-                </div>
-                {menuOpen && <div className="pd-inline-actions" role="group"
+                                {menuOpen && <div className="pd-inline-actions" role="group"
                   aria-label={"More options for " + title}>
                   <Link href={"/books?course="+encodeURIComponent(course.courseId)}
                     onClick={()=>setOpenMenuId(null)}
@@ -276,6 +274,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <span className="pd-sr-only">Return to Think Tank</span>
                   </button>
                 </div>}
+                  </div>
+</div>
                 {open && <div className="pd-review pd-think-review myplan-review"
                   id={detailsId} role="region" aria-label={"Details for " + title}>
                   {item && (item.description || item.tips) && <div className="pd-think-description-section">

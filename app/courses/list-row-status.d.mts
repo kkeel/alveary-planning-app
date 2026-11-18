@@ -17,3 +17,8 @@ export declare function listRowStatus(
  planActive:boolean;planTone:ListRowTone;contextTone:ListRowTone;
  anyAssigned:boolean;isPlanned:boolean;
 };
+
+export function nextCourseIdeaAll(course:{
+ ideaAll:boolean;topics:readonly {topicId:string;included:boolean;ideaChoice:"inherit"|"on"|"off"}[];
+ studentIds:readonly string[];overrides:readonly {topicId:string;studentId:string;assigned:boolean}[];
+},students:readonly {id:string}[]):boolean;

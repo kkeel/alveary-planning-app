@@ -1,3 +1,5 @@
+import { isTopicAssigned } from "./topic-assignment.mjs";
+
 /** Shared priority defaults are independent of both student assignments and idea stage.
  * A course default applies to all topics without an explicit topic override.
  * A topic can explicitly opt out via "Not set". Summary never mutates defaults. */
@@ -42,4 +44,47 @@ export function priorityRollup(values) {
   if (!values.length) return null;
   const distinct = new Set(values.map(value=>value === "Not set" ? null : value ?? null));
   return distinct.size > 1 ? "Varied" : [...distinct][0];
+}
+
+/** One effective-priority read model for Course List and My Plan.
+ * Student-specific choices are included without mutating shared defaults.
+ * Unassigned saved ideas continue to display their shared selected-topic
+ * priorities, while a planned course reflects actual assigned students. */
+export function topicPriorityRollup(shared, assignmentPriorities, savedCourse, students, topicId) {
+  if (!savedCourse) return undefined;
+  const assigned = students.filter(student =>
+    isTopicAssigned(savedCourse,topicId,student.id));
+  if (!assigned.length) return sharedTopicPriority(shared,savedCourse.courseId,topicId);
+  return priorityRollup(assigned.map(student =>
+    effectivePlanningPriority(shared,assignmentPriorities,
+      savedCourse.courseId,topicId,student.id)));
+}
+export function coursePriorityRollup(shared, assignmentPriorities, savedCourse, students, selectedTopicIds = []) {
+  if (!savedCourse) return undefined;
+  const actual = savedCourse.topics.filter(topic=>topic.included)
+    .flatMap(topic=>students.filter(student=>
+      isTopicAssigned(savedCourse,topic.topicId,student.id))
+      .map(student=>effectivePlanningPriority(shared,assignmentPriorities,
+        savedCourse.courseId,topic.topicId,student.id)));
+  if (!actual.length) {
+    for(const student of students){
+      if(savedCourse.studentIds.includes(student.id))
+        actual.push(effectivePlanningPriority(shared,assignmentPriorities,
+          savedCourse.courseId,null,student.id));
+    }
+  }
+  if (actual.length) return priorityRollup(actual);
+  const topics = selectedTopicIds.length ? selectedTopicIds :
+    savedCourse.topics.filter(topic=>topic.included &&
+      (topic.ideaChoice==="on" || (topic.ideaChoice!=="off" && savedCourse.ideaAll)))
+      .map(topic=>topic.topicId);
+  return sharedCourseSummary(shared,savedCourse.courseId,topics);
+}
+/** Show a dot only when the student's *effective* topic priority actually
+ * differs from the shared topic value, regardless of inherited student
+ * course preferences or explicit same-value overrides. */
+export function differingStudentTopicPriority(shared, assignmentPriorities, courseId, topicId, studentId) {
+  const base=sharedTopicPriority(shared,courseId,topicId);
+  const actual=effectivePlanningPriority(shared,assignmentPriorities,courseId,topicId,studentId);
+  return actual===base ? undefined : actual;
 }

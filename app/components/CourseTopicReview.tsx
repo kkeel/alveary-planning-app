@@ -9,7 +9,8 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
+import { effectivePlanningPriority, priorityRollup, differingStudentTopicPriority } from "./shared-priority.mjs";
+import StudentPriorityDot from "./StudentPriorityDot";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -154,7 +155,17 @@ export default function CourseTopicReview({
 
     const topicTitle = <span className="pd-topic-title-text">{topic.title}
       {!!assignedNames.length && <small className="pd-topic-assigned-meta">
-        {assignedNames.join(" / ")}
+        {assignedNames.map((name,index)=>{
+          const student=topicStudents[index];
+          const difference=differingStudentTopicPriority(
+            demo.sharedPriorities,demo.assignmentPriorities,
+            parent.id,topic.id,student.id);
+          return <span key={student.id} className="pd-topic-student-name">
+            {index>0 && <span className="pd-student-name-separator"> / </span>}
+            {name}{difference!==undefined && <StudentPriorityDot
+              studentName={name} priority={difference}/>}
+          </span>;
+        })}
       </small>}
     </span>;
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
@@ -171,7 +182,7 @@ export default function CourseTopicReview({
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
             displayPriority={displayPriority} compact/>}
-        {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info"
+        {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info-action"
           aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
           title={mode==="think"?"Topic details":"Description & tips"}
           aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>

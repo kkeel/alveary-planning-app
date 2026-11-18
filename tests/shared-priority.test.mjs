@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
  sharedCoursePriority, sharedTopicPriority, sharedTopicOverride,
  sharedCourseSummary, effectivePlanningPriority, priorityRollup,
+ coursePriorityRollup,topicPriorityRollup,differingStudentTopicPriority,
 } from "../app/components/shared-priority.mjs";
 
 test("History course default changes only inherited topics; selected override stays",()=>{
@@ -56,4 +57,25 @@ test("display rollups become Varied for different student priorities without mod
  assert.equal(priorityRollup(["Core","Core"]),"Core");
  assert.equal(priorityRollup(["Core",null]),"Varied");
  assert.equal(priorityRollup([]),null);
+});
+
+test("Course List and My Plan use identical effective student-topic summaries",()=>{
+ const shared=[{courseId:"history",topicId:null,priority:"Core"}];
+ const student=[{courseId:"history",topicId:"us",studentId:"aj",priority:"Additional"}];
+ const choice={courseId:"history",stage:"planned",ideaAll:false,studentIds:["aj","hannah"],
+   overrides:[],topics:["us","world","ancient"].map((topicId,i)=>({
+     topicId,included:true,ideaChoice:"inherit",order:i}))};
+ const people=[{id:"aj"},{id:"hannah"}];
+ assert.equal(coursePriorityRollup(shared,student,choice,people),"Varied");
+ assert.equal(topicPriorityRollup(shared,student,choice,people,"us"),"Varied");
+ assert.equal(topicPriorityRollup(shared,student,choice,people,"world"),"Core");
+ assert.equal(differingStudentTopicPriority(shared,student,"history","us","aj"),"Additional");
+ assert.equal(differingStudentTopicPriority(shared,student,"history","us","hannah"),undefined);
+ assert.equal(sharedCoursePriority(shared,"history"),"Core");
+});
+test("Intentional no-priority difference gets a neutral metadata dot",()=>{
+ const shared=[{courseId:"citizenship",topicId:"ethics",priority:"High Interest"}];
+ const student=[{courseId:"citizenship",topicId:"ethics",studentId:"aj",priority:"Not set"}];
+ assert.equal(differingStudentTopicPriority(shared,student,"citizenship","ethics","aj"),null);
+ assert.equal(differingStudentTopicPriority(shared,student,"citizenship","ethics","other"),undefined);
 });
