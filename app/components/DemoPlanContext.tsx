@@ -242,12 +242,26 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
    * The API prepares a missing parent with NO other Think Tank topics when
    * starting at a nested +. No deletion of unrelated parent assignments. */
   const prepareListPlan = useCallback((courseId:string,topicId:string|null) => {
-    void mutate("prepare_plan",{courseId,topicId},current =>
-      current.courses.some(c=>c.courseId===courseId) ? current : {
-        ...current,courses:[...current.courses,
-          {courseId,stage:"idea",ideaAll:false,
-           topics:[],studentIds:[],overrides:[]}],
-      });
+    // Course List already has the exact topic provenance in its public catalog.
+    // Prepare the optimistic parent WITH those linked topics so the student
+    // editor can appear immediately, even for combined and nested courses.
+    // The serialized mutation queue saves prepare_plan before any subsequent
+    // checkbox/priority/arrangement writes; the server remains authoritative.
+    void mutate("prepare_plan",{courseId,topicId},current => {
+      const preview=previewTopicsForCourse(catalog,courseId).map(topic=>({
+        ...topic,ideaChoice:"inherit" as const,
+      }));
+      const existing=current.courses.find(course=>course.courseId===courseId);
+      if (existing) {
+        if (existing.topics.length || !preview.length) return current;
+        return { ...current,courses:current.courses.map(course=>
+          course.courseId===courseId ? {...course,topics:preview} : course) };
+      }
+      return {...current,courses:[...current.courses,{
+        courseId,stage:"idea" as const,ideaAll:false,
+        topics:preview,studentIds:[],overrides:[],
+      }]};
+    });
   },[mutate]);
 
   const toggleListIdea = useCallback((courseId:string,topicId:string|null) => {
