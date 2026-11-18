@@ -1,0 +1,209 @@
+/* Alveary planning icon-button contract.
+ *
+ * One set of geometry, neutral colors, hover and focus rules for every
+ * single-icon action. Only the containing surface determines dimensions:
+ *   Course List course = 34px, Course List topic = 29px,
+ *   Think Tank/My Plan course = 30px, topic = 27px,
+ *   inline assignment utilities = 30px / student row = 28px.
+ *
+ * Intentional selected course/topic statuses retain their existing subject
+ * palette. The View/Hide + i disclosure may contain a short text label.
+ * Changes to button sizes/colors belong HERE, not in per-component CSS.
+ */
+:root {
+  --planning-icon-border: #dbe5d8;
+  --planning-icon-foreground: #68816d;
+  --planning-icon-hover-background: #f0f3ee;
+  --planning-icon-hover-border: #cbd6c9;
+  --planning-icon-hover-foreground: #4e6655;
+  --planning-icon-open-background: #f1f5ed;
+  --planning-icon-open-border: #d3dcd1;
+  --planning-icon-focus-ring: #59836a;
+}
+.cx-course-actions {
+  --planning-icon-size:34px;
+  --planning-icon-glyph:18px;
+  --planning-icon-art:21px;
+}
+.cx-course--topic .cx-course-actions {
+  --planning-icon-size:29px;
+  --planning-icon-glyph:16px;
+  --planning-icon-art:18px;
+}
+.pd-idea-heading {
+  --planning-icon-size:30px;
+  --planning-icon-glyph:17px;
+  --planning-icon-art:20px;
+}
+.pd-topic-row {
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
+  --planning-icon-art:18px;
+}
+.plan-group-shortcuts {
+  --planning-icon-size:30px;
+  --planning-icon-glyph:18px;
+  --planning-icon-art:20px;
+}
+.plan-student-tools {
+  --planning-icon-size:28px;
+  --planning-icon-glyph:17px;
+  --planning-icon-art:19px;
+}
+
+/* Grouping wrappers occupy exactly one action slot. */
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(.priority-control,.shared-arrangement-control,.student-arrangement-control,.pd-more-anchor) {
+  box-sizing:border-box;
+  display:inline-flex;
+  flex:0 0 var(--planning-icon-size);
+  width:var(--planning-icon-size);
+  min-width:var(--planning-icon-size);
+  height:var(--planning-icon-size);
+  min-height:var(--planning-icon-size);
+  align-items:center;
+  justify-content:center;
+  margin:0;
+  padding:0;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control) {
+  box-sizing:border-box;
+  display:inline-flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  width:var(--planning-icon-size);
+  min-width:var(--planning-icon-size);
+  height:var(--planning-icon-size);
+  min-height:var(--planning-icon-size);
+  padding:3px;
+  margin:0;
+  border-width:1px;
+  border-style:solid;
+  border-radius:5px;
+  box-shadow:none;
+  font-size:11px;
+  font-weight:500;
+  line-height:1;
+  cursor:pointer;
+  transition:background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+/* Resting neutral controls share the same tint. Subject-colored selected
+ * Lightbulb/Plan controls retain the explicit selected-style rules. */
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control)
+  :not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):not(.is-open):not(.is-member) {
+  border-color:var(--planning-icon-border);
+  background:#fff;
+  color:var(--planning-icon-foreground);
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control)
+  :not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):hover:not(:disabled) {
+  border-color:var(--planning-icon-hover-border);
+  background:var(--planning-icon-hover-background);
+  color:var(--planning-icon-hover-foreground);
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control)[aria-expanded="true"]:not(:disabled) {
+  border-color:var(--planning-icon-open-border);
+  background:var(--planning-icon-open-background);
+  color:var(--planning-icon-hover-foreground);
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control):focus-visible {
+  outline:2px solid var(--planning-icon-focus-ring);
+  outline-offset:2px;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control) > svg {
+  display:block;
+  width:var(--planning-icon-glyph);
+  height:var(--planning-icon-glyph);
+  flex:none;
+  margin:0;
+  stroke-width:1.8;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control) > img {
+  display:block;
+  width:var(--planning-icon-art);
+  height:var(--planning-icon-art);
+  flex:none;
+  margin:0;
+  object-fit:contain;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control):disabled {
+  cursor:default;
+}
+/* The long Course List info disclosure keeps its View/Hide word on desktop;
+ * the target's height, border and hover are still the same as other actions.
+ */
+.cx-course-actions button.planning-icon-control.cx-info-action {
+  width:auto;
+  min-width:var(--planning-icon-size);
+  padding:3px 7px;
+  border-color:transparent;
+  background:transparent;
+}
+.cx-course-actions button.planning-icon-control.cx-info-action.is-open {
+  background:var(--cx-subject-soft,#f1f5ed);
+  border-color:var(--cx-subject-medium,#d3dcd1);
+}
+@media (max-width:760px) {
+  .cx-course-actions {
+    --planning-icon-size:31px;
+    --planning-icon-glyph:17px;
+    --planning-icon-art:19px;
+  }
+  .cx-course--topic .cx-course-actions {
+    --planning-icon-size:27px;
+    --planning-icon-glyph:15px;
+    --planning-icon-art:17px;
+  }
+  .cx-course-actions button.planning-icon-control.cx-info-action {
+    width:var(--planning-icon-size);
+    padding:3px;
+  }
+}
+/* Preserve the subject tint on selected Course List rows. */
+.cx-course:is(.cx-status-full,.cx-status-partial,.cx-status-inherited,.cx-status-idea,.cx-context-inherited)
+  > .cx-course-head .priority-control:not(.has-priority)
+  button.planning-icon-control.priority-control-trigger,
+.cx-course--topic:is(.cx-idea-tone-full,.cx-idea-tone-inherited)
+  > .cx-course-head .priority-control:not(.has-priority)
+  button.planning-icon-control.priority-control-trigger {
+  background:var(--cx-subject-pale);
+  border-color:var(--cx-subject-medium);
+  color:color-mix(in srgb, var(--cx-subject) 55%, #3a5143);
+}
+
+/* Unset arrangement invitation: faint separated circles. The filled-in
+ * Separate choice uses the very same silhouette at full strength. */
+.shared-arrangement-control.is-unset button.planning-icon-control.priority-control-trigger,
+.student-arrangement-control.is-unset button.planning-icon-control.student-arrangement-trigger {
+  background:#fff;
+  color:#9bad9c;
+  border-color:var(--planning-icon-border);
+}
+.shared-arrangement-control.is-unset button.planning-icon-control.priority-control-trigger svg,
+.student-arrangement-control.is-unset button.planning-icon-control.student-arrangement-trigger svg {
+  opacity:.66;
+}
+.shared-arrangement-control.is-unset button.planning-icon-control.priority-control-trigger:hover:not(:disabled),
+.student-arrangement-control.is-unset button.planning-icon-control.student-arrangement-trigger:hover:not(:disabled) {
+  border-color:var(--planning-icon-hover-border);
+  background:var(--planning-icon-hover-background);
+  color:var(--planning-icon-hover-foreground);
+}
+.shared-arrangement-control.is-unset button.planning-icon-control.priority-control-trigger:hover svg,
+.student-arrangement-control.is-unset button.planning-icon-control.student-arrangement-trigger:hover svg {
+  opacity:1;
+}
+@media (prefers-reduced-motion:reduce) {
+  .planning-icon-control { transition:none!important; }
+}
