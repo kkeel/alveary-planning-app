@@ -553,18 +553,30 @@
   border-color:var(--cx-subject-medium);
   color:color-mix(in srgb,var(--cx-subject) 55%,#3a5143);
 }
+/* Topic reuse is a relationship, not a second status badge.
+ * One unboxed arrow is always present when an edition is shared across
+ * published parent courses. Its color reflects selection IN THIS parent;
+ * selecting the same edition elsewhere does not color this occurrence. */
 .cx-topic-elsewhere {
-  display:inline-flex; align-items:center; gap:4px;
-  max-width:100%; margin-left:7px; padding:2px 5px;
-  border:1px solid #dfe7da; border-radius:4px;
-  background:#f6f8f3; color:#597260;
-  font-size:10px; font-weight:500; line-height:1.25;
-  vertical-align:middle; white-space:nowrap;
+  display:inline-block;
+  margin-left:7px;
+  padding:0 1px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  color:#9bad9c;
+  font-size:15px;
+  font-weight:500;
+  line-height:1;
+  vertical-align:baseline;
+  white-space:nowrap;
 }
-.cx-topic-elsewhere svg { flex:none; }
+.cx-topic-elsewhere.is-active {
+  color:var(--cx-subject);
+  font-weight:700;
+}
 @media(max-width:660px) {
-  .cx-topic-elsewhere { margin-left:4px; padding:2px 3px; }
-  .cx-topic-elsewhere span { display:none; }
+  .cx-topic-elsewhere { margin-left:4px; }
 }
 
 /* Selected course / topic toolbars share a consistent visual hierarchy.
