@@ -184,8 +184,10 @@ assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head\
 assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+\.priority-control:not\(\.shared-arrangement-control\):not\(\.has-priority\)/);
 assert.match(listCss,/button\.planning-icon-control\.cx-info-action:not\(\.is-open\)/);
 assert.match(listCss,/\.cx-course\.cx-has-planning-selection > \.cx-course-head \.cx-course-actions\s+button\.planning-icon-control\.cx-info-action\.is-open/);
-// A shared-edition arrow is a relationship cue; it does not claim the
-// occurrence is selected merely because another parent is saved.
+// The arrow identifies a shared curriculum topic and its color signals
+// selection ANYWHERE. A separate row highlight says selected through HERE.
+// Choosing the same edition under another parent may color this arrow,
+// but must never color or select the current row.
 const parentsByTopic=new Map();
 for(const link of catalog.topicLinks) {
  const parents=parentsByTopic.get(link.childEditionId)??new Set();
@@ -195,21 +197,22 @@ for(const link of catalog.topicLinks) {
 assert.ok(parentsByTopic.get(us.topicEditionId).size>1,
   "shared History topic is published through multiple parent courses");
 assert.equal(hasTint(grade9,us.topicId),false,
-  "untouched instance stays neutral even if edition is selected elsewhere");
+  "untouched occurrence remains a neutral row even if its edition is selected elsewhere");
 assert.equal(hasTint(older,shared.topicId),true,
-  "the instance chosen under its own parent has the highlighted arrow");
+  "the selected occurrence under its own parent is highlighted");
 assert.equal(hasTint(allIdea,us.topicId),true,
-  "whole-course Think Tank idea highlights the inherited shared topic arrow");
-assert.equal(hasTint(topicPlan,us.topicId),true,
-  "topic-level My Plan selection highlights that exact shared topic arrow");
+  "whole-course idea colors its topic row as selected here");
 assert.match(explorer,/const sharedTopicEditions = \(\(\) => \{/);
-assert.match(explorer,/parents\.size > 1/);
+assert.match(explorer,/const sharedTopicParentTitles = \(\(\) => \{/);
 assert.match(explorer,/const hasSharedTopic = nested && \(sharedTopicEditions\.has\(course\.editionId\)/);
 assert.match(explorer,/const selectedHere = mode === "plan" && \(status\.planActive \|\| status\.ideaActive\)/);
+assert.match(explorer,/const selectedInAnyCourse = selectedHere \|\| \(mode === "plan" && presentElsewhere\.length > 0\)/);
+assert.match(explorer,/\(selectedInAnyCourse \? " is-active" : ""\)/);
+assert.match(explorer,/publishedParentTitles\.join\("; "\)/,
+  "tooltip must name the actual published parent courses");
+assert.match(explorer,/Also selected under " \+ place\.courseTitle/,
+  "tooltip names where the shared edition was selected");
 assert.match(explorer,/\{hasSharedTopic && <span className=\{"cx-topic-elsewhere" \+/);
-assert.match(explorer,/\(selectedHere \? " is-active" : ""\)/);
-assert.doesNotMatch(explorer,/\{presenceLabel\}/,
-  "visible My Plan / Think Tank labels should not compete with row status");
 assert.match(listCss,/\.cx-topic-elsewhere\.is-active \{\s*color:var\(--cx-subject\);/);
 assert.match(listCss,/\.cx-topic-elsewhere \{[\s\S]*?border:0;[\s\S]*?background:transparent;/);
 
