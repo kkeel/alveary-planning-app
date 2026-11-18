@@ -21,7 +21,6 @@ import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { sharedCourseSummary } from "./shared-priority.mjs";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
@@ -280,10 +279,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const remainingCount = savedChoice
                       ? pendingIdeaCount(savedChoice,cloud.students) : 0;
                     const partiallyPlanned = savedChoice?.stage === "planned" && remainingCount > 0;
-                    const headingPriority = savedChoice ? sharedCourseSummary(
-                      cloud.sharedPriorities,idea.id,savedChoice.topics.filter(topic =>
-                        topicIsThinkTankIdea(savedChoice,topic.topicId,cloud.students))
-                        .map(topic=>topic.topicId)) : null;
+                    const selectedTopicIds = savedChoice?.topics.filter(topic =>
+                      topicIsThinkTankIdea(savedChoice,topic.topicId,cloud.students))
+                      .map(topic=>topic.topicId) ?? [];
                     const reviewOpen = activeThinkCourseId === idea.id;
                     const reviewId = "pd-think-details-" + idea.id;
                     return <div className={"pd-idea" + (reviewOpen ? " is-open" : "")} key={idea.id}>
@@ -297,7 +295,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                               {showTopicCount && partiallyPlanned && <span className="pd-meta-divider"> · </span>}
                               {partiallyPlanned && "Partial My Plan"}
                             </small>}
-                            {headingPriority && <small className="shared-priority-heading-summary">Priority: {headingPriority}</small>}
                              {reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}
                           </span>
                         </button>
@@ -315,6 +312,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           title="View books" onClick={closeMobileDrawer}>
                           <BookOpen size={15} aria-hidden="true"/>
                         </Link>
+                        {savedChoice && <SharedPriorityEditor courseId={idea.id}
+                          selectedTopicIds={selectedTopicIds}/>}
                         {cloud.ready && <button type="button"
                           className="pd-plan-action pd-think-toolbar-plus"
                           aria-label={idea.type === "Combined Course"

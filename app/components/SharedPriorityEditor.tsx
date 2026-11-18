@@ -1,63 +1,140 @@
 "use client";
 
-import { useDemoPlan } from "./DemoPlanContext";
+import { useEffect, useId, useRef, useState } from "react";
+import { Check, Layers3, Tag } from "lucide-react";
+import { useDemoPlan, type SharedPriority } from "./DemoPlanContext";
 import { sharedCoursePriority, sharedCourseSummary, sharedTopicOverride,
   sharedTopicPriority } from "./shared-priority.mjs";
 
-/** Same lightweight priority editor is available in Think Tank, My Plan and
- * in-place student assignment. It never selects or assigns students. */
+type Priority = "Core" | "High Interest" | "Additional";
+type Choice = Priority | "inherit" | "none" | "clear";
+
+// Original 2026–27 Course Planning illustrations, already published by Alveary.
+// URLs let the development app reuse the exact existing art, not replacement icons.
+const priorityArt: Record<Priority, string> = {
+  Core: "https://raw.githubusercontent.com/kkeel/course-picker/main/img/Core%20Subjects.png",
+  "High Interest": "https://raw.githubusercontent.com/kkeel/course-picker/main/img/High%20Interest%20Subjects.png",
+  Additional: "https://raw.githubusercontent.com/kkeel/course-picker/main/img/Additional%20Subjects.png",
+};
+const options: Priority[] = ["Core", "High Interest", "Additional"];
+
+function PrioritySymbol({ priority, size = 18 }: {
+  priority: Priority | "Varied" | null;
+  size?: number;
+}) {
+  if (priority === "Varied") return <Layers3 size={size - 2} aria-hidden="true"/>;
+  if (priority) return <img src={priorityArt[priority]} width={size} height={size}
+    alt="" aria-hidden="true" loading="lazy" decoding="async"/>;
+  return <Tag size={size - 3} aria-hidden="true"/>;
+}
+
+/** A tiny always-available action, not a form field in the reading flow.
+ * One click opens the menu; selecting a value autosaves without a Done step.
+ * Assignment membership and course/topic priority inheritance are untouched. */
 export default function SharedPriorityEditor({
   courseId, topicId = null, selectedTopicIds = [], compact = false,
+  disabled = false,
 }: {
   courseId: string;
   topicId?: string | null;
   selectedTopicIds?: string[];
   compact?: boolean;
+  disabled?: boolean;
 }) {
   const plan = useDemoPlan();
+  const [open,setOpen] = useState(false);
+  const id = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const shared = plan.sharedPriorities;
-  const courseDefault = sharedCoursePriority(shared, courseId);
-  const summary = topicId === null
-    ? sharedCourseSummary(shared,courseId,selectedTopicIds)
-    : sharedTopicPriority(shared,courseId,topicId);
-  const override = topicId === null ? courseDefault :
+  const courseValue = sharedCoursePriority(shared,courseId);
+  const topicValue = topicId === null ? "inherit" :
     sharedTopicOverride(shared,courseId,topicId);
-  const value = topicId === null ? courseDefault ?? "" :
-    override === "inherit" ? "inherit" : override === "Not set" ? "none" : override;
-  const choices = [
-    ...(topicId !== null ? [{
-      value:"inherit",
-      label:"Use course default" + (courseDefault ? " (" + courseDefault + ")" : ""),
-    }] : [{ value:"", label:"Decide later" }]),
-    { value:"Core", label:"Core" },
-    { value:"High Interest", label:"High Interest" },
-    { value:"Additional", label:"Additional" },
-    ...(topicId !== null ? [{ value:"none", label:"No priority" }] : []),
+  const effectiveTopic = topicId === null ? null :
+    sharedTopicPriority(shared,courseId,topicId);
+  const summary = topicId === null && selectedTopicIds.length
+    ? sharedCourseSummary(shared,courseId,selectedTopicIds) : null;
+  const shown = topicId === null
+    ? summary ?? courseValue : effectiveTopic;
+  const activeValue = topicId === null ? courseValue : topicValue;
+  const hasCustomTopics = topicId === null && selectedTopicIds.some(id =>
+    sharedTopicOverride(shared,courseId,id) !== "inherit");
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+    document.addEventListener("pointerdown",onPointerDown);
+    document.addEventListener("keydown",onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown",onPointerDown);
+      document.removeEventListener("keydown",onKeyDown);
+    };
+  }, [open]);
+
+  function change(choice: Choice) {
+    const next: SharedPriority["priority"] | null = choice === "inherit" ||
+      choice === "clear" ? null : choice === "none" ? "Not set" : choice;
+    if (!plan.courses.some(course => course.courseId === courseId)) {
+      // A priority on an unchosen course is an idea, not a student assignment.
+      // A topic-first priority saves only its topic through the correct parent.
+      if (topicId === null) plan.addChoice(courseId);
+      else plan.toggleListIdea(courseId,topicId);
+    }
+    plan.setSharedPriority(courseId,topicId,next);
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  const name = shown === "Varied" ? "Varied priorities" :
+    shown ? "Priority: " + shown : "Set priority";
+  const hint = topicId !== null && topicValue === "inherit" && effectiveTopic
+    ? name + " (same as course)" : name;
+  const selectedChoice = topicId === null ? courseValue ?? "clear" :
+    topicValue === "inherit" ? "inherit" :
+    topicValue === "Not set" ? "none" : topicValue;
+  const menuChoices: {value:Choice; label:string; art?:Priority}[] = [
+    ...(topicId !== null ? [{value:"inherit" as const,label:"Same as course"}] : []),
+    ...options.map(value=>({value,label:value,art:value})),
+    {value:topicId === null ? "clear" : "none",
+      label:topicId === null ? "Clear priority" : "No priority"},
   ];
-  const label = topicId === null ? "Course priority default" : "Topic priority";
-  return <div className={"shared-priority-editor" +
-    (compact ? " is-compact" : "")} onClick={event => event.stopPropagation()}>
-    <label>
-      <span>{label}</span>
-      <select aria-label={label} value={value ?? ""}
-        disabled={!plan.ready}
-        onChange={event => {
-          const v = event.target.value;
-          plan.setSharedPriority(courseId,topicId,
-            v === "" || v === "inherit" ? null :
-              v === "none" ? "Not set" :
-              v as "Core" | "High Interest" | "Additional");
-        }}>
-        {choices.map(choice=><option key={choice.value} value={choice.value}>
-          {choice.label}
-        </option>)}
-      </select>
-    </label>
-    {topicId === null && selectedTopicIds.length > 0 &&
-      <small className="shared-priority-summary" aria-live="polite">
-        {summary === "Varied"
-          ? "Varied topics · customized topics stay unchanged"
-          : summary ? "Selected topics: " + summary : "No selected priority yet"}
-      </small>}
+
+  return <div ref={rootRef} className={"priority-control" +
+      (compact ? " is-compact" : "") +
+      (shown ? " has-priority" : "") +
+      (shown === "Varied" ? " is-varied" : "") +
+      (topicId !== null && topicValue === "inherit" ? " is-inherited" : "")}
+    onClick={event=>event.stopPropagation()}>
+    <button type="button" ref={triggerRef} className="priority-control-trigger"
+      aria-label={hint} title={hint} aria-expanded={open} aria-controls={id}
+      disabled={disabled || !plan.ready}
+      onClick={()=>setOpen(value=>!value)}>
+      <PrioritySymbol priority={shown === "Varied" || shown === "Core" ||
+        shown === "High Interest" || shown === "Additional" ? shown : null}
+        size={compact ? 18 : 21}/>
+    </button>
+    {open && <div id={id} className="priority-control-popover" role="group"
+      aria-label={topicId === null ? "Course priority" : "Topic priority"}>
+      <div className="priority-control-heading">Priority <span>optional</span></div>
+      {menuChoices.map(option=><button key={option.value} type="button"
+        className="priority-option" aria-pressed={selectedChoice === option.value}
+        onClick={()=>change(option.value)}>
+        {option.art ? <PrioritySymbol priority={option.art} size={22}/> :
+          <span className="priority-option-placeholder" aria-hidden="true"/>}
+        <span>{option.label}</span>
+        {selectedChoice===option.value && <Check size={14} aria-hidden="true"/>}
+      </button>)}
+      {hasCustomTopics && <p className="priority-control-note">
+        Topics you've changed keep their own priorities.
+      </p>}
+    </div>}
   </div>;
 }

@@ -1340,3 +1340,30 @@
 .pd-think-review.myplan-review .pd-assign-in-place {
   margin:7px 0 11px;
 }
+
+/* Compact student editing: priority lives in the quiet header utility area;
+   advanced per-student controls remain available without oversized fields. */
+.plan-assign-head { align-items:center; flex-wrap:wrap; gap:8px 13px; }
+.plan-assign-head-tools {
+  display:flex; justify-content:flex-end; align-items:center;
+  flex-wrap:wrap; gap:7px 12px; margin-left:auto; min-width:0;
+}
+.plan-assign-priority { display:inline-flex; align-items:center; gap:4px;
+  color:#6b806f; font-size:11px; font-weight:500; white-space:nowrap; }
+.plan-assign-priority .priority-control { margin:0; }
+.pd-assignment-quick-actions {
+  display:inline-flex; align-items:center; justify-content:flex-end;
+  flex-wrap:wrap; gap:6px 10px; min-width:0;
+}
+.plan-preferences { max-width:840px; }
+.plan-preference-row { gap:8px 12px; }
+.plan-preference-row label { max-width:100%; }
+.plan-preference-row select { max-width:100%; font-size:11px; }
+@media(min-width:700px) {
+  .plan-preference-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:560px) {
+  .plan-assign-head-tools { width:100%; margin-left:0; justify-content:space-between; }
+  .plan-assign-head strong { flex:1 1 auto; }
+  .pd-assignment-quick-actions { margin-left:auto; }
+}

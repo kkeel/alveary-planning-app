@@ -10,7 +10,6 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { sharedCourseSummary } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
@@ -214,6 +213,9 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const shared = hasSharedTopic(sharedTopics, course);
               const menuOpen = openMenuId === course.courseId;
               const title = item?.title ?? "Saved course";
+              const selectedTopicIds = course.topics.filter(topic => topic.included &&
+                demo.students.some(student=>isTopicAssigned(course,topic.topicId,student.id)))
+                .map(topic=>topic.topicId);
               return <div className={"pd-idea myplan-row" + (open ? " is-open" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -246,6 +248,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     aria-label={"View books for " + title} title="View books">
                     <BookOpen size={15} aria-hidden="true"/>
                   </Link>
+                  <SharedPriorityEditor courseId={course.courseId}
+                    selectedTopicIds={selectedTopicIds}/>
                   <button type="button" className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"
                     aria-label={"Edit students and priorities for " + title}
                     title={"Edit students for " + title} aria-expanded={editing}

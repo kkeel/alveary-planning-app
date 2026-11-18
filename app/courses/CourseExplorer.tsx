@@ -9,7 +9,8 @@ import { guidanceSegments, matchesCourseGrades } from "./choice-display.mjs";
 import { sourceChoiceForRow } from "./course-list-actions.mjs";
 import { canOpenListStudentEditor } from "./list-editor-readiness.mjs";
 import { subjectColor } from "./legacy-subject-colors.mjs";
-import { listRowStatus } from "./list-row-status.mjs";
+import { listRowStatus, topicIsThinkTankIdea } from "./list-row-status.mjs";
+import { isTopicAssigned } from "../components/topic-assignment.mjs";
 import PlacementSymbol from "../components/PlacementSymbol";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
 import { usePlannerAuth } from "../components/PlannerAuthProvider";
@@ -154,23 +155,6 @@ function CourseRow({
     ? disclosureOverride.expanded : detailMode === "expanded";
   const disclosureRef = useRef<HTMLButtonElement>(null);
   const beforeToggleTop = useRef<number | null>(null);
-  const [quickPriorityOpen, setQuickPriorityOpen] = useState(false);
-  const quickPriorityRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!quickPriorityOpen) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!quickPriorityRef.current?.contains(event.target as Node)) setQuickPriorityOpen(false);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setQuickPriorityOpen(false);
-    };
-    document.addEventListener("pointerdown", dismiss);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", dismiss);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [quickPriorityOpen]);
   const detailsId = useId(); // unique for each occurrence, not the shared curriculum ID
   const isCombined = course.type === "Combined Course";
   const children = sortTopicsForCourse(course, childTopics.get(course.editionId) ?? []);
@@ -185,6 +169,10 @@ function CourseRow({
     isCombined, planned.includes(sourceCourseId));
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
     planningTarget.topicId === sourceChoice.topicId;
+  const selectedTopicIds = parentChoice?.topics.filter(topic =>
+    topic.included && (topicIsThinkTankIdea(parentChoice,topic.topicId,students) ||
+      students.some(student=>isTopicAssigned(parentChoice,topic.topicId,student.id))))
+    .map(topic=>topic.topicId) ?? [];
   const subjectHex = subjectColor(parentSubject ?? course.subject);
   const subjectVars = {
     "--cx-subject": subjectHex,
@@ -265,12 +253,12 @@ function CourseRow({
               status.ideaTone === "inherited" ? "Remove only this inherited topic idea" :
               status.ideaTone === "partial" ? "Select all topics for Think Tank" :
               "Save this selection to Think Tank"}
-            onClick={() => {
-              onPlannedToggle(sourceCourseId,sourceChoice.topicId);
-              setQuickPriorityOpen(!status.ideaActive);
-            }}>
+            onClick={() => onPlannedToggle(sourceCourseId,sourceChoice.topicId)}>
             <Lightbulb size={16} strokeWidth={1.8} aria-hidden="true"/>
           </button>
+          <SharedPriorityEditor courseId={sourceCourseId}
+            topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
+            compact={nested} disabled={status.excluded}/>
           <button type="button" className={"cx-direct-plan-action" +
             (status.planActive ? " is-selected" : "") +
             (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
@@ -299,16 +287,6 @@ function CourseRow({
         </>}
       </div>
     </div>
-    {mode === "plan" && quickPriorityOpen && <div className="cx-priority-quick" ref={quickPriorityRef}>
-      <div className="cx-priority-quick-title">
-        <span><Lightbulb size={14} aria-hidden="true"/> Saved to Think Tank · Priority optional</span>
-        <button type="button" aria-label="Close priority editor" onClick={() => setQuickPriorityOpen(false)}>×</button>
-      </div>
-      {parentChoice && (!nested || parentChoice.topics.some(t => t.topicId===course.id))
-        ? <SharedPriorityEditor courseId={sourceCourseId}
-            topicId={sourceChoice.topicId}/>
-        : <span className="cx-assign-loading">Saving your idea…</span>}
-    </div>}
     {mode === "plan" && activePlanEditor && <div className="cx-inline-assign" role="region"
       aria-label={"Assign students for " + course.title}>
       {!canOpenListStudentEditor(parentChoice, course.type, nested) ?
@@ -326,9 +304,6 @@ function CourseRow({
             onClose={onEndPlan} onCancel={onEndPlan}/>}
     </div>}
     {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
-      {mode === "plan" && parentChoice && <SharedPriorityEditor
-        courseId={sourceCourseId} topicId={sourceChoice.topicId}
-        selectedTopicIds={parentChoice.topics.filter(t => t.included).map(t => t.topicId)}/> }
       {!isCombined && <div className="cx-course-meta">
         {course.schedules.length > 0 && <div className="cx-schedule-list">
           {course.schedules.map(schedule => <span key={schedule.id} className="cx-schedule-item">
