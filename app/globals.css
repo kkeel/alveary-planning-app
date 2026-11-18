@@ -560,10 +560,7 @@ p { line-height: 1.65; }
 .priority-control .priority-control-trigger:hover:not(:disabled) {
   border-color:#b7cbb4; background:#edf4eb;
 }
-.student-priority-control.is-custom .priority-control-trigger::after {
-  content:""; position:absolute; right:2px; bottom:1px;
-  width:5px; height:5px; border-radius:50%; background:#577b5e;
-}
+/* Customized priority is conveyed by the effective icon and its accessible label; no corner dot. */
 .student-priority-control.is-inherited .priority-control-trigger {
   border-color:#e2e9df; background:#fbfcfa;
 }
