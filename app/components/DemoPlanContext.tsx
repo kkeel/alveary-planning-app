@@ -55,6 +55,7 @@ type Action = "load" | "import" | "set_choice" | "remove_choice" | "set_stage" |
   "upsert_group" | "delete_group";
 type DemoPlanContextValue = {
   ready: boolean; saving: boolean; error: string | null;
+  confirmedSinceLoad: boolean;
   courses: SavedCourse[]; students: PlanningStudent[];
   studentGroups: PlanningGroup[]; studentPreferences: StudentPreference[];
   assignmentPriorities: AssignmentPriority[];
@@ -131,6 +132,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmedSinceLoad, setConfirmedSinceLoad] = useState(false);
   const latestConfirmed = useRef<DemoPlanSnapshot>(blank);
   const chain = useRef<Promise<unknown>>(Promise.resolve());
   const pending = useRef(0);
@@ -159,11 +161,13 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
       latestConfirmed.current = blank;
       setReady(false);
       setError(null);
+      setConfirmedSinceLoad(false);
       return;
     }
     enabled.current = true;
     let active = true;
     setReady(false);
+    setConfirmedSinceLoad(false);
     void request("load").then(data => {
       if (!active || !enabled.current) return;
       latestConfirmed.current = data;
@@ -209,6 +213,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
       if (pending.current === 0) {
         setSnapshot(data);
         setSaving(false);
+        setConfirmedSinceLoad(true);
       }
     }).catch(() => {
       if (!enabled.current) return;
@@ -364,6 +369,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
         if (pending.current === 0) {
           setSnapshot(data);
           setSaving(false);
+          setConfirmedSinceLoad(true);
         }
       }
       return true;
@@ -518,7 +524,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     mutate("delete_group", { groupId }), [mutate]);
 
   return <Context.Provider value={{
-    ready, saving, error, courses: snapshot.courses, students: snapshot.students,
+    ready, saving, error, confirmedSinceLoad, courses: snapshot.courses, students: snapshot.students,
     studentGroups: snapshot.studentGroups, studentPreferences: snapshot.studentPreferences,
     assignmentPriorities: snapshot.assignmentPriorities,
     sharedPriorities: snapshot.sharedPriorities,

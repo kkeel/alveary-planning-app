@@ -131,36 +131,19 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
     catch { /* storage is optional for a public-safe UI preview */ }
   }, [value, ready, storageKey, storageScope]);
 
-  // Rehydrate choices from another browser only after the authenticated
-  // Supabase plan is available. Never discard unsynced legacy local choices.
+  // The older local-only bookmark model is no longer the source of truth.
+  // Never mirror cloud courses into thinkTankIds: a legacy cleanup path used
+  // to mistake those IDs for stale bookmarks and DELETE real saved courses.
+  // Clear only browser-local bookmark/exclusion data, without sending any
+  // planning mutations. The authenticated Demo plan remains untouched.
   useEffect(() => {
     if (!ready || storageScope === "public" || !cloud.ready) return;
     setValue(previous => {
-      const ids = [...previous.thinkTankIds];
-      const exclusions = { ...previous.excludedTopicIdsByCourse };
-      let changed = false;
-      for (const saved of cloud.courses) {
-        if (!ids.includes(saved.courseId)) {
-          ids.push(saved.courseId);
-          changed = true;
-        }
-        // New optimistic bookmarks initially have no topic payload. Do not
-        // erase legacy topic exclusions while their server save is pending.
-        if (saved.topics.length) {
-          const excluded = saved.topics.filter(t => !t.included).map(t => t.topicId);
-          const existing = exclusions[saved.courseId] ?? [];
-          if (existing.length !== excluded.length ||
-            excluded.some(id => !existing.includes(id))) {
-            if (excluded.length) exclusions[saved.courseId] = excluded;
-            else delete exclusions[saved.courseId];
-            changed = true;
-          }
-        }
-      }
-      return changed ? { ...previous, thinkTankIds: ids,
-        excludedTopicIdsByCourse: exclusions } : previous;
+      if (!previous.thinkTankIds.length &&
+          !Object.keys(previous.excludedTopicIdsByCourse).length) return previous;
+      return { ...previous, thinkTankIds: [], excludedTopicIdsByCourse: {} };
     });
-  }, [ready, storageScope, cloud.ready, cloud.courses]);
+  }, [ready, storageScope, cloud.ready]);
 
   // Keep this action stable across state updates so auth initialization never
   // re-runs merely because a member clicks List | Planning.

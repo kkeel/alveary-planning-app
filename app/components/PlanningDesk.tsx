@@ -101,12 +101,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // topics without any assigned student stay in Think Tank; assigned topics
   // appear in My Plan. Keep an editor visible until Done, even when its final
   // click assigns the last remaining topic.
-  // The authenticated Demo plan is the sole source of member selections.
-  // Retire leftover local-only bookmarks so a cleared plan stays cleared.
-  useEffect(()=>{
-    if(!cloud.ready || !desk.thinkTankIds.length) return;
-    for(const id of desk.thinkTankIds) desk.removeIdea(id);
-  },[cloud.ready,desk.thinkTankIds,desk.removeIdea]);
+  // Saved course selections come only from DemoPlanContext. Do not translate
+  // browser bookmarks into delete requests: the local preferences provider
+  // retires old bookmarks without touching the authenticated server plan.
   const ideas = useMemo(() => cloud.courses
     .filter(choice=>pendingIdeaCount(choice,cloud.students)>0 ||
       (choice.courseId===justPlannedId || choice.courseId===assigningId))

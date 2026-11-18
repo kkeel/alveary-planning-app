@@ -10,7 +10,7 @@ import { useDemoPlan } from "./DemoPlanContext";
  * Students and the other planning pages. The indication never blocks edits. */
 export default function AppSaveStatus() {
   const { status } = usePlannerAuth();
-  const { saving, ready, error } = useDemoPlan();
+  const { saving, ready, error, confirmedSinceLoad } = useDemoPlan();
   const signedIn = status === "signed-in";
 
   // Internal page switches keep the provider and pending queue alive. When
@@ -26,20 +26,23 @@ export default function AppSaveStatus() {
   }, [signedIn, saving]);
 
   if (!signedIn) return null;
-  const state = error ? "error" : saving ? "saving" : ready ? "saved" : "connecting";
+  const state = error ? "error" : saving ? "saving" :
+    ready ? (confirmedSinceLoad ? "saved" : "ready") : "connecting";
   const label = state === "error" ? "Not saved" :
     state === "saving" ? "Saving…" :
-    state === "saved" ? "Saved" : "Connecting…";
+    state === "saved" ? "Saved" : state === "ready" ? "Ready" : "Connecting…";
   return <span className={"shell-save-status is-" + state}
     role={state === "error" ? "alert" : "status"}
     aria-live="polite" aria-atomic="true"
     title={error || (saving
       ? "Your latest changes are being saved. You can continue planning."
-      : ready ? "Your saved planning changes are up to date."
+      : state === "saved" ? "The latest change was confirmed by the server."
+      : ready ? "Your saved plan is ready for editing."
       : "Connecting to your saved plan.")}>
     {state === "error" ? <CircleAlert size={15} aria-hidden="true"/> :
       state === "saving" ? <LoaderCircle className="shell-save-spinner" size={15} aria-hidden="true"/> :
         state === "saved" ? <Check size={15} aria-hidden="true"/> :
+        state === "ready" ? <Cloud size={15} aria-hidden="true"/> :
           <Cloud size={15} aria-hidden="true"/>}
     <span>{label}</span>
   </span>;
