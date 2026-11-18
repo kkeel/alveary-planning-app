@@ -10,6 +10,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
 import { coursePriorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -233,6 +234,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <SharedPriorityEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
+                  <SharedArrangementEditor courseId={course.courseId}
+                    selectedTopicIds={selectedTopicIds}/>
                         <button type="button" className="pd-row-tool pd-mini-info-action"
                     aria-label={(open?"Hide":"View")+" details for "+title}
                     title={open?"Hide details":"View details"}
