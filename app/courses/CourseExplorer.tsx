@@ -154,10 +154,12 @@ function CourseRow({
   onEndPlan,
 }: CourseRowProps) {
   const [disclosureOverride, setDisclosureOverride] = useState<{
-    revision: number; expanded: boolean;
+    revision: number; mode: DetailMode;
   } | null>(null);
-  const isExpanded = disclosureOverride?.revision === detailRevision
-    ? disclosureOverride.expanded : detailMode === "expanded";
+  const visibleMode: DetailMode = disclosureOverride?.revision === detailRevision
+    ? disclosureOverride.mode : detailMode;
+  const isExpanded = visibleMode !== "compact";
+  const showFullDetails = visibleMode === "detailed";
   const disclosureRef = useRef<HTMLButtonElement>(null);
   const beforeToggleTop = useRef<number | null>(null);
   const detailsId = useId(); // unique for each occurrence, not the shared curriculum ID
@@ -206,21 +208,27 @@ function CourseRow({
 
   function toggleDetails() {
     beforeToggleTop.current = disclosureRef.current?.getBoundingClientRect().top ?? null;
-    setDisclosureOverride({revision:detailRevision,expanded:!isExpanded});
+    const nextMode: DetailMode = showFullDetails
+      ? detailMode === "topics" ? "topics" : "compact"
+      : "detailed";
+    setDisclosureOverride({revision:detailRevision,mode:nextMode});
   }
 
   const childProps: Omit<CourseRowProps, "course" | "nested"> = {
     childTopics, mode, planned, onPlannedToggle, onRemovePlan,
     parentCourseId: sourceCourseId,
     parentSubject: parentSubject ?? course.subject,
-    detailMode, detailRevision, savedCourses, students,
-    sharedPriorities, assignmentPriorities, planningTarget,
+    // Expanded exposes topic rows but keeps their description panels closed.
+    // Detailed (or a parent manually opened in detail) reveals all topic detail.
+    detailMode: showFullDetails ? "detailed" : "compact", detailRevision,
+    savedCourses, students, sharedPriorities, assignmentPriorities, planningTarget,
     onStartPlan, onEndPlan,
   };
 
   return <div style={subjectVars} className={"cx-course" +
     (nested ? " cx-course--topic" : "") +
     (isExpanded ? " is-expanded" : "") +
+    (visibleMode === "topics" ? " is-topics-only" : "") +
     (mode === "plan" && status.planTone !== "none" ? " cx-status-" + status.planTone : "") +
     (mode === "plan" && status.ideaActive ? " cx-status-idea cx-idea-tone-" + status.ideaTone : "") +
     (mode === "plan" && status.contextTone !== "none" ? " cx-context-" + status.contextTone : "")}>
@@ -228,7 +236,7 @@ function CourseRow({
       <button ref={disclosureRef} type="button" className="cx-course-disclosure"
         aria-expanded={canExpand ? isExpanded : undefined}
         aria-controls={canExpand ? detailsId : undefined}
-        disabled={!canExpand} title={canExpand ? (isExpanded ? "Hide details" : "View details") : undefined}
+        disabled={!canExpand} title={canExpand ? (showFullDetails ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
@@ -238,14 +246,14 @@ function CourseRow({
       </button>
       <div className="cx-course-actions">
         {canExpand && <button type="button" className={"cx-info-action" +
-          (isExpanded ? " is-open" : "") +
+          (showFullDetails ? " is-open" : "") +
           (mode === "plan" && (status.ideaActive || status.planActive)
             ? " is-member" : "")}
           aria-controls={detailsId} aria-expanded={isExpanded}
-          aria-label={(isExpanded ? "Hide" : "View") + " details for " + course.title}
-          title={(isExpanded ? "Hide" : "View") + " description and topics"}
+          aria-label={(showFullDetails ? "Hide" : "View") + " details for " + course.title}
+          title={(showFullDetails ? "Hide" : "View") + " description and topics"}
           onClick={toggleDetails}>
-          <span className="cx-info-word">{isExpanded ? "Hide" : "View"}</span>
+          <span className="cx-info-word">{showFullDetails ? "Hide" : "View"}</span>
           <Info size={16} strokeWidth={1.8} aria-hidden="true"/>
         </button>}
         {mode === "plan" && <>
@@ -317,7 +325,7 @@ function CourseRow({
             onClose={onEndPlan} onCancel={onEndPlan}/>}
     </div>}
     {canExpand && isExpanded && <div className="cx-course-details" id={detailsId}>
-      {!isCombined && <div className="cx-course-meta">
+      {showFullDetails && !isCombined && <div className="cx-course-meta">
         {course.schedules.length > 0 && <div className="cx-schedule-list">
           {course.schedules.map(schedule => <span key={schedule.id} className="cx-schedule-item">
             {schedule.text}
@@ -325,8 +333,8 @@ function CourseRow({
         </div>}
         <span className="cx-grade-detail">{course.gradeDisplay || gradeLabel(course.grades)}</span>
       </div>}
-      {course.description && <p className="cx-description">{course.description}</p>}
-      {course.tips && <TipCallout>{course.tips}</TipCallout>}
+      {showFullDetails && course.description && <p className="cx-description">{course.description}</p>}
+      {showFullDetails && course.tips && <TipCallout>{course.tips}</TipCallout>}
       {children.length > 0 && <div className="cx-topic-list" aria-label={"Topics in " + course.title}>
         <div className="cx-topic-heading">Topics</div>
         {children.map(child => <CourseRow key={child.id} course={child} nested {...childProps} />)}
