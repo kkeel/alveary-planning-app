@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 import { demoteIfNoAssignedTopics, isTopicAssigned } from "./topic-assignment.mjs";
-import { nextCourseIdeaAll } from "../courses/list-row-status.mjs";
+import { nextCourseIdeaAll, isUnusedSavedCourse } from "../courses/list-row-status.mjs";
 import catalog from "../courses/catalog-preview.json";
 import { previewTopicsForCourse } from "../courses/optimistic-topics.mjs";
 
@@ -111,6 +111,19 @@ function isSnapshot(value: unknown): value is DemoPlanSnapshot {
 const blank: DemoPlanSnapshot = { schoolYear: "2027-28", planKind: "demo",
   students: [], courses: [], studentGroups: [], studentPreferences: [],
   assignmentPriorities: [], sharedPriorities: [], assignmentArrangements: [], sharedArrangements: [] };
+
+/** Removing a saved course resets every old per-course customization and
+ * exclusion in the optimistic view, matching database cascade deletion. */
+function withoutCourse(current:DemoPlanSnapshot,courseId:string):DemoPlanSnapshot {
+  return {...current,
+    courses:current.courses.filter(x=>x.courseId!==courseId),
+    studentPreferences:current.studentPreferences.filter(x=>x.courseId!==courseId),
+    assignmentPriorities:current.assignmentPriorities.filter(x=>x.courseId!==courseId),
+    sharedPriorities:current.sharedPriorities.filter(x=>x.courseId!==courseId),
+    assignmentArrangements:current.assignmentArrangements.filter(x=>x.courseId!==courseId),
+    sharedArrangements:current.sharedArrangements.filter(x=>x.courseId!==courseId),
+  };
+}
 
 export function DemoPlanProvider({ children }: { children: ReactNode }) {
   const { status, userId, getAccessToken } = usePlannerAuth();
@@ -248,7 +261,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
           studentIds:[],overrides:[],
         }]};
       }
-      return {...current,courses:current.courses.map(c=>{
+      const courses=current.courses.map(c=>{
         if (c.courseId!==courseId) return c;
         const topics=c.topics.length ? c.topics : previewTopicsForCourse(catalog,courseId);
         if (topicId===null) {
@@ -269,7 +282,11 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
             : c.ideaAll ? "inherit":"on";
           return {...t,ideaChoice};
         })};
-      })};
+      });
+      const changed=courses.find(c=>c.courseId===courseId);
+      const optimistic={...current,courses};
+      return changed&&isUnusedSavedCourse(changed,current.students)
+        ? withoutCourse(optimistic,courseId):optimistic;
     });
   },[mutate]);
 
@@ -361,9 +378,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   }, [ready, getAccessToken, request]);
 
   const removeChoice = useCallback((courseId: string) => {
-    void mutate("remove_choice", { courseId }, current => ({
-      ...current, courses: current.courses.filter(c => c.courseId !== courseId),
-    }));
+    void mutate("remove_choice", { courseId }, current => withoutCourse(current,courseId));
   }, [mutate]);
   const setStage = useCallback((courseId: string, stage: "idea" | "planned") => {
     // If the course is still an unsynced legacy bookmark, establish the
@@ -374,14 +389,18 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     }));
   }, [snapshot.courses, addChoice, mutate]);
   const setTopic = useCallback((courseId: string, topicId: string, include: boolean) => {
-    void mutate("set_topic", { courseId, topicId, include }, current => ({
-      ...current, courses: current.courses.map(c => {
+    void mutate("set_topic", { courseId, topicId, include }, current => {
+      const courses=current.courses.map(c => {
         if (c.courseId !== courseId) return c;
         const next = { ...c,
           topics: c.topics.map(t => t.topicId === topicId ? { ...t, included: include } : t) };
         return include ? next : demoteIfNoAssignedTopics(next, current.students);
-      }),
-    }));
+      });
+      const changed=courses.find(c=>c.courseId===courseId);
+      const optimistic={...current,courses};
+      return changed&&isUnusedSavedCourse(changed,current.students)
+        ? withoutCourse(optimistic,courseId):optimistic;
+    });
   }, [mutate]);
   const assignCourse = useCallback((courseId: string, studentId: string, assign: boolean) => {
     void mutate("set_course_student", { courseId, studentId, assign }, current => ({
