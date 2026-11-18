@@ -96,7 +96,7 @@ test("Arrangement offers combined, separate, later and topic inheritance inline"
 });
 test("More menus remain one-row icons and My Plan shows only student-level topic counts",()=>{
   const css=read("app/components/planning-desk.css");
-  assert.match(css,/\.priority-control-popover\.floating-icon-menu/);
+  assert.match(read("app/globals.css"),/\.priority-control-popover\.floating-icon-menu/);
   assert.match(topic,/className="floating-icon-menu pd-topic-menu"/);
   for(const src of [desk,plan,topic]) assert.match(src,/pd-sr-only/);
   assert.doesNotMatch(plan,/showTopicCount|selectionTopicCount/);
