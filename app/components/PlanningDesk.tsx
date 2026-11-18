@@ -215,8 +215,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // or two visible columns. List and Planning never mount both desk variants.
   const notices = null;
   const thinkTankContent = <>
+          {ideas.length > 0 && <p className="pd-intro pd-planning-guidance">Ideas to consider for your school year.</p>}
           <div className="pd-details-toolbar">
-            {ideas.length > 0 && <p className="pd-intro">Ideas to consider for your school year.</p>}
             <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
               onChange={next => { desk.setThinkDetails(next); setOpenThinkCourseId(assigningId); setCourseInfoId(null); setHiddenDetailedCourseIds([]); }}/>
           </div>
