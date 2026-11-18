@@ -18,6 +18,8 @@ type PlanningDeskState = {
   collapsedSubjects: string[];
   quiet: boolean;
   tab: "think" | "plan";
+  // Distinguishes a member's deliberate tab choice from the old Think Tank fallback.
+  tabExplicit: boolean;
   courseMode: "browse" | "plan";
   grades: number[];
   country: CountryFilter;
@@ -54,7 +56,7 @@ const defaults: PlanningDeskState = {
   // Expanded shows the curriculum structure without overwhelming new members.
   listDetails: "topics", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "think", courseMode: "browse",
+  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
 };
 // Keep user-view preferences valid even if old or manually edited local storage is malformed.
@@ -112,7 +114,12 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           subjectOrder: Array.isArray(saved.subjectOrder) ? saved.subjectOrder.filter((x): x is string => typeof x === "string") : [],
           orderedIdsBySubject: saved.orderedIdsBySubject && typeof saved.orderedIdsBySubject === "object" ? saved.orderedIdsBySubject : {},
           collapsedSubjects: Array.isArray(saved.collapsedSubjects) ? saved.collapsedSubjects : [],
-          quiet: saved.quiet === true, tab: saved.tab === "plan" ? "plan" : "think",
+          quiet: saved.quiet === true,
+          // Older stored "think" was also the automatic default, so it did
+          // not necessarily indicate a member had chosen it. Migrate those
+          // sessions to My Plan once, then respect every deliberate tab click.
+          tab: saved.tabExplicit === true && saved.tab === "think" ? "think" : "plan",
+          tabExplicit: saved.tabExplicit === true,
           // A prior explicit Planning selection wins. Existing Think Tank ideas
           // alone should not force a first-time member into full-page Planning.
           courseMode: saved.courseMode === "plan" ? "plan" : "browse",
@@ -234,7 +241,9 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
       });
     },
     setQuiet: quiet => setValue(v => ({ ...v, quiet })),
-    setTab: tab => setValue(v => ({ ...v, tab })),
+    setTab: tab => setValue(v => v.tab === tab && v.tabExplicit ? v : {
+      ...v, tab, tabExplicit: true,
+    }),
     setNotes: notes => setValue(v => ({ ...v, notes })),
     toggleSubject: subject => setValue(v => ({
       ...v,

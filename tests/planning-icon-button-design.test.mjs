@@ -125,3 +125,24 @@ test("Mini desk unset buttons inherit row backgrounds",()=>{
   const deskCss=read("app/components/planning-desk.css");
   assert.match(deskCss,/button\.planning-icon-control\.priority-control-trigger:not\(:hover\):not\(:focus-visible\):not\(\[aria-expanded="true"\]\)\s*\{\s*background:transparent !important;/);
 });
+
+test("Mini desk navigation groups are distinct and divider is above guidance",()=>{
+  const css=read("app/components/planning-desk.css");
+  const component=read("app/components/PlanningDesk.tsx");
+  const context=read("app/components/PlanningDeskContext.tsx");
+  assert.match(css,/\.pd-desk-controls\s*\{[\s\S]*?border-bottom:1px solid #dfe7da;/);
+  assert.match(css,/\.pd-desk-controls \.pd-tabs\s*\{[\s\S]*?border:1px solid #e3e8dd;/);
+  assert.match(css,/\.pd-desk \.pd-header-density\s*\{[\s\S]*?margin-top:11px;[\s\S]*?background:transparent;\s*border:0;/);
+  assert.match(css,/\.pd-desk \.pd-body\s*\{\s*\/\* Only the description/);
+  const controlIndex=component.indexOf('className="pd-desk-controls"');
+  const dividerIndex=component.indexOf('className="pd-header-density"',controlIndex);
+  const contentIndex=component.indexOf('className="pd-body"',dividerIndex);
+  assert.ok(controlIndex>0 && dividerIndex>controlIndex && contentIndex>dividerIndex,
+    "Both fixed control groups must precede all scrollable introductions and subjects");
+  assert.match(context,/tab: "plan", tabExplicit: false/);
+  assert.match(context,/saved\.tabExplicit === true && saved\.tab === "think" \? "think" : "plan"/);
+  assert.match(context,/setTab: tab => setValue\(v => v\.tab === tab && v\.tabExplicit \? v : \{/);
+  assert.match(context,/tab, tabExplicit: true/);
+  assert.match(context,/setPlanDetails: mode =>/);
+  assert.match(context,/setThinkDetails: mode =>/);
+});

@@ -73,3 +73,9 @@ The Course List uses its existing `listRowStatus` (parent-aware Think Tank/My Pl
 ## Mini desk header structure correction
 
 Do **not** position the portable Compact / Expanded / Detailed switch as `position: sticky` inside `.pd-body`: it overlapped scrolling subject headings and produced the impression that the list was moving through the controls. Instead, `PlanningDesk.tsx` renders `.pd-desk-controls` with the Think Tank / My Plan tabs **and** the current tab's mode switch above the single `.pd-body` scroll viewport. Its introduction comes first within the scrolling content, followed immediately by the subject list. `MyPlanPanel` avoids rendering a second switch when `densityControlInHeader` is set, but still retains its internal full-page switch.
+
+## Mini desk layout and forward-facing tab (November 18)
+
+The portable Planning Desk uses a **fixed top area**: title, a distinct Think Tank / My Plan tab group, then a separate Compact / Expanded / Detailed switch. The two groups are spaced rather than drawn as one large tinted box. A full-width divider sits under them. Only **below that divider** does `.pd-body` scroll; if there is at least one chosen course/topic, its short introduction appears at the beginning of the scrollable content, before the subject headings.
+
+The first visit defaults to **My Plan**. The existing browser-scoped Planning Desk preference saves explicit tab selections using `tabExplicit`. A legacy saved Think Tank tab from the old default is migrated to My Plan once (there was no way to distinguish an old automatic Think Tank default from a deliberate Think Tank choice), then every new choice is remembered. Think Tank and My Plan preserve their separate density preferences independently. The existing default density remains Expanded, as the user has been reviewing, unless the member chooses Compact or Detailed.
