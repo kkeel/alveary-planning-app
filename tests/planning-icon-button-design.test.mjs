@@ -146,3 +146,30 @@ test("Mini desk navigation groups are distinct and divider is above guidance",()
   assert.match(context,/setPlanDetails: mode =>/);
   assert.match(context,/setThinkDetails: mode =>/);
 });
+
+test("Full Planning columns keep density modes outside scrolling subject lists",()=>{
+  const desk=read("app/components/PlanningDesk.tsx");
+  const plan=read("app/components/MyPlanPanel.tsx");
+  const css=read("app/components/planning-desk.css");
+  const full=desk.slice(desk.indexOf('if (variant === "full")'));
+  const think=full.indexOf('<section className="pd-full-column" aria-label="Think Tank">');
+  const planCol=full.indexOf('<section className="pd-full-column" aria-label="My Plan">');
+  assert.ok(think>=0 && planCol>think);
+  for(const source of [full.slice(think,planCol),full.slice(planCol,full.indexOf('</section>;'))]){
+    const heading=source.indexOf('className="pd-full-column-heading"');
+    const density=source.indexOf('className="pd-full-density"');
+    const body=source.indexOf('className="pd-full-column-body"');
+    assert.ok(heading>=0 && density>heading && body>density,
+      "Each column must render its permanent mode controls before the scrollable body");
+  }
+  assert.match(full,/<DetailViewSwitch label="Think Tank" value=\{desk\.thinkDetails\}/);
+  assert.match(full,/<DetailViewSwitch label="My Plan" value=\{desk\.planDetails\}/);
+  assert.match(full,/sideBySide densityControlInHeader \/>/,
+    "My Plan must not render a duplicate inner mode control");
+  assert.match(plan,/\{!densityControlInHeader && <div className="pd-details-toolbar">/);
+  assert.match(css,/\.pd-full-density\s*\{[\s\S]*?border-bottom:1px solid #e3e9df;/);
+  assert.match(css,/\.pd-full-column-body\s*\{[^}]*overflow-y:auto;/);
+  assert.doesNotMatch(desk.slice(desk.indexOf("const thinkTankContent ="),desk.indexOf('if (variant === "full")')),
+    /variant === "full" && <div className="pd-details-toolbar">/,
+    "Think Tank should not inject a sticky switch inside its scrolling content");
+});

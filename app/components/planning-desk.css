@@ -662,6 +662,17 @@
 .pd-full-column-body { padding:15px 16px 24px; overflow-y:auto; overflow-x:hidden;
   max-height:calc(100vh - 315px); min-height:330px; overscroll-behavior:contain;
   scrollbar-gutter:stable; }
+/* Full Planning Desk: the mode switch is a fixed sibling of the heading,
+   OUTSIDE the independently scrolling subject list. It never overlays rows. */
+.pd-full-density {
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  padding:9px 16px 11px;
+  background:#fffefa;
+  border-bottom:1px solid #e3e9df;
+}
+.pd-full-density .pd-detail-switch { max-width:100%; }
 .pd-full-column-body .pd-subject-list { gap:11px; }
 .pd-full-column-body .pd-intro { font-size:12px; }
 .pd-full-column-body .pd-review { padding:14px; }
@@ -1936,8 +1947,13 @@
 .pd-desk .myplan-panel > .pd-planning-guidance {
   padding-inline:12px;
 }
+/* Only the mini desk and full-column headers own the mode switch now.
+ * Do not pin anything inside the scrolling full-column body. */
 .pd-full-column-body .pd-details-toolbar {
-  padding:6px 0 9px;
+  position:static;
+  z-index:auto;
+  padding:0;
+  box-shadow:none;
 }
 @media print {
   .pd-details-toolbar { position:static; box-shadow:none; }

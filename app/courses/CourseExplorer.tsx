@@ -84,6 +84,21 @@ const sharedTopicEditions = (() => {
   return new Set([...parentsByTopic].filter(([, parents]) => parents.size > 1)
     .map(([editionId]) => editionId));
 })();
+// Resolve actual published parent course titles for every reused edition.
+// The tooltip lists *curriculum* choices even if none is in a member's plan.
+const sharedTopicParentTitles = (() => {
+  const parentByEdition = new Map(catalog.courses.map(plan => [plan.editionId, plan]));
+  const titles = new Map<string, Set<string>>();
+  for (const link of catalog.topicLinks) {
+    const title = parentByEdition.get(link.parentEditionId)?.title;
+    if (!title) continue;
+    const options = titles.get(link.childEditionId) ?? new Set<string>();
+    options.add(title);
+    titles.set(link.childEditionId, options);
+  }
+  return new Map([...titles].map(([editionId, names]) =>
+    [editionId, [...names].sort()] as const));
+})();
 const compareText = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const comparePlan = (a: Plan, b: Plan) =>
   compareText(a.presentationSort, b.presentationSort) ||
@@ -193,18 +208,22 @@ function CourseRow({
     isCombined, planned.includes(sourceCourseId));
   const hasSharedTopic = nested && (sharedTopicEditions.has(course.editionId) ||
     presentElsewhere.length > 0);
-  // An arrow shows a curriculum connection. Color refers ONLY to this
-  // particular parent context, never to a saved use in a different course.
+  // The arrow always means shared curriculum. Its color means this edition
+  // is in Think Tank / My Plan under ANY parent; a highlighted row separately
+  // means that the topic is chosen through the parent being viewed here.
   const selectedHere = mode === "plan" && (status.planActive || status.ideaActive);
+  const selectedInAnyCourse = selectedHere || (mode === "plan" && presentElsewhere.length > 0);
+  const publishedParentTitles = sharedTopicParentTitles.get(course.editionId) ?? [];
   const presenceDescription = [
-    "Shared topic: also offered through another course.",
+    "Shared curriculum topic. Offered in: " + publishedParentTitles.join("; ") + ".",
     selectedHere
-      ? "Selected here in " + (status.planActive ? "My Plan" : "Think Tank") + "."
-      : "Not selected through this course.",
+      ? "Selected under this course in " + (status.planActive ? "My Plan" : "Think Tank") + "."
+      : "Not selected under this course.",
     ...presentElsewhere.map(place =>
-      "Also selected in " + place.location + " under " + place.courseTitle + "."),
-    "Students and assignments are chosen separately for each course.",
-  ].join(" ");
+      "Also selected under " + place.courseTitle + " in " + place.location + "."),
+    !selectedInAnyCourse ? "Not yet selected in Think Tank or My Plan." : "",
+    "Student assignments stay separate for each course.",
+  ].filter(Boolean).join(" ");
   // A course or topic is visually selected if it is in Think Tank OR My Plan.
   // This is presentation-only; shared-topic provenance and assignment logic stay intact.
   const hasPlanningSelection = mode === "plan" && (status.ideaActive || status.planActive);
@@ -275,7 +294,7 @@ function CourseRow({
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
           {hasSharedTopic && <span className={"cx-topic-elsewhere" +
-             (selectedHere ? " is-active" : "")} role="img"
+             (selectedInAnyCourse ? " is-active" : "")} role="img"
              title={presenceDescription} aria-label={presenceDescription}>↔</span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
             {choiceTags.map(tag => <span className="cx-choice-tag" key={tag}>{tag}</span>)}
