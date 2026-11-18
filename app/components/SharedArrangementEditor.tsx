@@ -11,8 +11,8 @@ import { ArrangementSymbol, ArrangementPlaceholderSymbol } from "./StudentArrang
 import FloatingChoiceMenu from "./FloatingChoiceMenu";
 
 type Arrangement="Combined"|"Separate"|"Later";
-type Choice=Arrangement|"inherit"|"clear";
-const options:Arrangement[]=["Combined","Separate","Later"];
+type Choice="Combined"|"Separate"|"inherit"|"clear";
+const options:Choice[]=["Combined","Separate"];
 
 /** One shared arrangement choice for every member of a course or topic,
  * automatically inherited unless the student has an explicit override. */
@@ -44,21 +44,17 @@ export default function SharedArrangementEditor({
         t.topicId,shared)));
     if(effective.length) shown=arrangementRollup(effective);
   }
-  const relevantTopicIds=topicId===null
-    ? choice?.topics.filter(topic=>topic.included).map(topic=>topic.topicId)??selectedTopicIds
-    : [topicId];
-  const hasChosenArrangement=
-    shared.some(item=>item.courseId===courseId && (item.topicId===null ||
-      relevantTopicIds.includes(item.topicId))) ||
-    plan.assignmentArrangements.some(item=>item.courseId===courseId &&
-      (item.topicId===null || relevantTopicIds.includes(item.topicId)));
-  // Effective "Later" without any saved choice is the implicit fallback,
-  // not an explicit decision. Keep it visually quiet everywhere.
-  const isUnset=shown===null || (shown==="Later"&&!hasChosenArrangement);
-  const inherited=topicId!==null&&explicitTopic==="inherit";
-  const active=topicId===null?courseDefault??"clear":explicitTopic;
+  // "Decide later" is retired as a menu choice. An old saved Later value
+  // renders as an invitation, not an overdue decision. Clearing it removes
+  // that explicit value and restores course/topic/student inheritance.
+  const isUnset=shown===null || shown==="Later";
+  const inherited=topicId!==null&&
+    (explicitTopic==="inherit"||explicitTopic==="Later");
+  const active=topicId===null
+    ? (courseDefault===null||courseDefault==="Later"?"clear":courseDefault)
+    : explicitTopic==="Later"?"inherit":explicitTopic;
   const label=shown==="Varied"?"Varied arrangements":
-    isUnset?"Set arrangement":shown==="Later"?"Decide later":shown==="Both"?
+    isUnset?"Choose arrangement":shown==="Both"?
     "Both (previous setting)":shown;
   function choose(value:Choice) {
     const picked:SharedArrangement["arrangement"]|null=
@@ -73,7 +69,7 @@ export default function SharedArrangementEditor({
     triggerRef.current?.focus();
   }
   return <div className={"priority-control shared-arrangement-control"+
-    (compact?" is-compact":"")+(shown&&shown!=="Later"?" has-priority":"")+
+    (compact?" is-compact":"")+(!isUnset?" has-priority":"")+
     (inherited?" is-inherited":"")+(isUnset?" is-unset":"")}
     onClick={event=>event.stopPropagation()}>
     <button ref={triggerRef} type="button" className="priority-control-trigger"
@@ -99,13 +95,13 @@ export default function SharedArrangementEditor({
         className="priority-option" aria-pressed={active===value}
         onClick={()=>choose(value)}>
         <ArrangementSymbol value={value} size={20}/>
-        <span>{value==="Later"?"Decide later":value}</span>
+        <span>{value}</span>
         {active===value&&<Check size={14} aria-hidden="true"/>}
       </button>)}
       {topicId===null&&<button type="button" className="priority-option"
         aria-pressed={active==="clear"} onClick={()=>choose("clear")}>
         <ArrangementPlaceholderSymbol size={19}/>
-        <span>Clear arrangement</span>
+        <span>Leave unset</span>
         {active==="clear"&&<Check size={14} aria-hidden="true"/>}
       </button>}
       {topicId===null&&selectedTopicIds.some(topic=>
