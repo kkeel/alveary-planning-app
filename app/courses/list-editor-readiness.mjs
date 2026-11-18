@@ -1,10 +1,11 @@
-/** The student picker is allowed to open from the optimistic saved parent
- * as soon as + Plan is clicked for a single-topic course. Its identity is
- * already unambiguous, so it needn't wait for the server's topic-link snapshot.
+/** An optimistic parent can open its student editor immediately after
+ * clicking + or + All. Combined/nested courses get their included topic
+ * editions from the same public catalog shown in Course List, not a second
+ * network response. This retains exact parent-course provenance.
  *
- * Nested and combined topics still require hydrated source topic links to
- * preserve their exact saved parent-course provenance. Mutations are queued:
- * prepare_plan is submitted before any student assignment. */
+ * Prepare_plan is queued before every student/priority write, so the database
+ * parent and topic rows exist before dependent writes reach the server.
+ * Older single-topic optimistic choices with empty topics remain supported. */
 export function canOpenListStudentEditor(choice, courseType, nested = false) {
   if (!choice) return false;
   if (!nested && courseType === "Single-Topic Course") return true;

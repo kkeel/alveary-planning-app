@@ -574,6 +574,20 @@ p { line-height: 1.65; }
 .shared-arrangement-control.is-inherited .priority-control-trigger {
   color:#879b8a;
 }
+/* A two-panel invitation, not a false "Decide later" selection. Quiet until
+   someone opens the control; a saved Later value still uses its clock. */
+.shared-arrangement-control.is-unset .priority-control-trigger {
+  color:#91a494; background:#fbfcfa; border-color:#e3e9e0;
+}
+.shared-arrangement-control.is-unset .priority-control-trigger:hover:not(:disabled) {
+  color:#496f50; background:#edf4eb; border-color:#b7cbb4;
+}
+.student-arrangement-control.is-unset .student-arrangement-trigger {
+  color:#91a494; background:#fbfcfa; border-color:#e3e9e0;
+}
+.student-arrangement-control.is-unset .student-arrangement-trigger:hover:not(:disabled) {
+  color:#3c6046; background:#edf4eb; border-color:#b9cdb6;
+}
 .priority-control-popover.floating-choice-menu {
   position:fixed; width:205px; right:auto; bottom:auto;
   z-index:10020; overflow-x:hidden;
