@@ -312,6 +312,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           title="View books" onClick={closeMobileDrawer}>
                           <BookOpen size={15} aria-hidden="true"/>
                         </Link>
+                        {savedChoice && <SharedPriorityEditor courseId={idea.id}
+                          selectedTopicIds={selectedTopicIds}/>}
                         {cloud.ready && <button type="button"
                           className="pd-plan-action pd-think-toolbar-plus"
                           aria-label={idea.type === "Combined Course"
