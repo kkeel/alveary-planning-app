@@ -9,7 +9,8 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { effectivePlanningPriority, priorityRollup, differingStudentTopicPriority } from "./shared-priority.mjs";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
+import { effectiveArrangement } from "./arrangement-inheritance.mjs";
 import StudentPriorityDot from "./StudentPriorityDot";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
@@ -32,9 +33,10 @@ export function TopicOtherUses({
   const uses = otherUses(index, topicEditionId, parentCourseId);
   const students = [...new Set(uses.flatMap(use => use.studentNames))];
   if (!students.length) return null;
-  return <div className="pd-topic-sharing" title="This topic is also assigned through another course grouping">
+  return <span className="pd-topic-sharing" title="Also assigned through another course"
+    aria-label={"Also assigned through another course: "+students.join(", ")}>
     <span aria-hidden="true">↔</span> {students.join(", ")}
-  </div>;
+  </span>;
 }
 
 type Props = {
@@ -153,19 +155,27 @@ export default function CourseTopicReview({
           </span>
         : null;
 
+    const sharedUse=mode==="plan" && otherUses(sharingIndex,topic.editionId,parent.id).length>0;
     const topicTitle = <span className="pd-topic-title-text">{topic.title}
-      {!!assignedNames.length && <small className="pd-topic-assigned-meta">
+      {(!!assignedNames.length || sharedUse) && <small className="pd-topic-assigned-meta">
         {assignedNames.map((name,index)=>{
           const student=topicStudents[index];
-          const difference=differingStudentTopicPriority(
+          const actual=effectivePlanningPriority(
             demo.sharedPriorities,demo.assignmentPriorities,
             parent.id,topic.id,student.id);
+          const arrangement=effectiveArrangement(
+            demo.assignmentArrangements,parent.id,student.id,topic.id);
           return <span key={student.id} className="pd-topic-student-name">
             {index>0 && <span className="pd-student-name-separator"> / </span>}
-            {name}{difference!==undefined && <StudentPriorityDot
-              studentName={name} priority={difference}/>}
+            {name}{displayPriority==="Varied" && <StudentPriorityDot
+              studentName={name} priority={actual}/>}
+            {arrangement==="Combined" && <span className="myplan-combined-symbol"
+              role="img" aria-label={name+": Combined arrangement"}
+              title={name+": Combined arrangement"}><PlacementSymbol size={13}/></span>}
           </span>;
         })}
+        {sharedUse && <TopicOtherUses topicEditionId={topic.editionId}
+          parentCourseId={parent.id} index={sharingIndex}/>}
       </small>}
     </span>;
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
@@ -244,7 +254,7 @@ export default function CourseTopicReview({
             else onToggleTopic(topic.id,false);
             setTopicMenuId(null);
           }} aria-label={"Remove " + topic.title + " from Think Tank"}
-             title="Remove this idea">
+             title="Remove this Think Tank idea">
              <Trash2 size={17} aria-hidden="true"/>
              <span className="pd-sr-only">Remove idea</span>
            </button>}
@@ -257,11 +267,9 @@ export default function CourseTopicReview({
         }}>
           {isRemoved ? <Plus size={17} aria-hidden="true"/> :
             <CircleMinus size={17} aria-hidden="true"/>}
-          <span className="pd-sr-only">{isRemoved ? "Include topic" : "Exclude topic"}</span>
+          <span className="pd-sr-only">{isRemoved ? "Restore topic to course" : "Exclude topic from course"}</span>
         </button>
       </div>}
-      <TopicOtherUses topicEditionId={topic.editionId}
-        parentCourseId={parent.id} index={sharingIndex}/>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
         <PlanningScheduleGradeMeta course={topic}/>
         {topic.description && <p>{topic.description}</p>}
