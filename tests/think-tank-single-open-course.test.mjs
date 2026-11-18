@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { resolveThinkCourse, toggleThinkCourse } from "../app/components/think-tank-accordion.mjs";
+import { toggleThinkCourse } from "../app/components/think-tank-accordion.mjs";
 
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
 const desk = read("app/components/PlanningDesk.tsx");
@@ -16,20 +16,14 @@ assert.equal(active, "History: Grade 9");
 active = toggleThinkCourse(active, "History: Grade 9");
 assert.equal(active, null);
 
-// An old saved Expanded preference can show ONE initial full-page course,
-// never a simultaneous expansion of every row. Portable starts collapsed.
-assert.equal(resolveThinkCourse(undefined, "full", "expanded", "First course"), "First course");
-assert.equal(resolveThinkCourse(undefined, "full", "compact", "First course"), null);
-assert.equal(resolveThinkCourse(undefined, "portable", "expanded", "First course"), null);
-assert.equal(resolveThinkCourse(null, "full", "expanded", "First course"), null);
-assert.equal(resolveThinkCourse("Other course", "full", "expanded", "First course"), "Other course");
-
+// Compact allows one manually opened course, but Expanded and Detailed
+// reveal all topics without modifying the member's saved display preference.
 assert.ok(desk.includes('const [openThinkCourseId, setOpenThinkCourseId]'),
   "Use a single global Think Tank accordion state");
 assert.ok(!desk.includes("reviewOverrides") && !desk.includes("setReviewOverrides"),
   "Per-row disclosure flags must not permit multiple open courses");
-assert.ok(desk.includes("const reviewOpen = activeThinkCourseId === idea.id;"),
-  "All subjects must resolve from the same active course ID");
+assert.ok(desk.includes('desk.thinkDetails !== "compact" || activeThinkCourseId === idea.id;'),
+  "Expanded and Detailed show topic lists; Compact retains a single local accordion");
 assert.ok(desk.includes("toggleThinkDetails(idea.id, event.currentTarget)"),
   "Course title and info should use the same accordion action");
 assert.ok(desk.includes("openThinkForAssignment(idea.id, event.currentTarget)"),
@@ -39,9 +33,8 @@ assert.ok(desk.includes('role="region" aria-label={"Details for " + idea.title}'
 assert.ok(desk.includes("rememberThinkAnchor") && desk.includes("useLayoutEffect"),
   "Changing expanded courses should preserve the clicked row's scroll position");
 
-// Full Planning no longer needs an Expanded / Compact toggle. Its
-// single-open behavior continues through title and info clicks.
-assert.ok(!desk.includes("<DetailViewSwitch"));
+// Every planning surface now offers the same three density choices.
+assert.ok(desk.includes('<DetailViewSwitch label="Think Tank"'));
 assert.ok(!desk.includes("pd-full-status"), "Redundant full-page title removed");
 
 // Individual course rows remain distinguishable in the lightweight list.
@@ -55,4 +48,4 @@ assert.ok(css.includes(".pd-think-course-list > .pd-idea > .pd-review.pd-think-r
 assert.ok(!css.includes(".pd-think-review .pd-topic-row:hover"),
   "Topic hover must still apply to controls, not whole rows");
 
-console.log("Think Tank cross-subject single-open accordion and course boundaries: OK");
+console.log("Think Tank compact accordion, expanded topics and course boundaries: OK");
