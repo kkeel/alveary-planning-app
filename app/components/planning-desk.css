@@ -1662,3 +1662,84 @@
   .plan-editor .plan-group-shortcuts { gap:5px; }
   .plan-editor .plan-student-tools { gap:1px; }
 }
+
+/* Gentle info controls: the content disclosure must not share the same class
+   as the icon button (previously it applied 19px left padding to the icon). */
+.pd-topic-row .pd-topic-icon.pd-topic-info-action,
+.pd-idea-heading .pd-row-tool.pd-mini-info-action {
+  box-sizing:border-box;
+  display:inline-flex; align-items:center; justify-content:center;
+  flex:0 0 27px; width:27px; min-width:27px;
+  height:27px; min-height:27px; padding:0; margin:0;
+  border:1px solid transparent; border-radius:4px;
+  background:transparent; color:#78927d; line-height:0;
+}
+.pd-topic-row .pd-topic-icon.pd-topic-info-action svg,
+.pd-idea-heading .pd-row-tool.pd-mini-info-action svg {
+  display:block; flex:none; margin:0; vertical-align:middle;
+}
+.pd-topic-row .pd-topic-icon.pd-topic-info-action:hover,
+.pd-topic-row .pd-topic-icon.pd-topic-info-action[aria-expanded="true"],
+.pd-idea-heading .pd-row-tool.pd-mini-info-action:hover,
+.pd-idea-heading .pd-row-tool.pd-mini-info-action[aria-expanded="true"] {
+  background:#edf4eb; border-color:#e3ebe0; color:#4d7156;
+}
+/* Anchor course overflow menus to the ellipsis itself. This is a temporary
+   action popover, not an additional list row that consumes reading space. */
+.pd-more-anchor {
+  position:relative; display:inline-flex; align-items:center;
+  flex:0 0 auto; min-width:28px; min-height:28px;
+}
+.pd-more-anchor:has(.pd-inline-actions) { z-index:145; }
+.pd-idea .pd-more-anchor > .pd-inline-actions {
+  position:absolute; z-index:145;
+  top:calc(100% + 4px); right:0; bottom:auto;
+  display:inline-flex; flex-direction:row; flex-wrap:nowrap;
+  align-items:center; justify-content:flex-end;
+  box-sizing:border-box; width:max-content; max-width:calc(100vw - 30px);
+  margin:0; padding:5px; gap:5px;
+  border:1px solid #dbe4d8; border-radius:6px;
+  background:#fffefa; box-shadow:0 6px 18px #30452d1c;
+}
+.pd-idea:last-child .pd-more-anchor > .pd-inline-actions {
+  /* The last row often sits at the bottom of the portable desk. */
+  top:auto; bottom:calc(100% + 4px);
+}
+/* True per-topic exceptions only. Course-level student metadata should never
+   become a long list of priorities or 'Customized priorities' labels. */
+.pd-topic-student-name { white-space:nowrap; }
+.pd-student-name-separator { color:#a6b2a2; white-space:pre; }
+.pd-student-priority-dot {
+  display:inline-block; width:7px; height:7px; box-sizing:border-box;
+  margin-left:4px; border:1px solid #ffffffbb; border-radius:50%;
+  vertical-align:middle; box-shadow:0 0 0 1px #56735a24;
+}
+.pd-student-priority-dot.is-core { background:#aab28e; }
+.pd-student-priority-dot.is-high { background:#5e806a; }
+.pd-student-priority-dot.is-additional { background:#ad98b6; }
+.pd-student-priority-dot.is-unset {
+  background:transparent; border:1.5px solid #92a093; box-shadow:none;
+}
+/* A mini desk must not abbreviate a student's name into two lines, nor put a
+   priority/arrangement popover in a too-narrow half-width grid cell. */
+.plan-editor .plan-student-list { grid-template-columns:minmax(0,1fr); }
+.plan-editor .plan-student-check span {
+  display:block; min-width:0; overflow:hidden; white-space:nowrap;
+  text-overflow:ellipsis; overflow-wrap:normal;
+}
+@container student-editor (min-width:650px) {
+  .plan-editor .plan-student-list {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@container student-editor (min-width:850px) {
+  .plan-editor .plan-student-list {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+.student-arrangement-control.is-flipped .student-arrangement-popover {
+  top:auto; bottom:calc(100% + 5px);
+}
+.student-arrangement-control.is-align-start .student-arrangement-popover {
+  right:auto; left:0;
+}
