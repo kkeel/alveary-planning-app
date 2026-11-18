@@ -1,7 +1,7 @@
 import type { SavedCourse, PlanningStudent } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
 import { isTopicAssigned } from "./topic-assignment.mjs";
-import { topicIsThinkTankIdea } from "../courses/list-row-status.mjs";
+import { buildTopicPresence, otherTopicPresence as outsideContext } from "./topic-presence.mjs";
 
 const titles = new Map(catalog.courses.map(course => [course.id, course.title]));
 
@@ -67,28 +67,17 @@ export type TopicPresenceIndex = Map<string, TopicPresence[]>;
 export function buildTopicPresenceIndex(
   courses: SavedCourse[], students: PlanningStudent[],
 ): TopicPresenceIndex {
-  const index: TopicPresenceIndex = new Map();
-  for (const course of courses) {
-    for (const topic of course.topics) {
-      if (!topic.included) continue;
-      const assigned = course.stage === "planned" &&
-        students.some(student=>isTopicAssigned(course,topic.topicId,student.id));
-      const idea = topicIsThinkTankIdea(course,topic.topicId,students);
-      const location = assigned ? "My Plan" : idea ? "Think Tank" : null;
-      if (!location) continue;
-      const list=index.get(topic.topicEditionId)??[];
-      list.push({
-        courseId:course.courseId,
-        courseTitle:titles.get(course.courseId)??"Another course",
-        location,
-      });
-      index.set(topic.topicEditionId,list);
-    }
+  const entries=buildTopicPresence(courses,students);
+  const index:TopicPresenceIndex=new Map();
+  for(const [editionId,uses] of entries) {
+    index.set(editionId,uses.map(use=>({
+      ...use, courseTitle:titles.get(use.courseId)??"Another course",
+    })));
   }
   return index;
 }
 export function otherTopicPresence(
   index: TopicPresenceIndex, editionId:string, courseId:string,
 ): TopicPresence[] {
-  return (index.get(editionId)??[]).filter(place=>place.courseId!==courseId);
+  return outsideContext(index,editionId,courseId);
 }
