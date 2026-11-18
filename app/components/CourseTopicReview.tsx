@@ -168,6 +168,8 @@ export default function CourseTopicReview({
           aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
+        {savedChoice && !isOther && !isRemoved && linkedTopic &&
+          <SharedPriorityEditor courseId={parent.id} topicId={topic.id} compact/>}
         <Link className="pd-topic-icon pd-topic-books"
           href={"/books?course=" + encodeURIComponent(topic.id)}
           aria-label={"View books for " + topic.title} title="View books">
