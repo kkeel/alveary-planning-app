@@ -75,7 +75,8 @@ test("Student selection is a multi-column roster with priority shown only if ass
   const css=read("app/components/planning-desk.css");
   assert.match(css,/\.plan-student-list\s*\{\s*display:grid/);
   assert.match(css,/grid-template-columns:repeat\(auto-fit/);
-  assert.match(students,/isAssigned && <StudentPriorityControl/);
+  assert.match(students,/isAssigned && <div className="plan-student-tools"/);
+  assert.match(students,/<StudentPriorityControl/);
   assert.match(students,/plan-select-all/);
 });
 
