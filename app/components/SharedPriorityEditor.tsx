@@ -33,13 +33,14 @@ export function PrioritySymbol({ priority, size = 18 }: {
  * Assignment membership and course/topic priority inheritance are untouched. */
 export default function SharedPriorityEditor({
   courseId, topicId = null, selectedTopicIds = [], compact = false,
-  disabled = false,
+  disabled = false, displayPriority,
 }: {
   courseId: string;
   topicId?: string | null;
   selectedTopicIds?: string[];
   compact?: boolean;
   disabled?: boolean;
+  displayPriority?: "Core" | "High Interest" | "Additional" | "Varied" | null;
 }) {
   const plan = useDemoPlan();
   const [open,setOpen] = useState(false);
@@ -54,8 +55,8 @@ export default function SharedPriorityEditor({
     sharedTopicPriority(shared,courseId,topicId);
   const summary = topicId === null && selectedTopicIds.length
     ? sharedCourseSummary(shared,courseId,selectedTopicIds) : null;
-  const shown = topicId === null
-    ? summary ?? courseValue : effectiveTopic;
+  const shown = displayPriority !== undefined ? displayPriority :
+    topicId === null ? summary ?? courseValue : effectiveTopic;
   const activeValue = topicId === null ? courseValue : topicValue;
   const hasCustomTopics = topicId === null && selectedTopicIds.some(id =>
     sharedTopicOverride(shared,courseId,id) !== "inherit");
