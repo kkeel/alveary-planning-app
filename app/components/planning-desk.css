@@ -1523,3 +1523,142 @@
 @media(max-width:355px) {
   .plan-student-list { grid-template-columns:minmax(0,1fr); }
 }
+
+/* PR: one coherent icon action strip in both Planning Desk columns.
+   Text remains in aria-label/title and visually hidden spans. */
+.pd-sr-only {
+  position:absolute!important;
+  width:1px!important; height:1px!important; padding:0!important;
+  margin:-1px!important; border:0!important; overflow:hidden!important;
+  clip:rect(0,0,0,0)!important; white-space:nowrap!important;
+}
+.pd-idea .pd-inline-actions,
+.pd-think-review .pd-topic-menu {
+  display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end;
+  gap:5px; width:max-content; max-width:calc(100% - 8px);
+  box-sizing:border-box; margin:3px 4px 7px auto; padding:5px;
+  border:1px solid #dbe4d8; border-radius:6px; background:#f9fbf8;
+}
+.pd-idea .pd-inline-actions a,
+.pd-idea .pd-inline-actions button,
+.pd-think-review .pd-topic-menu a,
+.pd-think-review .pd-topic-menu button {
+  display:inline-flex; flex:none; align-items:center; justify-content:center;
+  box-sizing:border-box; width:33px; min-width:33px; height:33px; min-height:33px;
+  padding:5px; margin:0; border:1px solid #d8e3d4; border-radius:5px;
+  background:white; color:#56725d; font-size:12px; line-height:1;
+  text-decoration:none; cursor:pointer; white-space:nowrap; flex-wrap:nowrap;
+}
+.pd-idea .pd-inline-actions a:hover,
+.pd-idea .pd-inline-actions button:hover:not(:disabled),
+.pd-think-review .pd-topic-menu a:hover,
+.pd-think-review .pd-topic-menu button:hover:not(:disabled) {
+  border-color:#bfcfbd; background:#ecf3e9; color:#395a42;
+  text-decoration:none;
+}
+.pd-idea .pd-inline-actions a:focus-visible,
+.pd-idea .pd-inline-actions button:focus-visible,
+.pd-think-review .pd-topic-menu a:focus-visible,
+.pd-think-review .pd-topic-menu button:focus-visible {
+  outline:2px solid #59836a; outline-offset:1px;
+}
+.pd-idea .pd-inline-actions svg,
+.pd-think-review .pd-topic-menu svg { flex:none; }
+@media(max-width:375px) {
+  .pd-idea .pd-inline-actions a, .pd-idea .pd-inline-actions button,
+  .pd-think-review .pd-topic-menu a,.pd-think-review .pd-topic-menu button {
+    width:30px; min-width:30px; height:30px; min-height:30px;
+  }
+}
+/* Keep Cancel and Done anchored to the upper right at every desk size. */
+.plan-editor { container: student-editor / inline-size; }
+.plan-editor .plan-assign-head {
+  display:flex; flex-wrap:nowrap; align-items:center; justify-content:space-between;
+  gap:8px; min-width:0; margin:0 0 9px;
+}
+.plan-editor .plan-assign-head > strong { flex:1 1 auto; min-width:0; padding:0; }
+.plan-editor .plan-assign-head > .pd-assignment-quick-actions {
+  display:inline-flex; flex:0 0 auto; flex-wrap:nowrap;
+  justify-content:flex-end; align-items:center; gap:8px;
+  width:auto; margin-left:auto;
+}
+.plan-editor .plan-assign-layout { margin-top:0; }
+.plan-editor .plan-group-shortcuts {
+  display:flex; flex-wrap:wrap; gap:6px; align-items:center;
+  justify-content:flex-start; margin:2px 0 10px;
+}
+.plan-editor .plan-group-shortcuts > .plan-select-all,
+.plan-editor .plan-group-shortcuts > .plan-group-create,
+.plan-editor .plan-group-shortcuts > .plan-add-student-action,
+.plan-editor .plan-group-shortcuts .plan-group-pill > button {
+  display:inline-flex; flex:0 0 auto; align-items:center;
+  justify-content:center; box-sizing:border-box;
+  min-height:30px; height:30px; padding:4px 10px; margin:0;
+  border:1px solid #d7e2d4; border-radius:5px;
+  background:#fff; color:#516e59;
+  font-size:11px; font-weight:550; line-height:1.2; cursor:pointer;
+}
+.plan-editor .plan-group-shortcuts > .plan-select-all:hover:not(:disabled),
+.plan-editor .plan-group-shortcuts > .plan-group-create:hover,
+.plan-editor .plan-group-shortcuts > .plan-add-student-action:hover,
+.plan-editor .plan-group-shortcuts .plan-group-pill > button:hover:not(:disabled) {
+  border-color:#bbcfb9; background:#f0f5ed; color:#3c5f45;
+}
+.plan-editor .plan-group-shortcuts > .plan-select-all:disabled {
+  opacity:.45; cursor:default;
+}
+.plan-editor .plan-group-shortcuts > .priority-control {
+  display:inline-flex; flex:0 0 auto; width:31px; min-width:31px;
+  height:30px; margin:0;
+}
+.plan-editor .plan-group-shortcuts > .priority-control .priority-control-trigger {
+  width:30px; min-width:30px; height:30px;
+}
+.plan-editor .pd-student-inline-form { margin:4px 0 9px; }
+.plan-editor .plan-student-list {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px; width:100%; max-width:none;
+}
+.plan-editor .plan-student-row { min-width:0; gap:4px; padding:3px 5px; }
+.plan-editor .plan-student-check { gap:5px; padding:4px 1px; }
+.plan-editor .plan-student-tools { display:inline-flex; flex:0 0 auto; gap:2px; }
+.plan-editor .plan-student-row:has(.student-arrangement-popover) { z-index:126; }
+.student-arrangement-control {
+  position:relative; display:inline-flex; align-items:center;
+  justify-content:center; width:28px; min-width:28px; height:30px;
+}
+.student-arrangement-trigger {
+  display:inline-flex; align-items:center; justify-content:center;
+  box-sizing:border-box; width:27px; min-width:27px; height:28px;
+  padding:3px; border:1px solid #e1e9dd; border-radius:4px;
+  background:#fbfcfa; color:#587260; cursor:pointer;
+}
+.student-arrangement-trigger:hover:not(:disabled),
+.student-arrangement-trigger[aria-expanded="true"] {
+  border-color:#b9cdb6; background:#edf4eb; color:#3c6046;
+}
+.student-arrangement-trigger:focus-visible {
+  outline:2px solid #59836a; outline-offset:1px;
+}
+.student-arrangement-control.is-inherited .student-arrangement-trigger { color:#708874; }
+.student-arrangement-control:has(.student-arrangement-popover) { z-index:127; }
+.student-arrangement-choice-icon {
+  display:inline-flex; width:22px; height:22px; flex:none;
+  align-items:center; justify-content:center;
+}
+.student-arrangement-popover { top:calc(100% + 5px); right:0; }
+.student-arrangement-popover .priority-option:disabled {
+  cursor:default; opacity:.6;
+}
+@container student-editor (min-width:670px) {
+  .plan-student-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@container student-editor (max-width:260px) {
+  .plan-student-list { grid-template-columns:minmax(0,1fr); }
+}
+@media(max-width:440px) {
+  .plan-editor .plan-assign-head { gap:5px; }
+  .plan-editor .plan-assign-head > .pd-assignment-quick-actions { gap:5px; }
+  .plan-editor .plan-group-shortcuts { gap:5px; }
+  .plan-editor .plan-student-tools { gap:1px; }
+}
