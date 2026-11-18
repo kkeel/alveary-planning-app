@@ -57,3 +57,16 @@ export function listRowStatus(choice,students,topicId,combined,localIdea=false) 
     contextTone:"none",anyAssigned,isPlanned:Boolean(choice?.stage==="planned"),
   };
 }
+
+/** Course-level lightbulb: fill missing eligible topic ideas before clearing a
+ * fully selected idea. Topics already assigned in this parent My Plan context
+ * do not count as pending Think Tank ideas, nor do excluded topics. */
+export function nextCourseIdeaAll(course,students) {
+  const eligible=course.topics.filter(topic=>topic.included &&
+    !topicHasAssignedStudent(course,topic.topicId,students));
+  const isIdea=topic=>topic.ideaChoice==="on" ||
+    (topic.ideaChoice!=="off" && course.ideaAll);
+  const incomplete=eligible.some(topic=>!isIdea(topic));
+  const active=eligible.some(isIdea);
+  return incomplete || !active;
+}
