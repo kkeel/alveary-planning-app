@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 import { demoteIfNoAssignedTopics, isTopicAssigned } from "./topic-assignment.mjs";
-import { nextCourseIdeaAll } from "../courses/list-row-status.mjs";
+import { nextCourseIdeaAll, isUnusedSavedCourse } from "../courses/list-row-status.mjs";
 import catalog from "../courses/catalog-preview.json";
 import { previewTopicsForCourse } from "../courses/optimistic-topics.mjs";
 
@@ -28,6 +28,10 @@ export type AssignmentArrangement = {
   courseId: string; studentId: string; topicId: string | null;
   arrangement: "Combined" | "Separate" | "Later" | "Both";
 };
+export type SharedArrangement = {
+  courseId: string; topicId: string | null;
+  arrangement: "Combined" | "Separate" | "Later";
+};
 export type StudentPreference = {
   courseId: string; studentId: string;
   priority: "Core" | "High Interest" | "Additional" | null;
@@ -40,13 +44,14 @@ export type DemoPlanSnapshot = {
   assignmentPriorities: AssignmentPriority[];
   sharedPriorities: SharedPriority[];
   assignmentArrangements: AssignmentArrangement[];
+  sharedArrangements: SharedArrangement[];
 };
 export type LegacyIdea = { courseId: string; excludedTopicIds: string[] };
 type Action = "load" | "import" | "set_choice" | "remove_choice" | "set_stage" |
   "toggle_idea" | "clear_plan" | "prepare_plan" |
   "set_topic" | "set_course_student" | "set_topic_student" |
   "batch_assign" | "set_preference" | "set_assignment_priority" | "set_shared_priority" |
-  "set_assignment_arrangement" |
+  "set_assignment_arrangement" | "set_shared_arrangement" |
   "upsert_group" | "delete_group";
 type DemoPlanContextValue = {
   ready: boolean; saving: boolean; error: string | null;
@@ -55,6 +60,7 @@ type DemoPlanContextValue = {
   assignmentPriorities: AssignmentPriority[];
   sharedPriorities: SharedPriority[];
   assignmentArrangements: AssignmentArrangement[];
+  sharedArrangements: SharedArrangement[];
   importIdeas: (ideas: LegacyIdea[]) => Promise<void>;
   addChoice: (courseId: string) => void;
   toggleListIdea: (courseId:string,topicId:string|null) => void;
@@ -75,6 +81,8 @@ type DemoPlanContextValue = {
     priority: SharedPriority["priority"] | null) => void;
   setAssignmentArrangement: (courseId: string, studentId: string,
     topicId: string | null, arrangement: "Combined" | "Separate" | "Later" | null) => void;
+  setSharedArrangement: (courseId:string,topicId:string|null,
+    arrangement:SharedArrangement["arrangement"]|null)=>void;
   saveGroup: (name: string, studentIds: string[], groupId?: string) => Promise<void>;
   deleteGroup: (groupId: string) => Promise<void>;
   refresh: () => Promise<void>;
@@ -92,6 +100,7 @@ function isSnapshot(value: unknown): value is DemoPlanSnapshot {
     Array.isArray(v.assignmentPriorities) &&
     Array.isArray(v.sharedPriorities) &&
     Array.isArray(v.assignmentArrangements) &&
+    Array.isArray(v.sharedArrangements) &&
     v.courses.every(c => typeof c.courseId === "string" &&
       (c.stage === "idea" || c.stage === "planned") &&
       typeof c.ideaAll === "boolean" &&
@@ -101,7 +110,20 @@ function isSnapshot(value: unknown): value is DemoPlanSnapshot {
 }
 const blank: DemoPlanSnapshot = { schoolYear: "2027-28", planKind: "demo",
   students: [], courses: [], studentGroups: [], studentPreferences: [],
-  assignmentPriorities: [], sharedPriorities: [], assignmentArrangements: [] };
+  assignmentPriorities: [], sharedPriorities: [], assignmentArrangements: [], sharedArrangements: [] };
+
+/** Removing a saved course resets every old per-course customization and
+ * exclusion in the optimistic view, matching database cascade deletion. */
+function withoutCourse(current:DemoPlanSnapshot,courseId:string):DemoPlanSnapshot {
+  return {...current,
+    courses:current.courses.filter(x=>x.courseId!==courseId),
+    studentPreferences:current.studentPreferences.filter(x=>x.courseId!==courseId),
+    assignmentPriorities:current.assignmentPriorities.filter(x=>x.courseId!==courseId),
+    sharedPriorities:current.sharedPriorities.filter(x=>x.courseId!==courseId),
+    assignmentArrangements:current.assignmentArrangements.filter(x=>x.courseId!==courseId),
+    sharedArrangements:current.sharedArrangements.filter(x=>x.courseId!==courseId),
+  };
+}
 
 export function DemoPlanProvider({ children }: { children: ReactNode }) {
   const { status, userId, getAccessToken } = usePlannerAuth();
@@ -239,7 +261,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
           studentIds:[],overrides:[],
         }]};
       }
-      return {...current,courses:current.courses.map(c=>{
+      const courses=current.courses.map(c=>{
         if (c.courseId!==courseId) return c;
         const topics=c.topics.length ? c.topics : previewTopicsForCourse(catalog,courseId);
         if (topicId===null) {
@@ -260,7 +282,11 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
             : c.ideaAll ? "inherit":"on";
           return {...t,ideaChoice};
         })};
-      })};
+      });
+      const changed=courses.find(c=>c.courseId===courseId);
+      const optimistic={...current,courses};
+      return changed&&isUnusedSavedCourse(changed,current.students)
+        ? withoutCourse(optimistic,courseId):optimistic;
     });
   },[mutate]);
 
@@ -352,9 +378,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
   }, [ready, getAccessToken, request]);
 
   const removeChoice = useCallback((courseId: string) => {
-    void mutate("remove_choice", { courseId }, current => ({
-      ...current, courses: current.courses.filter(c => c.courseId !== courseId),
-    }));
+    void mutate("remove_choice", { courseId }, current => withoutCourse(current,courseId));
   }, [mutate]);
   const setStage = useCallback((courseId: string, stage: "idea" | "planned") => {
     // If the course is still an unsynced legacy bookmark, establish the
@@ -365,14 +389,18 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     }));
   }, [snapshot.courses, addChoice, mutate]);
   const setTopic = useCallback((courseId: string, topicId: string, include: boolean) => {
-    void mutate("set_topic", { courseId, topicId, include }, current => ({
-      ...current, courses: current.courses.map(c => {
+    void mutate("set_topic", { courseId, topicId, include }, current => {
+      const courses=current.courses.map(c => {
         if (c.courseId !== courseId) return c;
         const next = { ...c,
           topics: c.topics.map(t => t.topicId === topicId ? { ...t, included: include } : t) };
         return include ? next : demoteIfNoAssignedTopics(next, current.students);
-      }),
-    }));
+      });
+      const changed=courses.find(c=>c.courseId===courseId);
+      const optimistic={...current,courses};
+      return changed&&isUnusedSavedCourse(changed,current.students)
+        ? withoutCourse(optimistic,courseId):optimistic;
+    });
   }, [mutate]);
   const assignCourse = useCallback((courseId: string, studentId: string, assign: boolean) => {
     void mutate("set_course_student", { courseId, studentId, assign }, current => ({
@@ -473,6 +501,16 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
       });
   }, [mutate]);
 
+  const setSharedArrangement = useCallback((courseId:string,topicId:string|null,
+    arrangement: SharedArrangement["arrangement"]|null)=>{
+    void mutate("set_shared_arrangement",{courseId,topicId,arrangement},current=>{
+      const remaining=current.sharedArrangements.filter(x=>
+        x.courseId!==courseId||x.topicId!==topicId);
+      return {...current,sharedArrangements:arrangement===null?remaining:
+        [...remaining,{courseId,topicId,arrangement}]};
+    });
+  },[mutate]);
+
   const saveGroup = useCallback((name: string, studentIds: string[], groupId?: string) =>
     mutate("upsert_group", { groupName: name, studentIds, ...(groupId ? { groupId } : {}) }),
   [mutate]);
@@ -485,9 +523,10 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
     assignmentPriorities: snapshot.assignmentPriorities,
     sharedPriorities: snapshot.sharedPriorities,
     assignmentArrangements: snapshot.assignmentArrangements,
+    sharedArrangements: snapshot.sharedArrangements,
     importIdeas, addChoice, toggleListIdea, clearListPlan, prepareListPlan,
     addStudent, removeChoice, setStage, setTopic, assignCourse, assignTopic,
-    assignStudents, setPreference, setAssignmentPriority, setSharedPriority, setAssignmentArrangement,
+    assignStudents, setPreference, setAssignmentPriority, setSharedPriority, setAssignmentArrangement, setSharedArrangement,
     saveGroup, deleteGroup, refresh,
   }}>{children}</Context.Provider>;
 }

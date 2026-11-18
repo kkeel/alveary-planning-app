@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound, Trash2, CircleMinus } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
@@ -9,7 +10,9 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
-import { effectivePlanningPriority, priorityRollup, differingStudentTopicPriority } from "./shared-priority.mjs";
+import SharedArrangementEditor from "./SharedArrangementEditor";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
+import { effectiveArrangement } from "./arrangement-inheritance.mjs";
 import StudentPriorityDot from "./StudentPriorityDot";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
@@ -32,9 +35,10 @@ export function TopicOtherUses({
   const uses = otherUses(index, topicEditionId, parentCourseId);
   const students = [...new Set(uses.flatMap(use => use.studentNames))];
   if (!students.length) return null;
-  return <div className="pd-topic-sharing" title="This topic is also assigned through another course grouping">
+  return <span className="pd-topic-sharing" title="Also assigned through another course"
+    aria-label={"Also assigned through another course: "+students.join(", ")}>
     <span aria-hidden="true">↔</span> {students.join(", ")}
-  </div>;
+  </span>;
 }
 
 type Props = {
@@ -66,6 +70,7 @@ export default function CourseTopicReview({
   }
   const [removedOpen, setRemovedOpen] = useState(false);
   const [topicMenuId, setTopicMenuId] = useState<string | null>(null);
+  const topicMenuButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
 
   const combined = parent.type === "Combined Course";
   const children = useMemo(() => combined
@@ -153,19 +158,28 @@ export default function CourseTopicReview({
           </span>
         : null;
 
+    const sharedUse=mode==="plan" && otherUses(sharingIndex,topic.editionId,parent.id).length>0;
     const topicTitle = <span className="pd-topic-title-text">{topic.title}
-      {!!assignedNames.length && <small className="pd-topic-assigned-meta">
+      {(!!assignedNames.length || sharedUse) && <small className="pd-topic-assigned-meta">
         {assignedNames.map((name,index)=>{
           const student=topicStudents[index];
-          const difference=differingStudentTopicPriority(
+          const actual=effectivePlanningPriority(
             demo.sharedPriorities,demo.assignmentPriorities,
             parent.id,topic.id,student.id);
+          const arrangement=effectiveArrangement(
+            demo.assignmentArrangements,parent.id,student.id,topic.id,
+            demo.sharedArrangements);
           return <span key={student.id} className="pd-topic-student-name">
             {index>0 && <span className="pd-student-name-separator"> / </span>}
-            {name}{difference!==undefined && <StudentPriorityDot
-              studentName={name} priority={difference}/>}
+            {name}{displayPriority==="Varied" && <StudentPriorityDot
+              studentName={name} priority={actual}/>}
+            {arrangement==="Combined" && <span className="myplan-combined-symbol"
+              role="img" aria-label={name+": Combined arrangement"}
+              title={name+": Combined arrangement"}><PlacementSymbol size={13}/></span>}
           </span>;
         })}
+        {sharedUse && <TopicOtherUses topicEditionId={topic.editionId}
+          parentCourseId={parent.id} index={sharingIndex}/>}
       </small>}
     </span>;
     return <div className={"pd-topic-item" + (isRemoved ? " is-excluded" : "")} key={topic.editionId}>
@@ -182,6 +196,8 @@ export default function CourseTopicReview({
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
             displayPriority={displayPriority} compact/>}
+        {savedChoice && !isOther && !isRemoved && linkedTopic &&
+          <SharedArrangementEditor courseId={parent.id} topicId={topic.id} compact/>}
         {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info-action"
           aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
           title={mode==="think"?"Topic details":"Description & tips"}
@@ -197,14 +213,21 @@ export default function CourseTopicReview({
             <Lightbulb size={15} aria-hidden="true"/>
           </button>}
         <button type="button" className="pd-topic-icon pd-topic-more"
+          ref={element=>{if(element)topicMenuButtons.current.set(topic.id,element);
+            else topicMenuButtons.current.delete(topic.id);}}
+          aria-controls={"pd-topic-menu-"+parent.id+"-"+topic.id}
           aria-label={"More options for " + topic.title} title="More options"
           aria-expanded={menuOpen}
           onClick={() => setTopicMenuId(menuOpen ? null : topic.id)}>
           <MoreHorizontal size={16} aria-hidden="true"/>
         </button>
       </div>
-      {menuOpen && <div className="pd-topic-menu" role="group"
-        aria-label={"More options for " + topic.title}>
+      <FloatingChoiceMenu open={menuOpen}
+        triggerRef={{current:topicMenuButtons.current.get(topic.id)??null}}
+        onDismiss={()=>setTopicMenuId(null)}
+        id={"pd-topic-menu-"+parent.id+"-"+topic.id}
+        className="floating-icon-menu pd-topic-menu"
+        label={"More options for "+topic.title}>
         <Link href={"/books?course="+encodeURIComponent(topic.id)}
           onClick={()=>setTopicMenuId(null)} title={"View books for "+topic.title}
           aria-label={"View books for "+topic.title}>
@@ -244,7 +267,7 @@ export default function CourseTopicReview({
             else onToggleTopic(topic.id,false);
             setTopicMenuId(null);
           }} aria-label={"Remove " + topic.title + " from Think Tank"}
-             title="Remove this idea">
+             title="Remove this Think Tank idea">
              <Trash2 size={17} aria-hidden="true"/>
              <span className="pd-sr-only">Remove idea</span>
            </button>}
@@ -257,11 +280,9 @@ export default function CourseTopicReview({
         }}>
           {isRemoved ? <Plus size={17} aria-hidden="true"/> :
             <CircleMinus size={17} aria-hidden="true"/>}
-          <span className="pd-sr-only">{isRemoved ? "Include topic" : "Exclude topic"}</span>
+          <span className="pd-sr-only">{isRemoved ? "Restore topic to course" : "Exclude topic from course"}</span>
         </button>
-      </div>}
-      <TopicOtherUses topicEditionId={topic.editionId}
-        parentCourseId={parent.id} index={sharingIndex}/>
+      </FloatingChoiceMenu>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
         <PlanningScheduleGradeMeta course={topic}/>
         {topic.description && <p>{topic.description}</p>}

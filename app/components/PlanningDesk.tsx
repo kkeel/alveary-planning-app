@@ -21,6 +21,8 @@ import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
@@ -50,22 +52,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const pendingThinkAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [courseInfoId, setCourseInfoId] = useState<string | null>(null);
-  useEffect(() => {
-    if (!openMenu) return;
-    const outside = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) ||
-          !event.target.closest(".pd-more-anchor")) setOpenMenu(null);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenu(null);
-    };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [openMenu]);
+  const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
@@ -114,31 +101,18 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // topics without any assigned student stay in Think Tank; assigned topics
   // appear in My Plan. Keep an editor visible until Done, even when its final
   // click assigns the last remaining topic.
-  const ideas = useMemo(() => {
-    // Source of truth is now the optimistic cloud snapshot, not only the old
-    // browser bookmark list. A freshly added topic/course appears in the mini
-    // desk on the very same click, even before local-storage rehydration runs.
-    const ids = new Set([
-      ...desk.thinkTankIds,
-      ...cloud.courses.filter(choice => pendingIdeaCount(choice,cloud.students) > 0)
-        .map(choice => choice.courseId),
-    ]);
-    return [...ids].filter(id => {
-      const choice = cloud.courses.find(course => course.courseId === id);
-      return !choice || pendingIdeaCount(choice,cloud.students) > 0 ||
-        justPlannedId === id || assigningId === id;
-    }).map(id => lookup.get(id))
-      .filter((plan):plan is CatalogPlan => Boolean(plan));
-  }, [desk.thinkTankIds, cloud.courses, cloud.students, justPlannedId, assigningId]);
-  const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
-    !cloud.courses.some(c => c.courseId === id)) : [];
-  const saveLegacyIdeas = () => {
-    if (!unsynced.length) return;
-    void cloud.importIdeas(unsynced.map(courseId => ({
-      courseId,
-      excludedTopicIds: desk.excludedTopicIdsByCourse[courseId] ?? [],
-    })));
-  };
+  // The authenticated Demo plan is the sole source of member selections.
+  // Retire leftover local-only bookmarks so a cleared plan stays cleared.
+  useEffect(()=>{
+    if(!cloud.ready || !desk.thinkTankIds.length) return;
+    for(const id of desk.thinkTankIds) desk.removeIdea(id);
+  },[cloud.ready,desk.thinkTankIds,desk.removeIdea]);
+  const ideas = useMemo(() => cloud.courses
+    .filter(choice=>pendingIdeaCount(choice,cloud.students)>0 ||
+      (choice.courseId===justPlannedId || choice.courseId===assigningId))
+    .map(choice=>lookup.get(choice.courseId))
+    .filter((plan):plan is CatalogPlan => Boolean(plan)),
+    [cloud.courses,cloud.students,justPlannedId,assigningId]);
   const grouped = useMemo(() => {
     const map = new Map<string, CatalogPlan[]>();
     for (const idea of ideas) map.set(idea.subject, [...(map.get(idea.subject) ?? []), idea]);
@@ -241,14 +215,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
   // Render one shared set of planning components in either the compact tabs
   // or two visible columns. List and Planning never mount both desk variants.
-  const notices = <>        {cloud.ready && unsynced.length > 0 && <div className="pd-save-browser">
-          <strong>{unsynced.length} browser-only {unsynced.length === 1 ? "idea" : "ideas"}</strong>
-          <p>Bring your existing Think Tank choices and topic customizations into your private Demo plan. This merges without overwriting choices already saved to your account.</p>
-          <button type="button" onClick={saveLegacyIdeas} disabled={cloud.saving}>
-            Save browser ideas to Demo plan
-          </button>
-        </div>}
-  </>;
+  const notices = null;
   const thinkTankContent = <>
           {ideas.length > 0 && <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
@@ -316,6 +283,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         </button>
                         {savedChoice && <SharedPriorityEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
+                        {savedChoice && <SharedArrangementEditor courseId={idea.id}
+                          selectedTopicIds={selectedTopicIds}/>}
                         <button type="button" className="pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
                           aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
@@ -324,13 +293,20 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <Info size={15} aria-hidden="true"/>
                         </button>
                         <div className="pd-more-anchor">
-                        <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
+                        <button type="button" className="pd-more"
+                          ref={element=>{if(element) moreButtons.current.set(idea.id,element);
+                            else moreButtons.current.delete(idea.id);}}
+                          aria-controls={"pd-think-menu-"+idea.id}
+                          aria-label={"More options for " + idea.title}
                           title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
-                                            {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
-                        aria-label={"More options for "+idea.title}>
+                                            <FloatingChoiceMenu open={openMenu===itemMenu}
+                        triggerRef={{current:moreButtons.current.get(idea.id)??null}}
+                        onDismiss={()=>setOpenMenu(null)}
+                        id={"pd-think-menu-"+idea.id} className="floating-icon-menu"
+                        label={"More options for "+idea.title}>
                         <Link href={"/books?course="+encodeURIComponent(idea.id)}
                           onClick={closeMobileDrawer}
                           title={"View books for "+idea.title} aria-label={"View books for "+idea.title}>
@@ -371,7 +347,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <Trash2 size={17} aria-hidden="true"/>
                           <span className="pd-sr-only">Remove idea</span>
                         </button>
-                      </div>}
+                      </FloatingChoiceMenu>
                         </div>
 </div>
                       {reviewOpen && <div className="pd-review pd-think-review" id={reviewId}

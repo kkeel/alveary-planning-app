@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, Info, Lightbulb, Link2, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
@@ -19,6 +19,7 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import SharedPriorityEditor from "../components/SharedPriorityEditor";
+import SharedArrangementEditor from "../components/SharedArrangementEditor";
 import { buildTopicPresenceIndex, otherTopicPresence, type TopicPresenceIndex } from "../components/topic-sharing";
 import { coursePriorityRollup, topicPriorityRollup } from "../components/shared-priority.mjs";
 import { useDemoPlan, type PlanningStudent, type SavedCourse, type SharedPriority, type AssignmentPriority } from "../components/DemoPlanContext";
@@ -177,7 +178,7 @@ function CourseRow({
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
   const presentElsewhere=nested ? otherTopicPresence(topicPresence,course.editionId,sourceCourseId) : [];
   const otherPlan=presentElsewhere.some(place=>place.location==="My Plan");
-  const presenceLabel=otherPlan ? "Also in My Plan" : "Also in Think Tank";
+  const presenceLabel=otherPlan ? "My Plan" : "Think Tank";
   const presenceDescription=presentElsewhere.map(place=>
     place.location+" in "+place.courseTitle).join("; ")+
     ". Choose students independently for this course.";
@@ -250,7 +251,7 @@ function CourseRow({
         <span className="cx-course-name">{course.title}
           {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere" role="img"
             title={presenceDescription} aria-label={presenceDescription}>
-            <Link2 size={12} aria-hidden="true"/>
+            <span aria-hidden="true">↔</span>
             <span>{presenceLabel}</span>
           </span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
@@ -294,6 +295,9 @@ function CourseRow({
           <SharedPriorityEditor courseId={sourceCourseId}
             topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
             compact={nested} disabled={status.excluded} displayPriority={displayPriority}/>
+          <SharedArrangementEditor courseId={sourceCourseId}
+            topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
+            compact={nested} disabled={status.excluded}/>
           <button type="button" className={"cx-direct-plan-action" +
             (status.planActive ? " is-selected" : "") +
             (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
@@ -380,7 +384,7 @@ export default function CourseExplorer() {
   const [planningTarget, setPlanningTarget] = useState<PlanTarget | null>(null);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
-  const planned = desk.thinkTankIds;
+  const planned = signedIn ? [] : desk.thinkTankIds;
   const topicPresence = useMemo(() => buildTopicPresenceIndex(
     cloud.courses,cloud.students),[cloud.courses,cloud.students]);
   function updateDetailMode(next: DetailMode) {

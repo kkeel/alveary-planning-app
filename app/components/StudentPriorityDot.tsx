@@ -10,6 +10,6 @@ export default function StudentPriorityDot({
     priority==="Additional"?"additional":"unset";
   const label=priority??"No priority";
   return <span className={"pd-student-priority-dot is-"+tone}
-    role="img" aria-label={studentName+": "+label+", different from the topic priority"}
-    title={studentName+": "+label+" (customized from topic)"} />;
+    role="img" aria-label={studentName+": "+label+" priority"}
+    title={studentName+": "+label+" priority"} />;
 }

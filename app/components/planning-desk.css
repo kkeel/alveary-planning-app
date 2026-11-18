@@ -1775,3 +1775,23 @@
 .pd-idea:not(.myplan-row) .pd-idea-heading > .priority-control {
   flex:0 0 auto;
 }
+
+/* Shared-course information stays on the SAME metadata line as student names. */
+.pd-topic-assigned-meta .pd-topic-sharing {
+  display:inline; margin:0 0 0 5px; padding:0;
+  vertical-align:baseline; white-space:nowrap; font-size:10px;
+}
+.pd-topic-assigned-meta .pd-topic-sharing span {
+  display:inline; margin-right:2px; font-size:12px;
+}
+/* A shared arrangement is a compact peer of the priority illustration. */
+.pd-topic-row .shared-arrangement-control,
+.pd-idea-heading .shared-arrangement-control {
+  flex:0 0 27px; width:27px; min-width:27px; height:28px;
+}
+.plan-group-shortcuts > .shared-arrangement-control {
+  flex:0 0 31px; width:31px; min-width:31px;
+}
+.plan-group-shortcuts > .shared-arrangement-control .priority-control-trigger {
+  width:30px; min-width:30px; height:30px;
+}

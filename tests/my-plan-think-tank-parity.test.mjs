@@ -54,7 +54,7 @@ assert.ok(plan.includes("focusCourseId, focusRevision"),
 // My Plan adds student data, retains checkmarks, and provides normal course
 // grade/scheduling information, plus student names per planned topic.
 assert.ok(plan.includes("<SquareCheckBig") && topics.includes("<SquareCheckBig"));
-assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements)"));
+assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements,demo.sharedArrangements)"));
 assert.ok(plan.includes("{open && item && <PlanningScheduleGradeMeta course={item}/>}")
 );
 assert.ok(topics.includes("const assignedNames = mode === \"plan\" && savedChoice && !isRemoved"));
@@ -68,7 +68,8 @@ assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic}/>"),
 // persisted student checkboxes, groups, priorities and Done flow.
 assert.ok(plan.includes('<UsersRound size={17} aria-hidden="true"/>'));
 assert.ok(plan.includes('Edit students'));
-assert.ok(plan.includes('className="pd-inline-actions" role="group"'));
+assert.ok(plan.includes('className="floating-icon-menu"'));
+assert.ok(plan.includes("<FloatingChoiceMenu open={menuOpen}"));
 assert.ok(plan.includes("toggleStudentEdit(course.courseId,event.currentTarget)"));
 assert.ok(plan.includes("<StudentAssignmentEditor course={course}"));
 assert.ok(topics.includes("Edit students"), "Student editor stays reachable through topic More menu");
@@ -86,7 +87,7 @@ assert.ok(topics.includes('href={"/books?course="+encodeURIComponent(topic.id)}'
 // It must not appear as an extra footer in expanded details.
 assert.ok(plan.includes('className="pd-more"'));
 assert.ok(plan.includes('<MoreHorizontal size={16}'));
-assert.ok(plan.includes('className="pd-inline-actions"'));
+assert.ok(plan.includes('className="floating-icon-menu"'));
 assert.ok(plan.includes("demo.setStage(course.courseId,\"idea\")"));
 assert.ok(plan.includes("Return to Think Tank"));
 assert.ok(!plan.includes('pd-myplan-toolbar-edit'));

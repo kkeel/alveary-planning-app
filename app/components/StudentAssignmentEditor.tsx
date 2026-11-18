@@ -5,6 +5,7 @@ import { UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
 import StudentPriorityControl from "./StudentPriorityControl";
 import StudentArrangementControl from "./StudentArrangementControl";
 import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
@@ -79,6 +80,7 @@ export default function StudentAssignmentEditor({
     onClose?.();
   }
   function openGroup(group?: PlanningGroup) {
+    setAddingStudent(false);
     setGroupEditing(true);
     setEditingGroupId(group?.id ?? null);
     setGroupName(group?.name ?? "");
@@ -145,17 +147,24 @@ export default function StudentAssignmentEditor({
             <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
               aria-label={"Edit " + group.name}>Edit</button>
           </div>)}
-          <button type="button" className="plan-group-create" onClick={() => openGroup()}>
-            + Group
+          <button type="button" className="plan-group-create" aria-expanded={groupEditing}
+            onClick={() => groupEditing ? setGroupEditing(false) : openGroup()}>
+            {groupEditing ? "Cancel" : "+ Group"}
           </button>
           <button type="button" className="plan-add-student-action"
             aria-expanded={addingStudent}
-            onClick={() => { setAddingStudent(value => !value); setStudentError(null); }}>
-            {addingStudent ? "Cancel adding" : "+ Student"}
+            onClick={() => {
+              setAddingStudent(value => !value);
+              setGroupEditing(false);
+              setStudentError(null);
+            }}>
+            {addingStudent ? "Cancel" : "+ Student"}
           </button>
           <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
             selectedTopicIds={topicId ? [] : course.topics.filter(t => t.included).map(t => t.topicId)}
             displayPriority={displayPriority}/>
+          <SharedArrangementEditor courseId={course.courseId} topicId={topicId ?? null}
+            selectedTopicIds={topicId ? [] : course.topics.filter(t => t.included).map(t=>t.topicId)}/>
         </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
       <label htmlFor={fieldId+"-student"}>Name or nickname</label>

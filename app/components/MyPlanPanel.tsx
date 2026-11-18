@@ -10,6 +10,8 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { coursePriorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -29,14 +31,15 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"]) {
+  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"],
+  sharedArrangements: ReturnType<typeof useDemoPlan>["sharedArrangements"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const includedCount = course.topics.filter(topic => topic.included).length;
   const assigned = people.filter(student => effectiveTopicCount(course, student.id) > 0);
   if (!assigned.length) return "Students to be decided";
   return assigned.map((student, index) => {
-    const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id);
+    const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id,sharedArrangements);
     const topicsAssigned = effectiveTopicCount(course, student.id);
     return <span className="myplan-student-summary" key={student.id}>
       {index > 0 && <span className="myplan-student-separator"> / </span>}
@@ -66,22 +69,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
-  useEffect(() => {
-    if (!openMenuId) return;
-    const outside = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) ||
-          !event.target.closest(".pd-more-anchor")) setOpenMenuId(null);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenuId(null);
-    };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [openMenuId]);
+  const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
   const pendingAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
 
   // Changes autosave immediately. Keep a course with its last student removed
@@ -222,7 +210,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>{title}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.assignmentArrangements)}
+                        {studentSummary(course,demo.students,demo.assignmentArrangements,demo.sharedArrangements)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
@@ -232,6 +220,8 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <SharedPriorityEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
+                  <SharedArrangementEditor courseId={course.courseId}
+                    selectedTopicIds={selectedTopicIds}/>
                         <button type="button" className="pd-row-tool pd-mini-info-action"
                     aria-label={(open?"Hide":"View")+" details for "+title}
                     title={open?"Hide details":"View details"}
@@ -241,14 +231,20 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <div className="pd-more-anchor">
                   <button type="button" className="pd-more"
+                    ref={element=>{if(element) moreButtons.current.set(course.courseId,element);
+                      else moreButtons.current.delete(course.courseId);}}
+                    aria-controls={"pd-myplan-menu-"+course.courseId}
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
                     aria-expanded={menuOpen}
                     onClick={() => setOpenMenuId(menuOpen ? null : course.courseId)}>
                     <MoreHorizontal size={16} aria-hidden="true"/>
                   </button>
-                                {menuOpen && <div className="pd-inline-actions" role="group"
-                  aria-label={"More options for " + title}>
+                                <FloatingChoiceMenu open={menuOpen}
+                  triggerRef={{current:moreButtons.current.get(course.courseId)??null}}
+                  onDismiss={()=>setOpenMenuId(null)}
+                  id={"pd-myplan-menu-"+course.courseId} className="floating-icon-menu"
+                  label={"More options for "+title}>
                   <Link href={"/books?course="+encodeURIComponent(course.courseId)}
                     onClick={()=>setOpenMenuId(null)}
                     title={"View books for "+title} aria-label={"View books for "+title}>
@@ -273,7 +269,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <Lightbulb size={17} aria-hidden="true"/>
                     <span className="pd-sr-only">Return to Think Tank</span>
                   </button>
-                </div>}
+                </FloatingChoiceMenu>
                   </div>
 </div>
                 {open && <div className="pd-review pd-think-review myplan-review"
