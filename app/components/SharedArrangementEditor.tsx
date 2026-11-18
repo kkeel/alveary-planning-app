@@ -12,7 +12,7 @@ import FloatingChoiceMenu from "./FloatingChoiceMenu";
 
 type Arrangement="Combined"|"Separate"|"Later";
 type Choice="Combined"|"Separate"|"inherit"|"clear";
-const options:Choice[]=["Combined","Separate"];
+const options:("Combined"|"Separate")[]=["Combined","Separate"];
 
 /** One shared arrangement choice for every member of a course or topic,
  * automatically inherited unless the student has an explicit override. */
