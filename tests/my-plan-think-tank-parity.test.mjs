@@ -7,6 +7,7 @@ const plan = read("app/components/MyPlanPanel.tsx");
 const topics = read("app/components/CourseTopicReview.tsx");
 const editor = read("app/components/StudentAssignmentEditor.tsx");
 const studentPriority = read("app/components/StudentPriorityControl.tsx");
+const arrangement = read("app/components/StudentArrangementControl.tsx");
 const css = read("app/components/planning-desk.css");
 
 // Planning has manual single-open disclosures; Course List can keep its own
@@ -71,7 +72,7 @@ assert.ok(plan.includes("<StudentAssignmentEditor course={course}"));
 assert.ok(topics.includes("Edit students"), "Student editor stays reachable through topic More menu");
 assert.ok(topics.includes("<SharedTopicStudentEditor"));
 assert.ok(editor.includes('<input type="checkbox" checked={isAssigned}'));
-assert.ok(editor.includes("demo.setAssignmentArrangement"));
+assert.ok(arrangement.includes("plan.setAssignmentArrangement"));
 assert.ok(studentPriority.includes("plan.setAssignmentPriority"));
 assert.ok(editor.includes("<StudentPriorityControl"));
 assert.ok(plan.includes('className="pd-row-tool pd-mini-info-action"'),
