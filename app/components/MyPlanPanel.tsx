@@ -9,6 +9,8 @@ import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
+import SharedPriorityEditor from "./SharedPriorityEditor";
+import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { selectionTopicCount } from "./planning-topic-sections.mjs";
