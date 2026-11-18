@@ -248,7 +248,7 @@ export default function StudentAssignmentEditor({
                     event.target.value as "Core" | "High Interest" | "Additional" | "Not set");
               }}>
               <option value="inherit">
-                "Same as plan"
+                Same as plan
               </option>
               <option value="Not set">No priority</option>
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
@@ -276,10 +276,10 @@ export default function StudentAssignmentEditor({
                     event.target.value as "Combined" | "Separate" | "Later");
               }}>
               <option value="inherit">
-                "Same as course"
+                Same as course
               </option>
               {arrangements.map(item => <option key={item} value={item}>
-                {item === "Later" ? "Decide later (override)" : item}
+                {item === "Later" ? "Decide later" : item}
               </option>)}
               {topicArrangement === "Both" && <option value="Both">Both (previous setting)</option>}
             </select>
