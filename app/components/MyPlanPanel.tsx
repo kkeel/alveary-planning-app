@@ -160,7 +160,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
     <div className="pd-details-toolbar">
       <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
       <DetailViewSwitch label="My Plan" value={desk.planDetails}
-        onChange={next => { desk.setPlanDetails(next); setOpenId(null); setInfoId(null); }}/>
+        onChange={next => { desk.setPlanDetails(next); setOpenId(editingStudentsId ?? editingTopicCourseId); setInfoId(null); }}/>
     </div>
     {!planned.length && <div className="pd-empty-state">
       <h3>Your plan starts here</h3>
