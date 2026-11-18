@@ -384,7 +384,7 @@ export default function CourseExplorer() {
   const [planningTarget, setPlanningTarget] = useState<PlanTarget | null>(null);
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
-  const planned = desk.thinkTankIds;
+  const planned = signedIn ? [] : desk.thinkTankIds;
   const topicPresence = useMemo(() => buildTopicPresenceIndex(
     cloud.courses,cloud.students),[cloud.courses,cloud.students]);
   function updateDetailMode(next: DetailMode) {
