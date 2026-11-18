@@ -1682,7 +1682,7 @@
 .pd-topic-row .pd-topic-icon.pd-topic-info-action[aria-expanded="true"],
 .pd-idea-heading .pd-row-tool.pd-mini-info-action:hover,
 .pd-idea-heading .pd-row-tool.pd-mini-info-action[aria-expanded="true"] {
-  background:#edf4eb; border-color:#e3ebe0; color:#4d7156;
+  background:#f0f3ee; border-color:#cbd6c9; color:#4e6655;
 }
 /* Anchor course overflow menus to the ellipsis itself. This is a temporary
    action popover, not an additional list row that consumes reading space. */
