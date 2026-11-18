@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { sourceChoiceForRow } from "../app/courses/course-list-actions.mjs";
 import { canOpenListStudentEditor } from "../app/courses/list-editor-readiness.mjs";
+import { previewTopicsForCourse } from "../app/courses/optimistic-topics.mjs";
+import { savedTopicContexts } from "../app/components/shared-topic-contexts.mjs";
 
 const catalog = JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json", import.meta.url),"utf8"
@@ -35,10 +37,9 @@ const single = catalog.courses.find(c=>c.type==="Single-Topic Course");
 assert.ok(single);
 assert.deepEqual(sourceChoiceForRow(single.id),{courseId:single.id,topicId:null},
   "direct Plan on a single-topic course uses the ordinary course assignment");
-// The new saved parent is inserted optimistically before the serialized
-// prepare_plan network response. A single-topic course already identifies
-// what is being assigned: its student editor should never wait on topic
-// hydration. Combined/nested contexts still must wait for topic links.
+// A newly prepared parent is inserted optimistically before the serialized
+// prepare_plan response. Its topics come from the public Course List catalog,
+// so both + All and nested + can open instantly while backend writes queue.
 const optimisticParent = {
   courseId: single.id, stage: "idea", ideaAll: false,
   topics: [], studentIds: [], overrides: [],
@@ -48,7 +49,7 @@ assert.equal(canOpenListStudentEditor(undefined, single.type),false,
 assert.equal(canOpenListStudentEditor(optimisticParent, single.type),true,
   "single-topic + must open the student editor immediately");
 assert.equal(canOpenListStudentEditor(optimisticParent, g9.type),false,
-  "combined +All must continue waiting for its verified topic links");
+  "a parent with genuinely unknown links must still wait for topic data");
 assert.equal(canOpenListStudentEditor(optimisticParent, "Topic",true),false,
   "nested + must not bypass parent-topic membership verification");
 const hydratedParent = {...optimisticParent, topics:[
@@ -61,3 +62,32 @@ assert.equal(canOpenListStudentEditor(hydratedCombined,"Topic",true),true);
 
 console.log("PASS: member Course List Plan/Think Tank actions preserve saved parent and nested topic context.");
 console.log("PASS: single-topic + Plan opens before topic hydration; combined/nested safeguards remain.");
+
+const g78 = byTitle.get("History: Grades 7-8 (U.S.)");
+assert.ok(g78);
+const previewCombined = {
+  courseId: g78.id, stage: "idea", ideaAll: false,
+  topics: previewTopicsForCourse(catalog,g78.id),
+  studentIds: [], overrides: [],
+};
+assert.equal(previewCombined.topics.length,3);
+assert.equal(canOpenListStudentEditor(previewCombined,g78.type),true,
+  "fresh combined + All should open on the same click using catalog topic links");
+const previewGradeNine = {
+  courseId:g9.id,stage:"idea",ideaAll:false,
+  topics:previewTopicsForCourse(catalog,g9.id),
+  studentIds:[],overrides:[],
+};
+assert.equal(canOpenListStudentEditor(previewGradeNine,"Topic",true),true,
+  "nested + opens instantly with the source parent's public topic links");
+assert.ok(previewGradeNine.topics.some(t=>
+  t.topicId===us9.id && t.topicEditionId===us9.editionId && t.included),
+  "the instant editor preserves the exact shared source edition in its parent");
+const crossContexts=savedTopicContexts([previewCombined,previewGradeNine],us9.editionId);
+assert.ok(crossContexts.some(context=>context.courseId===g9.id),
+  "the parent context is available to the instant nested editor");
+const source = readFileSync(new URL("../app/components/DemoPlanContext.tsx",import.meta.url),"utf8");
+assert.match(source,/prepareListPlan[\s\S]*?previewTopicsForCourse\(catalog,courseId\)/,
+  "optimistic prepare_plan must hydrate its topics from the catalog");
+assert.match(source,/chain\.current\.catch\(\(\) => undefined\)\.then\(\(\) => request\(action, fields\)\)/,
+  "dependent assignments are serialized behind prepare_plan");
