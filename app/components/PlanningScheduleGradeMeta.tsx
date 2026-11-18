@@ -30,7 +30,7 @@ function shortSchedule(course: Course): string | null {
       minutes[0] + "–" + minutes[minutes.length - 1];
     parts.push(range + (schedules.some(schedule => schedule.minutesPlus) ? "+" : "") + " min");
   }
-  if (schedules.length > 1) parts.push("See grade recommendations");
+  if (schedules.length > 1) parts.push(schedules.some(schedule => schedule.gradeBand) ? "By grade" : "See options");
   return parts.length ? parts.join(" · ") : schedules.length + " schedule options";
 }
 
