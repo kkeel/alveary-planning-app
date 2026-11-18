@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { previewTopicsForCourse } from "../app/courses/optimistic-topics.mjs";
-import { listRowStatus, pendingIdeaCount, nextCourseIdeaAll } from "../app/courses/list-row-status.mjs";
+import { listRowStatus, pendingIdeaCount, nextCourseIdeaAll, isUnusedSavedCourse } from "../app/courses/list-row-status.mjs";
 
 const catalog=JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json",import.meta.url),"utf8"));
@@ -82,3 +82,16 @@ const courseWithMissingAndPlan={...courseWithPlan,
  ? {...t,ideaChoice:"off"}:t)};
 assert.equal(nextCourseIdeaAll(courseWithMissingAndPlan,people),true,
  "Fill the unassigned remaining topics without changing student assignments");
+
+assert.equal(isUnusedSavedCourse(savedCourseIdea,people),false);
+const blankFromIdeas={...savedCourseIdea,ideaAll:false,
+  topics:savedCourseIdea.topics.map(t=>({...t,ideaChoice:"inherit"}))};
+assert.equal(isUnusedSavedCourse(blankFromIdeas,people),true,
+ "The last removed Think Tank idea must discard the saved parent and old exclusions");
+assert.equal(isUnusedSavedCourse({...blankFromIdeas,
+  overrides:[{topicId:usSource.topicId,studentId:"AJ",assigned:true}],
+  stage:"planned"},people),false,
+ "An assigned topic prevents resetting its parent even with no Think Tank ideas");
+assert.equal(isUnusedSavedCourse({...blankFromIdeas,
+  topics:blankFromIdeas.topics.map(t=>({...t,included:false}))},people),true,
+ "A course with all topics excluded and nobody assigned is fully unused");
