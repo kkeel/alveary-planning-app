@@ -322,7 +322,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         {cloud.ready && savedChoice && <button type="button"
                           onClick={event=>{
                             const next=assigningId!==idea.id;
-                            openThinkForAssignment(idea.id,event.currentTarget);
+                            openThinkForAssignment(idea.id, event.currentTarget);
                             setAssigningId(next?idea.id:null);
                           }}>
                           <UsersRound size={14} aria-hidden="true"/> {assigningId===idea.id?"Close students":"Add / edit students"}
