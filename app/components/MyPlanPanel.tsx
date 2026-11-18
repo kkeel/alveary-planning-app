@@ -223,7 +223,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     aria-controls={detailsId}
                     onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
-                    <span>{title}
+                    <span>{title} <span className="pd-title-chevron">{open ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}</span>
                       {showTopicCount && <small className="pd-topic-count-note">
                         {topicCount.selected} of {topicCount.total} topics
                       </small>}
@@ -235,13 +235,6 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                       </small>
                       {open && item && <PlanningScheduleGradeMeta course={item}/>}
                     </span>
-                  </button>
-                  <button type="button" className="pd-row-tool pd-mini-info-action"
-                    aria-label={(open ? "Hide" : "View") + " details for " + title}
-                    title={open ? "Hide details" : "View details"}
-                    aria-expanded={open} aria-controls={detailsId}
-                    onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
-                    <Info size={15} aria-hidden="true"/>
                   </button>
                   <Link className="pd-row-tool pd-think-books"
                     href={"/books?course=" + encodeURIComponent(course.courseId)}
