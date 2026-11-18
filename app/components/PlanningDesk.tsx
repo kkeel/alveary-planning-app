@@ -275,7 +275,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                     const topicsOnly = desk.thinkDetails === "topics" && hasTopics &&
                       !infoOpen && assigningId !== idea.id;
                     const reviewId = "pd-think-details-" + idea.id;
-                    return <div className={"pd-idea" + (reviewOpen ? " is-open" : "") + (topicsOnly ? " is-topics-only" : "")} key={idea.id}>
+                    return <div className={"pd-idea" + (reviewOpen ? " is-open" : "") + (topicsOnly ? " is-topics-only" : "") + (desk.thinkDetails === "detailed" ? " is-detailed" : "")} key={idea.id}>
                       <div className="pd-idea-heading">
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
                           aria-controls={reviewId}
