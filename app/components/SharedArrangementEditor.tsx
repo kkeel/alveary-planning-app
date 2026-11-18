@@ -44,10 +44,21 @@ export default function SharedArrangementEditor({
         t.topicId,shared)));
     if(effective.length) shown=arrangementRollup(effective);
   }
+  const relevantTopicIds=topicId===null
+    ? choice?.topics.filter(topic=>topic.included).map(topic=>topic.topicId)??selectedTopicIds
+    : [topicId];
+  const hasChosenArrangement=
+    shared.some(item=>item.courseId===courseId && (item.topicId===null ||
+      relevantTopicIds.includes(item.topicId))) ||
+    plan.assignmentArrangements.some(item=>item.courseId===courseId &&
+      (item.topicId===null || relevantTopicIds.includes(item.topicId)));
+  // Effective "Later" without any saved choice is the implicit fallback,
+  // not an explicit decision. Keep it visually quiet everywhere.
+  const isUnset=shown===null || (shown==="Later"&&!hasChosenArrangement);
   const inherited=topicId!==null&&explicitTopic==="inherit";
   const active=topicId===null?courseDefault??"clear":explicitTopic;
   const label=shown==="Varied"?"Varied arrangements":
-    shown===null?"Set arrangement":shown==="Later"?"Decide later":shown==="Both"?
+    isUnset?"Set arrangement":shown==="Later"?"Decide later":shown==="Both"?
     "Both (previous setting)":shown;
   function choose(value:Choice) {
     const picked:SharedArrangement["arrangement"]|null=
@@ -63,14 +74,14 @@ export default function SharedArrangementEditor({
   }
   return <div className={"priority-control shared-arrangement-control"+
     (compact?" is-compact":"")+(shown&&shown!=="Later"?" has-priority":"")+
-    (inherited?" is-inherited":"")+(shown===null?" is-unset":"")}
+    (inherited?" is-inherited":"")+(isUnset?" is-unset":"")}
     onClick={event=>event.stopPropagation()}>
     <button ref={triggerRef} type="button" className="priority-control-trigger"
       disabled={disabled||!plan.ready} aria-expanded={open} aria-controls={id}
       aria-label={"Arrangement: "+label+(inherited?" (same as course)":"")}
       title={"Arrangement: "+label+(inherited?" (same as course)":"")}
       onClick={()=>setOpen(v=>!v)}>
-      {shown===null?<ArrangementPlaceholderSymbol size={compact?17:19}/>:
+      {isUnset?<ArrangementPlaceholderSymbol size={compact?17:19}/>:
         shown==="Varied"?<Layers3 size={compact?17:19} aria-hidden="true"/>:
         <ArrangementSymbol value={shown} size={compact?18:20}/>}
     </button>
