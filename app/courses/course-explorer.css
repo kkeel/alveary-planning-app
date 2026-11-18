@@ -567,18 +567,69 @@
   .cx-topic-elsewhere span { display:none; }
 }
 
-/* View + i is instructional, never a selected-planning status.
- * Topic and course View actions stay unboxed and muted, including when
- * the enclosing course has a colored My Plan selection. */
-.cx-course-actions button.planning-icon-control.cx-info-action,
-.cx-course-actions button.planning-icon-control.cx-info-action.is-open {
+/* Shared toolbar selection language.
+ * One planned or Think Tank topic tints that topic's controls and its
+ * parent course controls. A whole-course selection tints every included
+ * selected topic. The existing status logic decides which rows qualify:
+ * this changes buttons only, never rails, backgrounds, or membership. */
+.cx-course.cx-has-planning-selection > .cx-course-head
+  .cx-course-actions button.planning-icon-control:not(.cx-info-action) {
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
+  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c);
+}
+.cx-course.cx-has-planning-selection > .cx-course-head
+  .cx-course-actions button.planning-icon-control:not(.cx-info-action):hover:not(:disabled) {
+  background:color-mix(in srgb,var(--cx-subject) 23%,white);
+  border-color:color-mix(in srgb,var(--cx-subject) 48%,white);
+  color:color-mix(in srgb,var(--cx-subject) 80%,#25372c);
+}
+/* The shared unset-tag rule intentionally uses !important so untouched
+ * courses stay faint. A saved selection is the one deliberate exception. */
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible) {
+  background:var(--cx-subject-soft) !important;
+  border-color:var(--cx-subject-medium) !important;
+  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c) !important;
+}
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  .priority-control:not(.has-priority) .priority-control-trigger > :is(svg,img),
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  .cx-idea-action:not(.is-selected) > svg { opacity:1; }
+
+/* View is always plain, unboxed text and icon. Opening it changes the
+ * action label to Hide, which uses the same tinted button language as its
+ * neighbors (subject tint on selected rows, neutral tint otherwise). */
+.cx-course .cx-course-actions button.planning-icon-control.cx-info-action:not(.is-open) {
   background:transparent;
   border-color:transparent;
   color:#9bad9c;
 }
-.cx-course-actions button.planning-icon-control.cx-info-action:hover:not(:disabled),
-.cx-course-actions button.planning-icon-control.cx-info-action.is-open:hover:not(:disabled) {
-  background:#f0f3ee;
+.cx-course .cx-course-actions button.planning-icon-control.cx-info-action:not(.is-open):hover:not(:disabled) {
+  background:transparent;
   border-color:transparent;
-  color:#4e6655;
+  color:var(--planning-icon-hover-foreground,#4e6655);
+}
+.cx-course .cx-course-actions button.planning-icon-control.cx-info-action.is-open {
+  background:var(--planning-icon-open-background,#f1f5ed);
+  border-color:var(--planning-icon-open-border,#d3dcd1);
+  color:var(--planning-icon-hover-foreground,#4e6655);
+}
+.cx-course .cx-course-actions button.planning-icon-control.cx-info-action.is-open:hover:not(:disabled) {
+  background:#e9eee7;
+  border-color:#cbd6c9;
+  color:#4d6553;
+}
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  button.planning-icon-control.cx-info-action.is-open {
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
+  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c);
+}
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  button.planning-icon-control.cx-info-action.is-open:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--cx-subject) 23%,white);
+  border-color:color-mix(in srgb,var(--cx-subject) 48%,white);
+  color:color-mix(in srgb,var(--cx-subject) 80%,#25372c);
 }
