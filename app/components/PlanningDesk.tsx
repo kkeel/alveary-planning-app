@@ -115,31 +115,18 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   // topics without any assigned student stay in Think Tank; assigned topics
   // appear in My Plan. Keep an editor visible until Done, even when its final
   // click assigns the last remaining topic.
-  const ideas = useMemo(() => {
-    // Source of truth is now the optimistic cloud snapshot, not only the old
-    // browser bookmark list. A freshly added topic/course appears in the mini
-    // desk on the very same click, even before local-storage rehydration runs.
-    const ids = new Set([
-      ...desk.thinkTankIds,
-      ...cloud.courses.filter(choice => pendingIdeaCount(choice,cloud.students) > 0)
-        .map(choice => choice.courseId),
-    ]);
-    return [...ids].filter(id => {
-      const choice = cloud.courses.find(course => course.courseId === id);
-      return !choice || pendingIdeaCount(choice,cloud.students) > 0 ||
-        justPlannedId === id || assigningId === id;
-    }).map(id => lookup.get(id))
-      .filter((plan):plan is CatalogPlan => Boolean(plan));
-  }, [desk.thinkTankIds, cloud.courses, cloud.students, justPlannedId, assigningId]);
-  const unsynced = cloud.ready ? desk.thinkTankIds.filter(id =>
-    !cloud.courses.some(c => c.courseId === id)) : [];
-  const saveLegacyIdeas = () => {
-    if (!unsynced.length) return;
-    void cloud.importIdeas(unsynced.map(courseId => ({
-      courseId,
-      excludedTopicIds: desk.excludedTopicIdsByCourse[courseId] ?? [],
-    })));
-  };
+  // The authenticated Demo plan is the sole source of member selections.
+  // Retire leftover local-only bookmarks so a cleared plan stays cleared.
+  useEffect(()=>{
+    if(!cloud.ready || !desk.thinkTankIds.length) return;
+    for(const id of desk.thinkTankIds) desk.removeIdea(id);
+  },[cloud.ready,desk.thinkTankIds,desk.removeIdea]);
+  const ideas = useMemo(() => cloud.courses
+    .filter(choice=>pendingIdeaCount(choice,cloud.students)>0 ||
+      (choice.courseId===justPlannedId || choice.courseId===assigningId))
+    .map(choice=>lookup.get(choice.courseId))
+    .filter((plan):plan is CatalogPlan => Boolean(plan)),
+    [cloud.courses,cloud.students,justPlannedId,assigningId]);
   const grouped = useMemo(() => {
     const map = new Map<string, CatalogPlan[]>();
     for (const idea of ideas) map.set(idea.subject, [...(map.get(idea.subject) ?? []), idea]);
@@ -242,14 +229,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
   // Render one shared set of planning components in either the compact tabs
   // or two visible columns. List and Planning never mount both desk variants.
-  const notices = <>        {cloud.ready && unsynced.length > 0 && <div className="pd-save-browser">
-          <strong>{unsynced.length} browser-only {unsynced.length === 1 ? "idea" : "ideas"}</strong>
-          <p>Bring your existing Think Tank choices and topic customizations into your private Demo plan. This merges without overwriting choices already saved to your account.</p>
-          <button type="button" onClick={saveLegacyIdeas} disabled={cloud.saving}>
-            Save browser ideas to Demo plan
-          </button>
-        </div>}
-  </>;
+  const notices = null;
   const thinkTankContent = <>
           {ideas.length > 0 && <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
