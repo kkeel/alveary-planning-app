@@ -212,7 +212,8 @@ Deno.serve(async (req: Request) => {
       "load", "import", "set_choice", "remove_choice", "set_stage",
       "set_topic", "set_course_student", "set_topic_student",
       "toggle_idea", "clear_plan", "prepare_plan",
-      "set_assignment_priority", "set_assignment_arrangement", "set_shared_priority", ...manageActions,
+      "set_assignment_priority", "set_assignment_arrangement", "set_shared_priority",
+      "set_shared_arrangement", ...manageActions,
     ]);
     if (typeof p.action !== "string" || !actions.has(p.action)) {
       return response(req, 400, { error: "invalid_action" });
@@ -273,6 +274,8 @@ Deno.serve(async (req: Request) => {
         (priority === undefined || (priority === "Not set" && !topicId) ||
          (p.topicId != null && !topicId))) ||
       (p.action === "set_assignment_arrangement" &&
+        (assignmentArrangement === undefined || (p.topicId != null && !topicId))) ||
+      (p.action === "set_shared_arrangement" &&
         (assignmentArrangement === undefined || (p.topicId != null && !topicId)))
     ) return response(req, 400, { error: "invalid_request" });
 
@@ -310,6 +313,22 @@ Deno.serve(async (req: Request) => {
       assertDatabase(sharedWriteError, "shared_priority_save_failed");
     }
 
+    // A course-wide or topic-wide arrangement default belongs to the family,
+    // not to one student; this secured RPC validates the exact parent/edition.
+    if (p.action === "set_shared_arrangement") {
+      const { error: sharedArrangementError } = await admin.rpc("demo_plan_shared_arrangements", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "set",
+        p_course_id: courseId,
+        p_topic_id: topicId,
+        p_arrangement: assignmentArrangement,
+      });
+      assertDatabase(sharedArrangementError, "shared_arrangement_save_failed");
+    }
+
     // A private course default or child-topic arrangement is keyed to the
     // entitled member's saved parent course, active student and exact edition.
     if (p.action === "set_assignment_arrangement") {
@@ -342,7 +361,8 @@ Deno.serve(async (req: Request) => {
       })
       : (manage || p.action === "set_assignment_priority" ||
           p.action === "set_assignment_arrangement" ||
-          p.action === "set_shared_priority")
+          p.action === "set_shared_priority" ||
+          p.action === "set_shared_arrangement")
       ? await admin.rpc("demo_plan_manage", {
         p_auth_user_id: caller.user.id,
         p_member_id: memberId,
@@ -350,7 +370,8 @@ Deno.serve(async (req: Request) => {
         p_school_year: year,
         p_action: p.action === "set_assignment_priority" ||
           p.action === "set_assignment_arrangement" ||
-          p.action === "set_shared_priority" ? "load" : p.action,
+          p.action === "set_shared_priority" ||
+          p.action === "set_shared_arrangement" ? "load" : p.action,
         p_course_id: courseId,
         p_student_ids: studentIds,
         p_student_id: student,
@@ -417,11 +438,24 @@ Deno.serve(async (req: Request) => {
     if (!Array.isArray(assignmentArrangements)) {
       throw new Error("arrangement_response_unrecognized");
     }
+    const { data: sharedArrangements, error: sharedArrangementsError } =
+      await admin.rpc("demo_plan_shared_arrangements", {
+        p_auth_user_id: caller.user.id,
+        p_member_id: memberId,
+        p_workspace_id: workspaceId,
+        p_school_year: year,
+        p_action: "load",
+      });
+    assertDatabase(sharedArrangementsError, "shared_arrangement_read_failed");
+    if (!Array.isArray(sharedArrangements)) {
+      throw new Error("shared_arrangement_response_unrecognized");
+    }
     return response(req, 200, {
       ...(plan as object),
       assignmentPriorities,
       sharedPriorities,
       assignmentArrangements,
+      sharedArrangements,
     });
   } catch (error) {
     const stage = error instanceof Error ? error.message : "unexpected_error";
