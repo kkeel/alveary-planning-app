@@ -41,6 +41,7 @@ test("Student editor keeps utilities in header and personal controls beside rost
   assert.match(header,/SharedPriorityEditor/);
   assert.match(header,/pd-assignment-quick-actions/);
   assert.match(students,/plan-student-row/);
+  assert.match(students,/isAssigned && <StudentPriorityControl/);
   assert.match(students,/StudentPriorityControl/);
   assert.match(students,/plan-student-detail/);
   assert.match(students,/setAssignmentArrangement/);
@@ -53,4 +54,23 @@ test("setting priority on an unchosen item establishes an idea rather than an as
   assert.match(control,/plan\.addChoice\(courseId\)/);
   assert.match(control,/plan\.toggleListIdea\(courseId,topicId\)/);
   assert.doesNotMatch(control,/plan\.assignCourse|plan\.assignTopic/);
+});
+
+test("Desk controls keep small i buttons and move books/student editing to More",()=>{
+  for(const src of [desk,plan]) {
+    assert.match(src,/pd-mini-info-action/);
+    assert.match(src,/pd-inline-actions/);
+    assert.match(src,/View books/);
+  }
+  assert.match(topic,/pd-topic-info/);
+  assert.match(topic,/pd-topic-menu/);
+  assert.match(topic,/Edit students/);
+  assert.doesNotMatch(topic,/className="pd-topic-icon pd-topic-edit"/);
+});
+test("Student selection is a multi-column roster with priority shown only if assigned",()=>{
+  const css=read("app/components/planning-desk.css");
+  assert.match(css,/\.plan-student-list\s*\{\s*display:grid/);
+  assert.match(css,/grid-template-columns:repeat\(auto-fit/);
+  assert.match(students,/isAssigned && <StudentPriorityControl/);
+  assert.match(students,/plan-select-all/);
 });
