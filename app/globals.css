@@ -552,7 +552,7 @@ p { line-height: 1.65; }
 }
 
 /* Neutral priority tag gets the same square frame as the three illustrated
-   priorities. Customized student icons retain an understated identifying dot. */
+   priorities. Student customizations are labeled without an extra corner dot. */
 .priority-control .priority-control-trigger {
   border-color:#dfe7da;
   background:#fff;
