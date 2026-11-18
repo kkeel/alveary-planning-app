@@ -287,9 +287,9 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         {savedChoice && <SharedArrangementEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
                         <button type="button" className="planning-icon-control pd-row-tool pd-mini-info-action"
-                          title={reviewOpen ? "Hide details" : "View details"}
-                          aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
-                          aria-expanded={reviewOpen} aria-controls={reviewId}
+                          title={infoOpen ? "Hide guidance" : "View guidance"}
+                          aria-label={(infoOpen ? "Hide" : "View") + " guidance for " + idea.title}
+                          aria-expanded={infoOpen} aria-controls={reviewId}
                           onClick={event => toggleThinkDetails(idea.id,event.currentTarget)}>
                           <Info size={15} aria-hidden="true"/>
                         </button>
