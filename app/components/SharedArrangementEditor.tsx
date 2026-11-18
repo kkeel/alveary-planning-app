@@ -83,7 +83,7 @@ export default function SharedArrangementEditor({
       onClick={()=>setOpen(v=>!v)}>
       {isUnset?<ArrangementPlaceholderSymbol size={compact?17:19}/>:
         shown==="Varied"?<Layers3 size={compact?17:19} aria-hidden="true"/>:
-        <ArrangementSymbol value={shown} size={compact?18:20}/>}
+        <ArrangementSymbol value={shown??"Later"} size={compact?18:20}/>}
     </button>
     <FloatingChoiceMenu open={open} triggerRef={triggerRef}
       onDismiss={()=>setOpen(false)} id={id}
