@@ -6,6 +6,7 @@ import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreferen
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
 import { coursePriority, topicPriorityOverride } from "./priority-inheritance.mjs";
 import { courseArrangement, topicArrangementOverride } from "./arrangement-inheritance.mjs";
+import SharedPriorityEditor from "./SharedPriorityEditor";
 
 const arrangements = ["Combined", "Separate", "Later"] as const;
 const priorities: Array<NonNullable<StudentPreference["priority"]>> =
@@ -135,6 +136,7 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
+    <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}/>
     {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
       <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
         title={topicId ? "Assign this topic to every student" :
@@ -202,8 +204,8 @@ export default function StudentAssignmentEditor({
     </button>
     {showPreferences && <div className="plan-preferences">
       <p className="plan-microcopy">
-        Course priorities and arrangements are defaults for each student.
-        Individual topics can inherit them or have their own settings.
+        Individual student priorities and arrangements are optional customizations.
+        Leave a student priority unset to use the shared course or topic priority.
       </p>
       {demo.students.filter(student => assigned.has(student.id) ||
         (!topicId && effectiveTopicCount(course, student.id) > 0)).map(student => {
@@ -220,7 +222,7 @@ export default function StudentAssignmentEditor({
           : "inherit";
         return <div className="plan-preference-row" key={student.id}>
           <strong>{student.displayName}</strong>
-          <label>Course default priority
+          <label>Student course priority
             <select value={courseDefault ?? ""}
               onChange={event => {
                 setHasSavedEdits(true);
@@ -228,11 +230,11 @@ export default function StudentAssignmentEditor({
                   (event.target.value || null) as
                     ReturnType<typeof coursePriority>);
               }}>
-              <option value="">Not set</option>
+              <option value="">Use shared default</option>
               {priorities.map(item => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          {topicId && <label>Priority for this topic
+          {topicId && <label>Student priority for this topic
             <select value={topicSelection}
               onChange={event => {
                 setHasSavedEdits(true);
