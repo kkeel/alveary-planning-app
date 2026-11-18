@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { Check, Clock3 } from "lucide-react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "./arrangement-inheritance.mjs";
@@ -36,10 +37,6 @@ export default function StudentArrangementControl({
 }){
   const plan=useDemoPlan();
   const [open,setOpen]=useState(false);
-  const [opensUp,setOpensUp]=useState(false);
-  const [alignStart,setAlignStart]=useState(false);
-  const menuRef=useRef<HTMLDivElement>(null);
-  const rootRef=useRef<HTMLDivElement>(null);
   const triggerRef=useRef<HTMLButtonElement>(null);
   const menuId=useId();
   const base=courseArrangement(plan.assignmentArrangements,courseId,studentId) as Arrangement|"Both";
@@ -50,36 +47,6 @@ export default function StudentArrangementControl({
   const selected:Choice=topicId ? topic as Choice : base;
   const inherited=topicId!==null && topic==="inherit";
   const caption=(effective==="Later"?"Decide later":effective==="Both"?"Both (previous setting)":effective);
-  useEffect(()=>{
-    if(!open) return;
-    function closeOutside(event:PointerEvent){
-      if(!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    function closeEscape(event:KeyboardEvent){
-      if(event.key==="Escape"){setOpen(false);triggerRef.current?.focus();}
-    }
-    document.addEventListener("pointerdown",closeOutside);
-    document.addEventListener("keydown",closeEscape);
-    return()=>{
-      document.removeEventListener("pointerdown",closeOutside);
-      document.removeEventListener("keydown",closeEscape);
-    };
-  },[open]);
-  useLayoutEffect(()=>{
-    if(!open || !triggerRef.current || !menuRef.current) return;
-    const trigger=triggerRef.current.getBoundingClientRect();
-    const menu=menuRef.current.getBoundingClientRect();
-    const scroller=triggerRef.current.closest(
-      ".pd-body, .pd-full-column-body, .cx-inline-assign");
-    const bounds=scroller?.getBoundingClientRect();
-    const top=Math.max(0,bounds?.top??0);
-    const bottom=Math.min(window.innerHeight,bounds?.bottom??window.innerHeight);
-    const left=Math.max(0,bounds?.left??0);
-    const below=bottom-trigger.bottom;
-    const above=trigger.top-top;
-    setOpensUp(below < menu.height+8 && above>below);
-    setAlignStart(trigger.right-menu.width < left+5);
-  },[open]);
   function choose(value:Choice){
     if(value==="Both") return; // legacy read-only value
     plan.setAssignmentArrangement(courseId,studentId,topicId,
@@ -95,9 +62,8 @@ export default function StudentArrangementControl({
     {value:"Later",label:"Decide later",display:"Later"},
     ...(selected==="Both"?[{value:"Both" as Choice,label:"Both (previous setting)",display:"Both" as const}]:[]),
   ];
-  return <div ref={rootRef}
-      className={"student-arrangement-control"+(inherited?" is-inherited":"")+
-        (opensUp?" is-flipped":"")+(alignStart?" is-align-start":"")}
+  return <div
+      className={"student-arrangement-control"+(inherited?" is-inherited":"")}
       onClick={event=>event.stopPropagation()}>
     <button type="button" ref={triggerRef} className="student-arrangement-trigger"
       disabled={!plan.ready} aria-expanded={open} aria-controls={menuId}
@@ -106,8 +72,9 @@ export default function StudentArrangementControl({
       onClick={()=>setOpen(v=>!v)}>
       <ArrangementSymbol value={effective} size={19}/>
     </button>
-    {open && <div ref={menuRef} id={menuId} className="priority-control-popover student-arrangement-popover"
-      role="group" aria-label={"Arrangement for "+studentName}>
+    <FloatingChoiceMenu open={open} triggerRef={triggerRef}
+      onDismiss={()=>setOpen(false)} id={menuId}
+      className="student-arrangement-popover" label={"Arrangement for "+studentName}>
       <div className="priority-control-heading">{studentName}<span>Arrangement</span></div>
       {choices.map(item=><button type="button" key={item.value}
         className="priority-option" aria-pressed={selected===item.value}
@@ -119,6 +86,6 @@ export default function StudentArrangementControl({
         <span>{item.label}</span>
         {selected===item.value && <Check size={14} aria-hidden="true"/>}
       </button>)}
-    </div>}
+    </FloatingChoiceMenu>
   </div>;
 }
