@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound } from "lucide-react";
+import { BookOpen, ChevronDown, ChevronRight, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
 import { sortTopicsForCourse } from "../courses/topic-order.mjs";
@@ -147,6 +147,9 @@ export default function CourseTopicReview({
         : null;
 
     const topicTitle = <span className="pd-topic-title-text">{topic.title}
+      {hasDetails && <span className="pd-title-chevron" aria-hidden="true">
+        {infoOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}
+      </span>}
       {!!assignedNames.length && <small className="pd-topic-assigned-meta">
         {assignedNames.join(" / ")}
       </small>}
@@ -162,12 +165,6 @@ export default function CourseTopicReview({
           : <span className="pd-topic-name">
               {selectionMark}{topicTitle}
             </span>}
-        {hasDetails && <button type="button" className="pd-topic-icon"
-          aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
-          title={mode === "think" ? "Topic details" : "Description & tips"} aria-expanded={infoOpen}
-          aria-controls={detailsId} onClick={toggleInfo}>
-          <Info size={14} aria-hidden="true"/>
-        </button>}
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedPriorityEditor courseId={parent.id} topicId={topic.id} compact/>}
         <Link className="pd-topic-icon pd-topic-books"
