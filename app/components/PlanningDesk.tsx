@@ -307,13 +307,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         </button>
                         {savedChoice && <SharedPriorityEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
+                        <div className="pd-more-anchor">
                         <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
                           title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
-                      </div>
-                      {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
+                                            {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
                         aria-label={"More options for "+idea.title}>
                         <Link href={"/books?course="+encodeURIComponent(idea.id)}
                           onClick={closeMobileDrawer}
@@ -356,6 +356,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <span className="pd-sr-only">Remove idea</span>
                         </button>
                       </div>}
+                        </div>
+</div>
                       {reviewOpen && <div className="pd-review pd-think-review" id={reviewId}
                         role="region" aria-label={"Details for " + idea.title}>
                         {(idea.description || idea.tips) && <div className="pd-think-description-section">
