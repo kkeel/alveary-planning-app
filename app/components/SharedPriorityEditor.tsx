@@ -39,7 +39,7 @@ export default function SharedPriorityEditor({
     (compact ? " is-compact" : "")} onClick={event => event.stopPropagation()}>
     <label>
       <span>{label}</span>
-      <select aria-label={label} value={value}
+      <select aria-label={label} value={value ?? ""}
         disabled={!plan.ready}
         onChange={event => {
           const v = event.target.value;
