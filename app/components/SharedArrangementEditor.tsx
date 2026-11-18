@@ -1,13 +1,13 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import { Check, CircleDashed, Layers3 } from "lucide-react";
+import { Check, Layers3 } from "lucide-react";
 import { useDemoPlan, type SharedArrangement } from "./DemoPlanContext";
 import { effectiveArrangement, arrangementRollup, sharedCourseArrangement,
   sharedTopicArrangementOverride, sharedTopicArrangement,
   sharedArrangementSummary } from "./arrangement-inheritance.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
-import { ArrangementSymbol } from "./StudentArrangementControl";
+import { ArrangementSymbol, ArrangementPlaceholderSymbol } from "./StudentArrangementControl";
 import FloatingChoiceMenu from "./FloatingChoiceMenu";
 
 type Arrangement="Combined"|"Separate"|"Later";
@@ -63,14 +63,14 @@ export default function SharedArrangementEditor({
   }
   return <div className={"priority-control shared-arrangement-control"+
     (compact?" is-compact":"")+(shown&&shown!=="Later"?" has-priority":"")+
-    (inherited?" is-inherited":"")}
+    (inherited?" is-inherited":"")+(shown===null?" is-unset":"")}
     onClick={event=>event.stopPropagation()}>
     <button ref={triggerRef} type="button" className="priority-control-trigger"
       disabled={disabled||!plan.ready} aria-expanded={open} aria-controls={id}
       aria-label={"Arrangement: "+label+(inherited?" (same as course)":"")}
       title={"Arrangement: "+label+(inherited?" (same as course)":"")}
       onClick={()=>setOpen(v=>!v)}>
-      {shown===null?<CircleDashed size={compact?17:19} aria-hidden="true"/>:
+      {shown===null?<ArrangementPlaceholderSymbol size={compact?17:19}/>:
         shown==="Varied"?<Layers3 size={compact?17:19} aria-hidden="true"/>:
         <ArrangementSymbol value={shown} size={compact?18:20}/>}
     </button>
@@ -80,7 +80,7 @@ export default function SharedArrangementEditor({
       <div className="priority-control-heading">Arrangement <span>optional</span></div>
       {topicId!==null&&<button type="button" className="priority-option"
         aria-pressed={active==="inherit"} onClick={()=>choose("inherit")}>
-        <CircleDashed size={19} aria-hidden="true"/>
+        <ArrangementPlaceholderSymbol size={19}/>
         <span>Same as course</span>
         {active==="inherit"&&<Check size={14} aria-hidden="true"/>}
       </button>}
@@ -93,7 +93,7 @@ export default function SharedArrangementEditor({
       </button>)}
       {topicId===null&&<button type="button" className="priority-option"
         aria-pressed={active==="clear"} onClick={()=>choose("clear")}>
-        <CircleDashed size={19} aria-hidden="true"/>
+        <ArrangementPlaceholderSymbol size={19}/>
         <span>Clear arrangement</span>
         {active==="clear"&&<Check size={14} aria-hidden="true"/>}
       </button>}
