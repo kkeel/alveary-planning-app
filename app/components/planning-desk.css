@@ -1795,3 +1795,58 @@
 .plan-group-shortcuts > .shared-arrangement-control .priority-control-trigger {
   width:30px; min-width:30px; height:30px;
 }
+
+
+/* Unified course/topic disclosure: no separate "Description & tips" bar.
+ * The short published schedule stays beside the title; detailed metadata
+ * and prose live directly above topics only when asked for. */
+.pd-course-inline-details {
+  margin:0 0 12px;
+  padding:4px 0 12px;
+  border-bottom:1px solid #e5ebe3;
+  color:#45584a;
+}
+.pd-course-inline-details .pd-schedule-grade-meta {
+  width:100%;
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 10px;
+  margin:0 0 9px;
+}
+.pd-course-inline-details .pd-schedule-grade-lines {
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+.pd-course-inline-details .pd-schedule-grade-item,
+.pd-think-review .pd-topic-info .pd-schedule-grade-item {
+  white-space:normal;
+  overflow-wrap:normal;
+  line-height:1.5;
+}
+.pd-schedule-grade-meta:not(.is-detailed) {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:3px 8px;
+}
+.pd-schedule-summary {
+  display:inline;
+  min-width:0;
+  color:#738078;
+  overflow-wrap:normal;
+}
+.pd-course-inline-details .pd-schedule-grade-meta.is-detailed .pd-schedule-grade-range {
+  align-self:flex-start;
+}
+.pd-think-review .pd-topic-info .pd-schedule-grade-meta.is-detailed {
+  align-items:flex-start;
+  flex-direction:column;
+}
+.pd-think-review .pd-topic-info .pd-schedule-grade-meta.is-detailed .pd-schedule-grade-range {
+  border-left:0;
+  padding-left:0;
+}
+/* The view switch shares layout rules in both columns and portable desk. */
+.pd-details-toolbar .pd-detail-switch { max-width:100%; }
