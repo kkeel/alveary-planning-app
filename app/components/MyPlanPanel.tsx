@@ -10,6 +10,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import { sharedCourseSummary } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
