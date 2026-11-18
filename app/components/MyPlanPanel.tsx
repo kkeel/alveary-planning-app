@@ -16,6 +16,7 @@ import { coursePriorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
+import DetailViewSwitch from "./DetailViewSwitch";
 import { buildTopicSharingIndex, hasSharedTopic } from "./topic-sharing";
 import PlacementSymbol from "./PlacementSymbol";
 import { effectiveTopicCount } from "./topic-assignment.mjs";
@@ -112,9 +113,17 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   }, [openId]);
 
   function toggleDetails(courseId: string, target: HTMLElement) {
-    rememberAnchor(target);
-    setOpenId(openId === courseId ? null : courseId);
-    setInfoId(null);
+    if (desk.planDetails === "compact") {
+      rememberAnchor(target);
+      const next = openId === courseId ? null : courseId;
+      setOpenId(next);
+      setInfoId(next ? courseId : null);
+    } else {
+      const hidden = "hidden:" + courseId;
+      setInfoId(previous => desk.planDetails === "detailed"
+        ? (previous === hidden ? null : hidden)
+        : (previous === courseId ? null : courseId));
+    }
     setEditingStudentsId(null);
     setEditingTopicCourseId(null);
     setOpenMenuId(null);
@@ -148,9 +157,11 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   </div>;
 
   return <section className="myplan-panel" aria-label="My Plan">
-    {planned.length > 0 && <div className="pd-details-toolbar">
+    <div className="pd-details-toolbar">
       <p className="pd-intro myplan-intro">Your chosen courses, with details available whenever you need them.</p>
-    </div>}
+      <DetailViewSwitch label="My Plan" value={desk.planDetails}
+        onChange={next => { desk.setPlanDetails(next); setOpenId(null); setInfoId(null); }}/>
+    </div>
     {!planned.length && <div className="pd-empty-state">
       <h3>Your plan starts here</h3>
       <p>Add students to a course or topic from the Course List to see it in My Plan.</p>
@@ -188,8 +199,9 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
           {!collapsed && <div className="pd-subject-items pd-think-course-list">
             {courses.map(course => {
               const item: CatalogCourse | undefined = lookup.get(course.courseId);
-              const open = openId === course.courseId;
-              const infoOpen = infoId === course.courseId;
+              const open = desk.planDetails !== "compact" || openId === course.courseId;
+              const infoOpen = desk.planDetails === "detailed"
+                 ? infoId !== "hidden:" + course.courseId : infoId === course.courseId;
               const editing = editingStudentsId === course.courseId;
               const detailsId = "pd-myplan-details-" + course.courseId;
               const shared = hasSharedTopic(sharedTopics, course);
@@ -223,9 +235,9 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   <SharedArrangementEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds}/>
                         <button type="button" className="planning-icon-control pd-row-tool pd-mini-info-action"
-                    aria-label={(open?"Hide":"View")+" details for "+title}
-                    title={open?"Hide details":"View details"}
-                    aria-expanded={open} aria-controls={detailsId}
+                    aria-label={(infoOpen?"Hide":"View")+" guidance for "+title}
+                    title={infoOpen?"Hide guidance":"View guidance"}
+                    aria-expanded={infoOpen} aria-controls={detailsId}
                     onClick={event=>toggleDetails(course.courseId,event.currentTarget)}>
                     <Info size={15} aria-hidden="true"/>
                   </button>
@@ -274,17 +286,11 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
 </div>
                 {open && <div className="pd-review pd-think-review myplan-review"
                   id={detailsId} role="region" aria-label={"Details for " + title}>
-                  {item && (item.description || item.tips) && <div className="pd-think-description-section">
-                    <button type="button" className="pd-plan-info-disclosure"
-                      aria-expanded={infoOpen}
-                      onClick={() => setInfoId(infoOpen ? null : course.courseId)}>
-                      <Info size={14} aria-hidden="true"/> Description &amp; tips
-                      {infoOpen ? <ChevronDown size={13} aria-hidden="true"/> :
-                        <ChevronRight size={13} aria-hidden="true"/>}
-                    </button>
-                    {infoOpen && <CourseInfoDisclosure course={item}/>}
-                  </div>}
-                  {editing && <div className="pd-assign-in-place myplan-assign-in-place">
+                  {item && infoOpen && <div className="pd-course-inline-details">
+                     <PlanningScheduleGradeMeta course={item} detailed/>
+                     <CourseInfoDisclosure course={item}/>
+                   </div>}
+                   {editing && <div className="pd-assign-in-place myplan-assign-in-place">
                     <StudentAssignmentEditor course={course}
                       onClose={() => {
                         setEditingStudentsId(null);
@@ -295,7 +301,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                         if (course.stage === "idea") setOpenId(null);
                       }}/>
                   </div>}
-                  {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan"
+                  {item && <CourseTopicReview parent={item} savedChoice={course} mode="plan" detailMode={desk.planDetails}
                     onToggleTopic={(topicId,included) =>
                       demo.setTopic(course.courseId,topicId,included)}
                     onTopicDone={sourceCourseId => {
