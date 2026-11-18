@@ -289,7 +289,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
                           aria-controls={reviewId}
                           onClick={event => toggleThinkDetails(idea.id, event.currentTarget)}>
-                          <Lightbulb size={14} aria-hidden="true"/><span>{idea.title}
+                          <Lightbulb size={14} aria-hidden="true"/><span>{idea.title} <span className="pd-title-chevron">{reviewOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}</span>
                             {(showTopicCount || partiallyPlanned) && <small className="pd-topic-count-note">
                               {showTopicCount && <>{topicCount.selected} of {topicCount.total} topics</>}
                               {showTopicCount && partiallyPlanned && <span className="pd-meta-divider"> · </span>}
@@ -297,14 +297,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             </small>}
                              {reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}
                           </span>
-                        </button>
-                        <button type="button"
-                          className="pd-row-tool pd-mini-info-action"
-                          title={reviewOpen ? "Hide details" : "View details"}
-                          aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
-                          aria-expanded={reviewOpen} aria-controls={reviewId}
-                          onClick={event => toggleThinkDetails(idea.id, event.currentTarget)}>
-                          <Info size={15} aria-hidden="true"/>
                         </button>
                         <Link className="pd-row-tool pd-think-books"
                           href={"/books?course=" + encodeURIComponent(idea.id)}
