@@ -221,10 +221,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     setHiddenDetailedCourseIds([]);
   };
   const thinkTankContent = <>
-          {variant === "full" && <div className="pd-details-toolbar">
-            <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
-              onChange={changeThinkDensity}/>
-          </div>}
           {ideas.length > 0 && <p className="pd-intro pd-planning-guidance">Ideas to consider for your school year.</p>}
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map(subject => {
@@ -436,6 +432,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <h2><Lightbulb size={19} aria-hidden="true"/> Think Tank</h2>
           <span className="pd-full-count">{ideas.length} {ideas.length === 1 ? "idea" : "ideas"}</span>
         </header>
+        <div className="pd-full-density">
+          <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
+            onChange={changeThinkDensity}/>
+        </div>
         <div className="pd-full-column-body">
           {notices}
           {thinkTankContent}
@@ -446,9 +446,13 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <h2><SquareCheckBig size={19} aria-hidden="true"/> My Plan</h2>
           <span className="pd-full-count">{plannedIds.size} {plannedIds.size === 1 ? "selection" : "selections"}</span>
         </header>
+        <div className="pd-full-density">
+          <DetailViewSwitch label="My Plan" value={desk.planDetails}
+            onChange={next => desk.setPlanDetails(next)}/>
+        </div>
         <div className="pd-full-column-body">
           <MyPlanPanel focusCourseId={focusPlanned?.courseId}
-            focusRevision={focusPlanned?.revision} sideBySide />
+            focusRevision={focusPlanned?.revision} sideBySide densityControlInHeader />
         </div>
       </section>
     </div>
