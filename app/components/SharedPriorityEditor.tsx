@@ -81,8 +81,15 @@ export default function SharedPriorityEditor({
   }, [open]);
 
   function change(choice: Choice) {
-    const next: SharedPriority["priority"] | null = choice === "inherit" ||
+    const picked: SharedPriority["priority"] | null = choice === "inherit" ||
       choice === "clear" ? null : choice === "none" ? "Not set" : choice;
+    // Picking the course's current effective priority on a topic means
+    // "same as course", not a permanent redundant topic override.
+    const base = sharedCoursePriority(shared,courseId);
+    const effectiveBase = base === "Not set" ? null : base;
+    const effectivePick = picked === "Not set" ? null : picked;
+    const next: SharedPriority["priority"] | null =
+      topicId !== null && effectivePick === effectiveBase ? null : picked;
     if (!plan.courses.some(course => course.courseId === courseId)) {
       // A priority on an unchosen course is an idea, not a student assignment.
       // A topic-first priority saves only its topic through the correct parent.
