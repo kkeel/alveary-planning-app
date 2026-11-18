@@ -198,21 +198,21 @@ export default function CourseTopicReview({
             displayPriority={displayPriority} compact/>}
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedArrangementEditor courseId={parent.id} topicId={topic.id} compact/>}
-        {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info-action"
+        {hasDetails && <button type="button" className="planning-icon-control pd-topic-icon pd-topic-info-action"
           aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
           title={mode==="think"?"Topic details":"Description & tips"}
           aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
         {mode === "think" && isOther && !isRemoved && !assignedInThisCourse(topic) &&
-          <button type="button" className="pd-topic-icon pd-topic-save-idea"
+          <button type="button" className="planning-icon-control pd-topic-icon pd-topic-save-idea"
             title="Add this topic to Think Tank"
             aria-label={"Add " + topic.title + " to Think Tank"}
             disabled={!savedChoice || !demo.ready}
             onClick={() => addOtherIdea(topic)}>
             <Lightbulb size={15} aria-hidden="true"/>
           </button>}
-        <button type="button" className="pd-topic-icon pd-topic-more"
+        <button type="button" className="planning-icon-control pd-topic-icon pd-topic-more"
           ref={element=>{if(element)topicMenuButtons.current.set(topic.id,element);
             else topicMenuButtons.current.delete(topic.id);}}
           aria-controls={"pd-topic-menu-"+parent.id+"-"+topic.id}
