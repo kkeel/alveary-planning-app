@@ -184,6 +184,9 @@ function CourseRow({
     ". Choose students independently for this course.";
   const status = listRowStatus(parentChoice, students, sourceChoice.topicId,
     isCombined, planned.includes(sourceCourseId));
+  // A course or topic is visually selected if it is in Think Tank OR My Plan.
+  // This is presentation-only; shared-topic provenance and assignment logic stay intact.
+  const hasPlanningSelection = mode === "plan" && (status.ideaActive || status.planActive);
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
     planningTarget.topicId === sourceChoice.topicId;
   const selectedTopicIds = parentChoice?.topics.filter(topic =>
@@ -239,6 +242,7 @@ function CourseRow({
     (nested ? " cx-course--topic" : "") +
     (isExpanded ? " is-expanded" : "") +
     (visibleMode === "topics" ? " is-topics-only" : "") +
+    (hasPlanningSelection ? " cx-has-planning-selection" : "") +
     (mode === "plan" && status.planTone !== "none" ? " cx-status-" + status.planTone : "") +
     (mode === "plan" && status.ideaActive ? " cx-status-idea cx-idea-tone-" + status.ideaTone : "") +
     (mode === "plan" && status.contextTone !== "none" ? " cx-context-" + status.contextTone : "")}>
