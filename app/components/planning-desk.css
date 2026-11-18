@@ -1850,3 +1850,67 @@
 }
 /* The view switch shares layout rules in both columns and portable desk. */
 .pd-details-toolbar .pd-detail-switch { max-width:100%; }
+
+/* Expanded is a structural view, not a half-open details panel. Combined
+ * course topics begin immediately after course title/student metadata. */
+.pd-think-course-list > .pd-idea.is-topics-only > .pd-review.pd-think-review {
+  margin:0 0 4px 8px;
+  padding:1px 8px 5px 12px;
+}
+.pd-think-course-list > .pd-idea.is-topics-only > .pd-review .pd-topic-review,
+.pd-think-course-list > .pd-idea.is-detailed > .pd-review .pd-topic-review {
+  margin:0;
+  padding-top:0;
+  border-top:0;
+}
+.pd-think-course-list > .pd-idea.is-topics-only .pd-topic-review-heading {
+  margin:0;
+  padding:0 0 4px;
+}
+/* Detailed shows published grade/schedule guidance only once, directly with
+ * the record it belongs to. Don't stack a second divider before Topics. */
+.pd-think-course-list > .pd-idea.is-detailed .pd-course-inline-details,
+.pd-think-course-list > .pd-idea .pd-course-inline-details {
+  margin:0 0 7px;
+  padding:0;
+  border:0;
+}
+.pd-think-course-list > .pd-idea .pd-course-inline-details .pd-schedule-grade-meta {
+  margin:0 0 6px;
+}
+.pd-think-course-list > .pd-idea .pd-course-inline-details .pd-course-description-tips {
+  padding:0;
+}
+/* Titles aren't selected-state buttons. Keep open topic details readable
+ * without the pale rectangle behind their title (including in Detailed). */
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"],
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"]:hover,
+.pd-think-review .pd-topic-row .pd-topic-title-button[aria-expanded="true"]:focus-visible {
+  background:transparent;
+  color:inherit;
+}
+.pd-think-review .pd-topic-row .pd-topic-title-button:hover,
+.pd-think-review .pd-topic-row .pd-topic-title-button:focus-visible {
+  background:transparent;
+  text-decoration:underline;
+  text-decoration-color:#b6ccb9;
+  text-underline-offset:3px;
+}
+/* An information disclosure is a transparent icon at rest AND while open,
+ * like the unboxed overflow dots. Hover and focus remain individually clear. */
+.pd-idea .pd-mini-info-action,
+.pd-topic-row .pd-topic-icon.pd-topic-info-action,
+.pd-idea .pd-mini-info-action[aria-expanded="true"],
+.pd-topic-row .pd-topic-icon.pd-topic-info-action[aria-expanded="true"] {
+  border-color:transparent;
+  background:transparent;
+  color:#9bad9c;
+}
+.pd-idea .pd-mini-info-action:hover,
+.pd-idea .pd-mini-info-action:focus-visible,
+.pd-topic-row .pd-topic-icon.pd-topic-info-action:hover,
+.pd-topic-row .pd-topic-icon.pd-topic-info-action:focus-visible {
+  border-color:transparent;
+  background:#f0f3ee;
+  color:#4e6655;
+}

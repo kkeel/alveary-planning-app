@@ -20,10 +20,12 @@ assert.equal(active, null);
 // reveal all topics without modifying the member's saved display preference.
 assert.ok(desk.includes('const [openThinkCourseId, setOpenThinkCourseId]'),
   "Use a single global Think Tank accordion state");
-assert.ok(!desk.includes("reviewOverrides") && !desk.includes("setReviewOverrides"),
-  "Per-row disclosure flags must not permit multiple open courses");
-assert.ok(desk.includes('desk.thinkDetails !== "compact" || activeThinkCourseId === idea.id;'),
-  "Expanded and Detailed show topic lists; Compact retains a single local accordion");
+assert.ok(desk.includes("hiddenDetailedCourseIds"),
+  "Detailed closures are independent rather than forced through one hidden ID");
+assert.ok(desk.includes('const reviewOpen = Boolean(') &&
+  desk.includes('desk.thinkDetails === "topics" && hasTopics') &&
+  desk.includes('activeThinkCourseId === idea.id'),
+  "Compact preserves its single active course; Expanded shows topics only for combined courses");
 assert.ok(desk.includes("toggleThinkDetails(idea.id, event.currentTarget)"),
   "Course title and info should use the same accordion action");
 assert.ok(desk.includes("openThinkForAssignment(idea.id, event.currentTarget)"),

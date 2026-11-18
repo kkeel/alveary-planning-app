@@ -8,14 +8,13 @@ const meta = read("app/components/PlanningScheduleGradeMeta.tsx");
 const css = read("app/components/planning-desk.css");
 const catalog = JSON.parse(read("app/courses/catalog-preview.json"));
 
-// The outer course's schedule & grades live under the existing secondary
-// topic-count/Partial My Plan line, never on a collapsed Think Tank row.
-const status = desk.indexOf('{partiallyPlanned && "Partial My Plan"}');
-const courseMeta = desk.indexOf('{reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}');
-const titleEnd = desk.indexOf("</button>", courseMeta);
-assert.ok(status >= 0 && courseMeta > status && titleEnd > courseMeta,
-  "Expanded course metadata belongs below the status line inside the title");
-
+// Expanded shows topic rows but no scheduling/grade clutter in course titles.
+// Detailed displays published course metadata exactly once, inside guidance.
+const courseMeta = desk.indexOf('<PlanningScheduleGradeMeta course={idea} detailed/>');
+const courseDetails = desk.indexOf('className="pd-course-inline-details"');
+assert.ok(courseMeta > courseDetails);
+assert.ok(!desk.includes('{reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}'));
+assert.ok(desk.includes('desk.thinkDetails === "topics" && hasTopics'));
 // Every nested topic owns its own recommendation in either planning column, visible only in details;
 // it is not copied onto its combined-course parent or the collapsed topic row.
 const topicInfo = topics.indexOf('{infoOpen && <div className="pd-topic-info"');

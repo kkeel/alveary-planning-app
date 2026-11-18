@@ -42,7 +42,7 @@ test("Course list supports two columns before three, with narrow one-column desk
  assert.match(css,/@container student-editor \(min-width:960px\)/);
  assert.match(css,/\.plan-editor \.plan-student-list \{ grid-template-columns:minmax\(0,1fr\); \}/);
 });
-test("Color dots match agreed Alveary palette and neutral selected tags are tinted",()=>{
+test("Color dots retain Alveary palette while unset toolbar actions stay muted",()=>{
  assert.match(css,/\.pd-student-priority-dot\.is-core \{ background:#596e5e; \}/);
  assert.match(css,/\.pd-student-priority-dot\.is-high \{ background:#adb58f; \}/);
  assert.match(css,/\.pd-student-priority-dot\.is-additional \{ background:#e8e9e2/);
@@ -53,10 +53,11 @@ test("Course-level toolbar matches topic priority, info, More and shared chooser
  const plan=read("app/components/MyPlanPanel.tsx");
  const desk=read("app/components/PlanningDesk.tsx");
  for(const source of [plan,desk]){
-   const priority=source.indexOf("<SharedPriorityEditor courseId=");
-   const info=source.indexOf('className="planning-icon-control pd-row-tool pd-mini-info-action"',priority);
-   const more=source.indexOf('className="pd-more-anchor"',info);
-   assert.ok(priority>0 && info>priority && more>info);
+   const info=source.indexOf('className="planning-icon-control pd-row-tool pd-mini-info-action"');
+   const priority=source.indexOf("<SharedPriorityEditor courseId=",info);
+   const arrangement=source.indexOf("<SharedArrangementEditor courseId=",priority);
+   const more=source.indexOf('className="pd-more-anchor"',arrangement);
+   assert.ok(info>0 && priority>info && arrangement>priority && more>arrangement);
  }
  assert.match(contextSwitch,/↔ Shared course options/);
  assert.match(contextSwitch,/Choose a course to edit/);
@@ -70,8 +71,8 @@ test("Think Tank and My Plan share independent three-mode switches and inline gu
  const schedule=read("app/components/PlanningScheduleGradeMeta.tsx");
  assert.match(think,/<DetailViewSwitch label="Think Tank" value=\{desk\.thinkDetails\}/);
  assert.match(plan,/<DetailViewSwitch label="My Plan" value=\{desk\.planDetails\}/);
- assert.match(think,/desk\.thinkDetails !== "compact"/);
- assert.match(plan,/desk\.planDetails !== "compact"/);
+ assert.match(think,/const reviewOpen = Boolean\(/);
+ assert.match(plan,/const open = Boolean\(/);
  assert.match(topics,/detailMode === "detailed"/);
  for(const source of [think,plan]) {
    assert.match(source,/className="pd-course-inline-details"/);
@@ -79,4 +80,22 @@ test("Think Tank and My Plan share independent three-mode switches and inline gu
  }
  assert.match(schedule,/shortSchedule\(course\)/);
  assert.match(schedule,/schedule\.text/);
+});
+
+test("Expanded hides single-course schedule panels, Detailed keeps independent closures",()=>{
+ const think=read("app/components/PlanningDesk.tsx");
+ const plan=read("app/components/MyPlanPanel.tsx");
+ const topics=read("app/components/CourseTopicReview.tsx");
+ const sharedCss=read("app/planning-icon-controls.css");
+ for (const source of [think,plan]) {
+   assert.match(source,/const topicsOnly = /);
+   assert.match(source,/hasTopics/);
+   assert.match(source,/hiddenDetailedCourseIds\.includes/);
+   assert.doesNotMatch(source,/\{(?:reviewOpen|open) && <PlanningScheduleGradeMeta/);
+   assert.match(source,/<PlanningScheduleGradeMeta course=\{(?:idea|item)\} detailed\/>/);
+ }
+ assert.match(topics,/hiddenDetailedTopicIds\.includes\(topic\.id\)/);
+ assert.match(sharedCss,/--planning-icon-unset: #9bad9c/);
+ assert.match(css,/\.pd-idea\.is-topics-only/);
+ assert.match(css,/\.pd-topic-title-button\[aria-expanded="true"\]/);
 });

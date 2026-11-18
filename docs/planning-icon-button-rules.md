@@ -39,7 +39,16 @@ For arrangement, compare an untouched course with one explicitly set Separate; t
 
 ## Planning information density
 
-Compact shows course rows only, Expanded shows course and topic rows with short published schedule summaries, and Detailed shows all guidance. Course List, Think Tank and My Plan use the same labels. Each planning surface saves its own choice; the default for a new preference is Expanded.
+Compact shows course rows only; Expanded shows the same course rows plus topics immediately beneath combined courses, with no extra grade/schedule lines or empty panels; Detailed shows full guidance. Course List, Think Tank and My Plan use the same labels. Each planning surface saves its own choice; the default for a new preference is Expanded.
 
-A member may click a title or info icon for one course or topic without changing their saved display mode. Detailed guidance appears directly on that item, not behind another "Description & tips" row. Scheduling summaries are descriptive only and never replace the exact grade-specific recommendation text (including placement and teacher-attention symbols), which stays available on demand.
+A member may click a title or info icon for one course or topic without changing their saved display mode. In Detailed, each course or topic can be independently closed, rather than the last closed course reopening another. Detailed guidance appears directly on that item, not behind another "Description & tips" row. Scheduling summaries are descriptive only and never replace the exact grade-specific recommendation text (including placement and teacher-attention symbols), which stays available on demand.
 
+
+## Visual tuning (November 18 follow-up)
+
+- Course and topic controls use **information → priority → arrangement → More** in Think Tank and My Plan. Course List still adds its own lightbulb and assignment actions.
+- Unset priority/tag, unselected lightbulb and View/info icon use muted `#9bad9c` (matching unset arrangement). A selected planning priority/arrangement/Think Tank status still uses the intentional subject palette.
+- Info controls are **unboxed** in both planning columns and the Course List View is always neutral, even when its course has been selected.
+- Expanded never opens course-level schedule, grade or description panels by default; single-topic courses have no blank detail rail. Combined-course topics sit immediately beneath the course identity.
+- Detailed keeps published recommendations and grade labels in the detail area **only once**, with no double separator, and opening a topic never leaves a persistent highlighted background behind its title.
+- Review the mobile mini desk: per-course closures in Detailed remain closed independently until reopened or the mode is changed.

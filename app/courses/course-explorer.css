@@ -566,3 +566,19 @@
   .cx-topic-elsewhere { margin-left:4px; padding:2px 3px; }
   .cx-topic-elsewhere span { display:none; }
 }
+
+/* View + i is instructional, never a selected-planning status.
+ * Topic and course View actions stay unboxed and muted, including when
+ * the enclosing course has a colored My Plan selection. */
+.cx-course-actions button.planning-icon-control.cx-info-action,
+.cx-course-actions button.planning-icon-control.cx-info-action.is-open {
+  background:transparent;
+  border-color:transparent;
+  color:#9bad9c;
+}
+.cx-course-actions button.planning-icon-control.cx-info-action:hover:not(:disabled),
+.cx-course-actions button.planning-icon-control.cx-info-action.is-open:hover:not(:disabled) {
+  background:#f0f3ee;
+  border-color:transparent;
+  color:#4e6655;
+}

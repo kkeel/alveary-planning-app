@@ -247,3 +247,58 @@
   height:var(--planning-icon-size);
   min-height:var(--planning-icon-size);
 }
+
+/* Calm, unchosen controls: match the faint invitation of unset arrangement.
+ * These are not assignments or selected priorities and should not inherit
+ * a subject highlight from an already-selected course row. */
+:root { --planning-icon-unset: #9bad9c; }
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row)
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible) {
+  background:#fff !important;
+  border-color:var(--planning-icon-border) !important;
+  color:var(--planning-icon-unset) !important;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row)
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger > :is(svg,img) {
+  opacity:.68;
+}
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row)
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger:hover > :is(svg,img),
+:is(.cx-course-actions,.pd-idea-heading,.pd-topic-row)
+  .priority-control:not(.shared-arrangement-control):not(.has-priority)
+  button.planning-icon-control.priority-control-trigger:focus-visible > :is(svg,img) {
+  opacity:1;
+}
+.cx-course-actions button.planning-icon-control.cx-idea-action:not(.is-selected),
+.pd-topic-row button.planning-icon-control.pd-topic-save-idea:not(.is-selected) {
+  color:var(--planning-icon-unset);
+}
+.cx-course-actions button.planning-icon-control.cx-idea-action:not(.is-selected) > svg,
+.pd-topic-row button.planning-icon-control.pd-topic-save-idea:not(.is-selected) > svg {
+  opacity:.68;
+}
+.cx-course-actions button.planning-icon-control.cx-idea-action:not(.is-selected):is(:hover,:focus-visible) > svg,
+.pd-topic-row button.planning-icon-control.pd-topic-save-idea:not(.is-selected):is(:hover,:focus-visible) > svg {
+  opacity:1;
+}
+/* Info is a quiet secondary action in both planning columns, with the
+ * same-sized invisible click target as the bordered tag/arrangement actions. */
+:is(.pd-idea-heading,.pd-topic-row) button.planning-icon-control:is(.pd-mini-info-action,.pd-topic-info-action) {
+  border-color:transparent;
+  background:transparent;
+  color:var(--planning-icon-unset);
+}
+:is(.pd-idea-heading,.pd-topic-row) button.planning-icon-control:is(.pd-mini-info-action,.pd-topic-info-action):is(:hover,:focus-visible),
+:is(.pd-idea-heading,.pd-topic-row) button.planning-icon-control:is(.pd-mini-info-action,.pd-topic-info-action)[aria-expanded="true"]:hover {
+  border-color:transparent;
+  background:var(--planning-icon-hover-background);
+  color:var(--planning-icon-hover-foreground);
+}
+:is(.pd-idea-heading,.pd-topic-row) button.planning-icon-control:is(.pd-mini-info-action,.pd-topic-info-action)[aria-expanded="true"]:not(:hover):not(:focus-visible) {
+  border-color:transparent;
+  background:transparent;
+  color:var(--planning-icon-unset);
+}
