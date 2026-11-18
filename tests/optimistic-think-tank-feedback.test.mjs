@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { previewTopicsForCourse } from "../app/courses/optimistic-topics.mjs";
-import { listRowStatus, pendingIdeaCount } from "../app/courses/list-row-status.mjs";
+import { listRowStatus, pendingIdeaCount, nextCourseIdeaAll } from "../app/courses/list-row-status.mjs";
 
 const catalog=JSON.parse(readFileSync(
   new URL("../app/courses/catalog-preview.json",import.meta.url),"utf8"));
@@ -61,3 +61,24 @@ assert.equal(previewTopicsForCourse(catalog,catalog.courses.find(c=>
   "top-level raw topic is not an assignable parent choice");
 
 console.log("PASS: instant course/topic Think Tank preview colors correct buttons and mini desk before any network response.");
+
+const partialCourse={...savedCourseIdea,topics:savedCourseIdea.topics.map((t,index)=>({
+ ...t, ideaChoice:index===1?"off":"inherit",
+}))};
+assert.equal(pendingIdeaCount(partialCourse,people),2);
+assert.equal(nextCourseIdeaAll(partialCourse,people),true,
+ "Clicking a partially selected course fills the missing topic, not deselects all");
+assert.equal(nextCourseIdeaAll(savedCourseIdea,people),false,
+ "Clicking a fully selected course removes the whole idea");
+assert.equal(nextCourseIdeaAll(directTopicIdea,people),true,
+ "A single topic idea upgrades to a complete course idea");
+const courseWithPlan={...savedCourseIdea,stage:"planned",ideaAll:true,
+ studentIds:[],overrides:[{studentId:"AJ",topicId:usSource.topicId,assigned:true}]};
+assert.equal(pendingIdeaCount(courseWithPlan,people),2);
+assert.equal(nextCourseIdeaAll(courseWithPlan,people),false,
+ "Already assigned topics do not count as missing Think Tank topics");
+const courseWithMissingAndPlan={...courseWithPlan,
+ topics:courseWithPlan.topics.map(t=>t.topicId!==usSource.topicId
+ ? {...t,ideaChoice:"off"}:t)};
+assert.equal(nextCourseIdeaAll(courseWithMissingAndPlan,people),true,
+ "Fill the unassigned remaining topics without changing student assignments");
