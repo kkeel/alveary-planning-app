@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound, Trash2, CircleMinus } from "lucide-react";
 import Link from "next/link";
 import { useDemoPlan, type SavedCourse } from "./DemoPlanContext";
@@ -69,6 +70,7 @@ export default function CourseTopicReview({
   }
   const [removedOpen, setRemovedOpen] = useState(false);
   const [topicMenuId, setTopicMenuId] = useState<string | null>(null);
+  const topicMenuButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
 
   const combined = parent.type === "Combined Course";
   const children = useMemo(() => combined
@@ -211,14 +213,21 @@ export default function CourseTopicReview({
             <Lightbulb size={15} aria-hidden="true"/>
           </button>}
         <button type="button" className="pd-topic-icon pd-topic-more"
+          ref={element=>{if(element)topicMenuButtons.current.set(topic.id,element);
+            else topicMenuButtons.current.delete(topic.id);}}
+          aria-controls={"pd-topic-menu-"+parent.id+"-"+topic.id}
           aria-label={"More options for " + topic.title} title="More options"
           aria-expanded={menuOpen}
           onClick={() => setTopicMenuId(menuOpen ? null : topic.id)}>
           <MoreHorizontal size={16} aria-hidden="true"/>
         </button>
       </div>
-      {menuOpen && <div className="pd-topic-menu" role="group"
-        aria-label={"More options for " + topic.title}>
+      <FloatingChoiceMenu open={menuOpen}
+        triggerRef={{current:topicMenuButtons.current.get(topic.id)??null}}
+        onDismiss={()=>setTopicMenuId(null)}
+        id={"pd-topic-menu-"+parent.id+"-"+topic.id}
+        className="floating-icon-menu pd-topic-menu"
+        label={"More options for "+topic.title}>
         <Link href={"/books?course="+encodeURIComponent(topic.id)}
           onClick={()=>setTopicMenuId(null)} title={"View books for "+topic.title}
           aria-label={"View books for "+topic.title}>
@@ -273,7 +282,7 @@ export default function CourseTopicReview({
             <CircleMinus size={17} aria-hidden="true"/>}
           <span className="pd-sr-only">{isRemoved ? "Restore topic to course" : "Exclude topic from course"}</span>
         </button>
-      </div>}
+      </FloatingChoiceMenu>
       {infoOpen && <div className="pd-topic-info" id={detailsId}>
         <PlanningScheduleGradeMeta course={topic}/>
         {topic.description && <p>{topic.description}</p>}
