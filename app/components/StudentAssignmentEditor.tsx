@@ -7,6 +7,7 @@ import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from 
 import { courseArrangement, topicArrangementOverride } from "./arrangement-inheritance.mjs";
 import SharedPriorityEditor from "./SharedPriorityEditor";
 import StudentPriorityControl from "./StudentPriorityControl";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 
 const arrangements = ["Combined", "Separate", "Later"] as const;
 
@@ -40,6 +41,23 @@ export default function StudentAssignmentEditor({
     : course.studentIds);
   const topicOnlyStudents = topicId ? [] : demo.students.filter(student =>
     !assigned.has(student.id) && effectiveTopicCount(course, student.id) > 0);
+  const assignedPriorityValues = topicId ?
+    demo.students.filter(student=>isTopicAssigned(course,topicId,student.id))
+      .map(student=>effectivePlanningPriority(
+        demo.sharedPriorities,demo.assignmentPriorities,
+        course.courseId,topicId,student.id)) :
+    course.topics.filter(topic=>topic.included).flatMap(topic=>
+      demo.students.filter(student=>isTopicAssigned(course,topic.topicId,student.id))
+        .map(student=>effectivePlanningPriority(
+          demo.sharedPriorities,demo.assignmentPriorities,
+          course.courseId,topic.topicId,student.id)));
+  if (!topicId && !assignedPriorityValues.length) for(const student of demo.students){
+    if(assigned.has(student.id)) assignedPriorityValues.push(
+      effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+        course.courseId,null,student.id));
+  }
+  const displayPriority=assignedPriorityValues.length ?
+    priorityRollup(assignedPriorityValues) : undefined;
 
   function setStudentAssignments(ids: string[], checked: boolean) {
     if (!ids.length || (topicId && !topicChoice)) return;
@@ -116,7 +134,8 @@ export default function StudentAssignmentEditor({
         </div>
         <div className="plan-assign-secondary-tools">
           <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
-            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}/>
+            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}
+            displayPriority={displayPriority}/>
           <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
             onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
             {addingStudent ? "Cancel adding" : "+ Add student"}
