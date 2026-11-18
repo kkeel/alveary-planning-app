@@ -6,6 +6,7 @@ const desk = read("app/components/PlanningDesk.tsx");
 const plan = read("app/components/MyPlanPanel.tsx");
 const topics = read("app/components/CourseTopicReview.tsx");
 const editor = read("app/components/StudentAssignmentEditor.tsx");
+const studentPriority = read("app/components/StudentPriorityControl.tsx");
 const css = read("app/components/planning-desk.css");
 
 // Planning has manual single-open disclosures; Course List can keep its own
@@ -39,8 +40,8 @@ assert.ok(css.includes(".pd-review.pd-think-review {"),
 assert.ok(css.includes("background:transparent;"),
   "Expanded details no longer need a filled review panel");
 
-// Only one open My Plan course across ALL subjects; both title and info
-// control toggle the same accordion, and focus/scroll stays stable.
+// Only one open My Plan course across ALL subjects; the clickable title
+// and the small i button toggle the same accordion.
 assert.ok(plan.includes('const [openId, setOpenId] = useState<string | null>(null)'));
 assert.ok(plan.includes('const open = openId === course.courseId;'));
 assert.ok(!plan.includes("openOverrides"), "Remove per-row multi-open preferences");
@@ -62,29 +63,36 @@ assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic}/>"),
 
 // Course + / +All becomes Edit Students in the toolbar; use exactly the same
 // persisted student checkboxes, groups, priorities and Done flow.
-assert.ok(plan.includes('className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"'));
-assert.ok(plan.includes("<UsersRound size={15}"));
+assert.ok(plan.includes('<UsersRound size={14} aria-hidden="true"/>'));
+assert.ok(plan.includes('Edit students'));
+assert.ok(plan.includes('className="pd-inline-actions" role="group"'));
 assert.ok(plan.includes("toggleStudentEdit(course.courseId,event.currentTarget)"));
 assert.ok(plan.includes("<StudentAssignmentEditor course={course}"));
-assert.ok(topics.includes('className="pd-topic-icon pd-topic-edit"'));
+assert.ok(topics.includes("Edit students"), "Student editor stays reachable through topic More menu");
 assert.ok(topics.includes("<SharedTopicStudentEditor"));
-assert.ok(editor.includes('<input type="checkbox" checked={assigned.has(student.id)}'));
+assert.ok(editor.includes('<input type="checkbox" checked={isAssigned}'));
 assert.ok(editor.includes("demo.setAssignmentArrangement"));
-assert.ok(editor.includes("demo.setAssignmentPriority"));
-assert.ok(plan.includes('href={"/books?course=" + encodeURIComponent(course.courseId)}'));
-assert.ok(topics.includes('href={"/books?course=" + encodeURIComponent(topic.id)}'));
+assert.ok(studentPriority.includes("plan.setAssignmentPriority"));
+assert.ok(editor.includes("<StudentPriorityControl"));
+assert.ok(plan.includes('className="pd-row-tool pd-mini-info-action"'),
+  "Keep the small i button as an explicit information affordance");
+assert.ok(plan.includes('href={"/books?course="+encodeURIComponent(course.courseId)}'));
+assert.ok(topics.includes('href={"/books?course="+encodeURIComponent(topic.id)}'));
 
-// More ... is in the same row and has the sole course-level return action.
+// More ... hosts Books, Edit Students, and Return to Think Tank.
 // It must not appear as an extra footer in expanded details.
 assert.ok(plan.includes('className="pd-more"'));
 assert.ok(plan.includes('<MoreHorizontal size={16}'));
 assert.ok(plan.includes('className="pd-inline-actions"'));
 assert.ok(plan.includes("demo.setStage(course.courseId,\"idea\")"));
 assert.ok(plan.includes("Return to Think Tank"));
+assert.ok(!plan.includes('pd-myplan-toolbar-edit'));
+assert.ok(topics.includes('className="pd-topic-icon pd-topic-info"'));
+assert.ok(!topics.includes('className="pd-topic-icon pd-topic-edit"'));
 assert.ok(!plan.includes('className="pd-review-actions"'));
 
 // Hover/focus selectors must apply to both Think Tank and My Plan. No whole
-// topic-row hover, while title, info, more, and individual topic controls work.
+// topic-row hover, while title, more, and individual topic controls work.
 assert.ok(css.includes(".pd-idea .pd-idea-review:hover,"));
 assert.ok(css.includes(".pd-idea .pd-mini-info-action:hover,"));
 assert.ok(css.includes(".pd-idea .pd-more:hover,"));

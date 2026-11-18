@@ -550,3 +550,20 @@ p { line-height: 1.65; }
 @media print {
   .priority-control { display:none!important; }
 }
+
+/* Neutral priority tag gets the same square frame as the three illustrated
+   priorities. Customized student icons retain an understated identifying dot. */
+.priority-control .priority-control-trigger {
+  border-color:#dfe7da;
+  background:#fff;
+}
+.priority-control .priority-control-trigger:hover:not(:disabled) {
+  border-color:#b7cbb4; background:#edf4eb;
+}
+.student-priority-control.is-custom .priority-control-trigger::after {
+  content:""; position:absolute; right:2px; bottom:1px;
+  width:5px; height:5px; border-radius:50%; background:#577b5e;
+}
+.student-priority-control.is-inherited .priority-control-trigger {
+  border-color:#e2e9df; background:#fbfcfa;
+}

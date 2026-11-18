@@ -1,16 +1,15 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
-import { ChevronDown, ChevronRight, UsersRound } from "lucide-react";
-import { useDemoPlan, type SavedCourse, type PlanningGroup, type StudentPreference } from "./DemoPlanContext";
+import { Settings2, UsersRound, X } from "lucide-react";
+import { useDemoPlan, type SavedCourse, type PlanningGroup } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
-import { coursePriority, topicPriorityOverride } from "./priority-inheritance.mjs";
 import { courseArrangement, topicArrangementOverride } from "./arrangement-inheritance.mjs";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import StudentPriorityControl from "./StudentPriorityControl";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 
 const arrangements = ["Combined", "Separate", "Later"] as const;
-const priorities: Array<NonNullable<StudentPreference["priority"]>> =
-  ["Core", "High Interest", "Additional"];
 
 export default function StudentAssignmentEditor({
   course, topicId, onAssigned, onClose, onCancel,
@@ -22,7 +21,7 @@ export default function StudentAssignmentEditor({
   // the source of truth; a topic checkbox never creates a standalone choice.
   const topicChoice = topicId ? course.topics.find(topic =>
     topic.topicId === topicId && topic.included) : null;
-  const [showPreferences, setShowPreferences] = useState(false);
+  const [detailsStudentId, setDetailsStudentId] = useState<string | null>(null);
   const [groupEditing, setGroupEditing] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [groupName, setGroupName] = useState("");
@@ -42,6 +41,23 @@ export default function StudentAssignmentEditor({
     : course.studentIds);
   const topicOnlyStudents = topicId ? [] : demo.students.filter(student =>
     !assigned.has(student.id) && effectiveTopicCount(course, student.id) > 0);
+  const assignedPriorityValues = topicId ?
+    demo.students.filter(student=>isTopicAssigned(course,topicId,student.id))
+      .map(student=>effectivePlanningPriority(
+        demo.sharedPriorities,demo.assignmentPriorities,
+        course.courseId,topicId,student.id)) :
+    course.topics.filter(topic=>topic.included).flatMap(topic=>
+      demo.students.filter(student=>isTopicAssigned(course,topic.topicId,student.id))
+        .map(student=>effectivePlanningPriority(
+          demo.sharedPriorities,demo.assignmentPriorities,
+          course.courseId,topic.topicId,student.id)));
+  if (!topicId && !assignedPriorityValues.length) for(const student of demo.students){
+    if(assigned.has(student.id)) assignedPriorityValues.push(
+      effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+        course.courseId,null,student.id));
+  }
+  const displayPriority=assignedPriorityValues.length ?
+    priorityRollup(assignedPriorityValues) : undefined;
 
   function setStudentAssignments(ids: string[], checked: boolean) {
     if (!ids.length || (topicId && !topicChoice)) return;
@@ -103,25 +119,27 @@ export default function StudentAssignmentEditor({
     <div className="plan-assign-head">
       <strong><UsersRound size={14} aria-hidden="true"/> Students</strong>
       <div className="plan-assign-head-tools">
-        <div className="plan-assign-priority">
-          <span>Priority</span>
-          <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
-            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}/>
-        </div>
         <div className="pd-assignment-quick-actions">
-        <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
-          onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
-          {addingStudent ? "Cancel adding" : "+ Add student"}
-        </button>
-        {(onCancel || onClose) && <button type="button" className="pd-cancel-action"
-          onClick={() => (onCancel ?? onClose)?.()}
-          title={hasSavedEdits
-            ? "Close editing; earlier changes are already saved"
-            : "Cancel editing without changing this assignment"}>
-          {hasSavedEdits ? "Close" : "Cancel"}
-        </button>}
-        {onClose && <button type="button" className="pd-done-action"
-          onClick={finishEditing} title="Finish student editing and save this selection to My Plan">Done</button>}
+          {(onCancel || onClose) && <button type="button" className="pd-cancel-action"
+            onClick={() => (onCancel ?? onClose)?.()}
+            title={hasSavedEdits
+              ? "Close editing; earlier changes are already saved"
+              : "Cancel editing without changing this assignment"}>
+            {hasSavedEdits ? "Close" : "Cancel"}
+          </button>}
+          {onClose && <button type="button" className="pd-done-action"
+            onClick={finishEditing} title="Finish student editing and save this selection to My Plan">
+            Done
+          </button>}
+        </div>
+        <div className="plan-assign-secondary-tools">
+          <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
+            selectedTopicIds={topicId ? [] : course.topics.filter(t=>t.included).map(t=>t.topicId)}
+            displayPriority={displayPriority}/>
+          <button type="button" className="pd-inline-edit" aria-expanded={addingStudent}
+            onClick={() => { setAddingStudent(v => !v); setStudentError(null); }}>
+            {addingStudent ? "Cancel adding" : "+ Add student"}
+          </button>
         </div>
       </div>
     </div>
@@ -143,154 +161,139 @@ export default function StudentAssignmentEditor({
       {studentError && <span role="alert" className="pd-inline-student-error">{studentError}</span>}
     </form>}
 
-    {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose a student group">
-      <button type="button" onClick={() => assign(demo.students.map(student => student.id))}
-        title={topicId ? "Assign this topic to every student" :
-          "Assign the full included course to every current student"}>
-        All <small>{demo.students.length}</small>
-      </button>
-      {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
-        <button type="button" onClick={() => assign(group.studentIds)}
-          disabled={!group.studentIds.length}>
-          {group.name} <small>{group.studentIds.length}</small>
-        </button>
-        <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
-          aria-label={"Edit " + group.name}>Edit</button>
-      </div>)}
-      <button type="button" className="plan-group-create" onClick={() => openGroup()}>
-        + Group
-      </button>
-    </div>}
-    <div className="plan-individuals" aria-label="Assign individual students">
-      {demo.students.map(student => <label key={student.id}>
-        <input type="checkbox" checked={assigned.has(student.id)}
-          onChange={event => {
-            setStudentAssignments([student.id], event.target.checked);
-          }}/>
-        {student.displayName}
-      </label>)}
-    </div>
-    {!!topicOnlyStudents.length && <p className="plan-microcopy">
-      {topicOnlyStudents.map(student => student.displayName).join(", ")}
-      {" "}{topicOnlyStudents.length === 1 ? "has" : "have"} individual topics selected.
-      Selecting a name above assigns the full included course.
-    </p>}
-    {groupEditing && <div className="plan-group-form">
-      <label htmlFor="planning-group-name">Group name</label>
-      <input id="planning-group-name" value={groupName} maxLength={50}
-        onChange={event => setGroupName(event.target.value)} placeholder="e.g. Younger Students"/>
-      <div className="plan-individuals">
-        {demo.students.map(student => <label key={student.id}>
-          <input type="checkbox" checked={groupStudentIds.includes(student.id)}
-            onChange={event => setGroupStudentIds(prev =>
-              event.target.checked ? [...prev,student.id] : prev.filter(id => id !== student.id))}/>
-          {student.displayName}
-        </label>)}
+    <div className={"plan-assign-layout" + (detailsStudentId ? " has-details" : "")}>
+      <div className="plan-assign-main">
+        {!!demo.students.length && <div className="plan-group-shortcuts" aria-label="Choose students">
+          <button type="button" className="plan-select-all"
+            onClick={() => assign(demo.students.map(student => student.id))}
+            title={topicId ? "Assign this topic to every student" :
+              "Assign the included course to every student"}>
+            All
+          </button>
+          {demo.studentGroups.map(group => <div className="plan-group-pill" key={group.id}>
+            <button type="button" onClick={() => assign(group.studentIds)}
+              disabled={!group.studentIds.length}>{group.name}</button>
+            <button type="button" className="plan-group-edit" onClick={() => openGroup(group)}
+              aria-label={"Edit " + group.name}>Edit</button>
+          </div>)}
+          <button type="button" className="plan-group-create" onClick={() => openGroup()}>
+            + Group
+          </button>
+        </div>}
+        <div className="plan-student-list" aria-label="Assign individual students">
+          {demo.students.map(student => {
+            const isAssigned=assigned.has(student.id);
+            const hasTopicChoices=!topicId && effectiveTopicCount(course,student.id)>0;
+            return <div className={"plan-student-row" +
+              (isAssigned?" is-assigned":"") + (detailsStudentId===student.id?" is-editing":"")}
+              key={student.id}>
+              <label className="plan-student-check">
+                <input type="checkbox" checked={isAssigned}
+                  onChange={event=>setStudentAssignments([student.id],event.target.checked)}/>
+                <span>{student.displayName}</span>
+              </label>
+              <div className="plan-student-tools">
+                {isAssigned && <StudentPriorityControl
+                  courseId={course.courseId} topicId={topicId??null}
+                  studentId={student.id} studentName={student.displayName}
+                  onChanged={()=>setHasSavedEdits(true)}/>} 
+                <button type="button" className="plan-student-settings"
+                  title={"Other choices for "+student.displayName}
+                  aria-label={"Other choices for "+student.displayName}
+                  aria-expanded={detailsStudentId===student.id}
+                  disabled={!isAssigned&&!hasTopicChoices}
+                  onClick={()=>setDetailsStudentId(id=>id===student.id?null:student.id)}>
+                  <Settings2 size={15} aria-hidden="true"/>
+                </button>
+              </div>
+            </div>;
+          })}
+        </div>
+        {!!topicOnlyStudents.length && <p className="plan-microcopy">
+          {topicOnlyStudents.map(student=>student.displayName).join(", ")}
+          {" "}{topicOnlyStudents.length===1?"has":"have"} individual topics selected.
+          Selecting a name above assigns the included course.
+        </p>}
+        {groupEditing && <div className="plan-group-form">
+          <label htmlFor={fieldId+"-group-name"}>Group name</label>
+          <input id={fieldId+"-group-name"} value={groupName} maxLength={50}
+            onChange={event=>setGroupName(event.target.value)}
+            placeholder="e.g. Younger Students"/>
+          <div className="plan-individuals">
+            {demo.students.map(student=><label key={student.id}>
+              <input type="checkbox" checked={groupStudentIds.includes(student.id)}
+                onChange={event=>setGroupStudentIds(prev=>
+                  event.target.checked ? [...prev,student.id] :
+                    prev.filter(id=>id!==student.id))}/>
+              {student.displayName}
+            </label>)}
+          </div>
+          <div className="plan-group-form-actions">
+            <button type="button" onClick={()=>void saveGroup()}
+              disabled={!groupName.trim()||demo.saving}>Save group</button>
+            <button type="button" onClick={()=>setGroupEditing(false)}>Cancel</button>
+            {editingGroupId && <button type="button" className="plan-group-delete"
+              onClick={()=>{
+                if(window.confirm("Delete this group shortcut? Existing course assignments remain unchanged.")){
+                  void demo.deleteGroup(editingGroupId);
+                  setHasSavedEdits(true);
+                  setGroupEditing(false);
+                }
+              }}>Delete group</button>}
+          </div>
+          <p className="plan-microcopy">
+            Groups are shortcuts. Changing a group doesn't change saved assignments.
+          </p>
+        </div>}
       </div>
-      <div className="plan-group-form-actions">
-        <button type="button" onClick={() => void saveGroup()} disabled={!groupName.trim() || demo.saving}>
-          Save group
-        </button>
-        <button type="button" onClick={() => setGroupEditing(false)}>Cancel</button>
-        {editingGroupId && <button type="button" className="plan-group-delete"
-          onClick={() => {
-            if (window.confirm("Delete this group shortcut? Existing course assignments remain unchanged.")) {
-              void demo.deleteGroup(editingGroupId);
+      {detailsStudentId && (()=>{
+        const student=demo.students.find(s=>s.id===detailsStudentId);
+        if(!student || (!assigned.has(student.id) &&
+          (topicId || effectiveTopicCount(course,student.id)===0))) return null;
+        const arrangement=courseArrangement(demo.assignmentArrangements,course.courseId,student.id);
+        const topicArrangement=topicId ? topicArrangementOverride(
+          demo.assignmentArrangements,course.courseId,student.id,topicId) : "inherit";
+        return <section className="plan-student-detail" aria-label={"Other choices for "+student.displayName}>
+          <div className="plan-student-detail-head">
+            <strong>{student.displayName} · Other choices</strong>
+            <button type="button" aria-label="Close other choices"
+              onClick={()=>setDetailsStudentId(null)}><X size={15}/></button>
+          </div>
+          {topicId && <div className="plan-student-detail-priority">
+            <span>Whole course</span>
+            <StudentPriorityControl courseId={course.courseId}
+              studentId={student.id} studentName={student.displayName}
+              onChanged={()=>setHasSavedEdits(true)}/>
+          </div>}
+          <label>Arrangement
+            <select value={arrangement} onChange={event=>{
               setHasSavedEdits(true);
-              setGroupEditing(false);
-            }
-          }}>Delete group</button>}
-      </div>
-      <p className="plan-microcopy">Groups are shortcuts. Changes to a group never rewrite saved assignments.</p>
-    </div>}
-    <button type="button" className="plan-text-disclosure"
-      aria-expanded={showPreferences} onClick={() => setShowPreferences(v => !v)}>
-      {showPreferences ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
-      Advanced assignment <small>optional</small>
-    </button>
-    {showPreferences && <div className="plan-preferences">
-      <p className="plan-microcopy">
-        Only change a student here when their plan differs.
-      </p>
-      {demo.students.filter(student => assigned.has(student.id) ||
-        (!topicId && effectiveTopicCount(course, student.id) > 0)).map(student => {
-        const courseDefault = coursePriority(demo.assignmentPriorities,
-          course.courseId, student.id);
-        const topicSelection = topicId
-          ? topicPriorityOverride(demo.assignmentPriorities,course.courseId,student.id,topicId)
-          : "inherit";
-        const arrangement = courseArrangement(demo.assignmentArrangements,
-          course.courseId,student.id);
-        const topicArrangement = topicId
-          ? topicArrangementOverride(demo.assignmentArrangements,
-              course.courseId,student.id,topicId)
-          : "inherit";
-        return <div className="plan-preference-row" key={student.id}>
-          <strong>{student.displayName}</strong>
-          <label>{topicId ? "Course priority" : "Priority"}
-            <select value={courseDefault ?? ""}
-              onChange={event => {
-                setHasSavedEdits(true);
-                demo.setAssignmentPriority(course.courseId, student.id, null,
-                  (event.target.value || null) as
-                    ReturnType<typeof coursePriority>);
-              }}>
-              <option value="">Same as everyone</option>
-              {priorities.map(item => <option key={item} value={item}>{item}</option>)}
+              demo.setAssignmentArrangement(course.courseId,student.id,null,
+                event.target.value as "Combined"|"Separate"|"Later");
+            }}>
+              {arrangements.map(item=><option key={item} value={item}>
+                {item==="Later"?"Decide later":item}
+              </option>)}
+              {arrangement==="Both" && <option value="Both">Both (previous setting)</option>}
             </select>
           </label>
           {topicId && <label>This topic
-            <select value={topicSelection}
-              onChange={event => {
-                setHasSavedEdits(true);
-                demo.setAssignmentPriority(course.courseId, student.id, topicId,
-                  event.target.value === "inherit" ? null :
-                    event.target.value as "Core" | "High Interest" | "Additional" | "Not set");
-              }}>
-              <option value="inherit">
-                Same as plan
-              </option>
-              <option value="Not set">No priority</option>
-              {priorities.map(item => <option key={item} value={item}>{item}</option>)}
+            <select value={topicArrangement} onChange={event=>{
+              setHasSavedEdits(true);
+              demo.setAssignmentArrangement(course.courseId,student.id,topicId,
+                event.target.value==="inherit" ? null :
+                event.target.value as "Combined"|"Separate"|"Later");
+            }}>
+              <option value="inherit">Same as course</option>
+              {arrangements.map(item=><option key={item} value={item}>
+                {item==="Later"?"Decide later":item}
+              </option>)}
+              {topicArrangement==="Both" && <option value="Both">Both (previous setting)</option>}
             </select>
           </label>}
-          <label>{topicId ? "Course arrangement" : "Arrangement"}
-            <select value={arrangement}
-              onChange={event => {
-                setHasSavedEdits(true);
-                demo.setAssignmentArrangement(course.courseId, student.id, null,
-                  event.target.value as "Combined" | "Separate" | "Later");
-              }}>
-              {arrangements.map(item => <option key={item} value={item}>
-                {item === "Later" ? "Decide later" : item}
-              </option>)}
-              {arrangement === "Both" && <option value="Both">Both (previous setting)</option>}
-            </select>
-          </label>
-          {topicId && <label>This topic arrangement
-            <select value={topicArrangement}
-              onChange={event => {
-                setHasSavedEdits(true);
-                demo.setAssignmentArrangement(course.courseId, student.id, topicId,
-                  event.target.value === "inherit" ? null :
-                    event.target.value as "Combined" | "Separate" | "Later");
-              }}>
-              <option value="inherit">
-                Same as course
-              </option>
-              {arrangements.map(item => <option key={item} value={item}>
-                {item === "Later" ? "Decide later" : item}
-              </option>)}
-              {topicArrangement === "Both" && <option value="Both">Both (previous setting)</option>}
-            </select>
-          </label>}
-        </div>;
-      })}
-      {!demo.students.some(student => assigned.has(student.id) ||
-        (!topicId && effectiveTopicCount(course,student.id) > 0)) &&
-        <p className="plan-microcopy">
-          Select a student above to set that student's priority.
-        </p>}
-    </div>}
+          <small>Changes for {student.displayName} won't affect anyone else's settings.</small>
+        </section>;
+      })()}
+    </div>
   </div>;
 }

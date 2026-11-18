@@ -9,6 +9,7 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 import PlacementSymbol from "./PlacementSymbol";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import { buildTopicSharingIndex, otherUses, type TopicSharingIndex } from "./topic-sharing";
@@ -129,6 +130,11 @@ export default function CourseTopicReview({
       ? demo.students.filter(student =>
           isTopicAssigned(savedChoice, topic.id, student.id)).map(student => student.displayName)
       : [];
+    const topicStudents = mode === "plan" && savedChoice && !isRemoved ?
+      demo.students.filter(student=>isTopicAssigned(savedChoice,topic.id,student.id)) : [];
+    const displayPriority = topicStudents.length ? priorityRollup(topicStudents.map(student=>
+      effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+        parent.id,topic.id,student.id))) : undefined;
     // The selection marker belongs to the topic title, not the toolbar.
     // Keep both in the same hover/focus surface without tinting the row.
     const selectionMark = mode === "think" && isOther && assignedInThisCourse(topic)
@@ -162,19 +168,15 @@ export default function CourseTopicReview({
           : <span className="pd-topic-name">
               {selectionMark}{topicTitle}
             </span>}
-        {hasDetails && <button type="button" className="pd-topic-icon"
-          aria-label={(infoOpen ? "Hide" : "Show") + " details for " + topic.title}
-          title={mode === "think" ? "Topic details" : "Description & tips"} aria-expanded={infoOpen}
-          aria-controls={detailsId} onClick={toggleInfo}>
+        {savedChoice && !isOther && !isRemoved && linkedTopic &&
+          <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
+            displayPriority={displayPriority} compact/>}
+        {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info"
+          aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
+          title={mode==="think"?"Topic details":"Description & tips"}
+          aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
           <Info size={14} aria-hidden="true"/>
         </button>}
-        {savedChoice && !isOther && !isRemoved && linkedTopic &&
-          <SharedPriorityEditor courseId={parent.id} topicId={topic.id} compact/>}
-        <Link className="pd-topic-icon pd-topic-books"
-          href={"/books?course=" + encodeURIComponent(topic.id)}
-          aria-label={"View books for " + topic.title} title="View books">
-          <BookOpen size={15} aria-hidden="true"/>
-        </Link>
         {mode === "think" && isOther && !isRemoved && !assignedInThisCourse(topic) &&
           <button type="button" className="pd-topic-icon pd-topic-save-idea"
             title="Add this topic to Think Tank"
@@ -182,31 +184,6 @@ export default function CourseTopicReview({
             disabled={!savedChoice || !demo.ready}
             onClick={() => addOtherIdea(topic)}>
             <Lightbulb size={15} aria-hidden="true"/>
-          </button>}
-        {mode === "plan" && savedChoice && !isRemoved &&
-          <button type="button" className="pd-topic-icon pd-topic-edit"
-            aria-label={"Edit students for " + topic.title} title="Edit students"
-            aria-expanded={editing}
-            onClick={() => {
-              setEditingTopicId(editing ? null : topic.id);
-              onTopicEditingChange?.(!editing);
-            }}>
-            <UsersRound size={15} aria-hidden="true"/>
-          </button>}
-        {mode === "think" && demo.ready && (planning || !assignedInThisCourse(topic)) &&
-          <button type="button" className="pd-topic-icon pd-topic-add"
-            aria-label={"Add students to " + topic.title + " in " + parent.title}
-            title={savedChoice ? "Assign students to this topic" :
-              "Save this course to Think Tank before assigning"}
-            aria-expanded={planning}
-            disabled={!savedChoice}
-            onClick={() => {
-              if (planning) {finishPlanningTopic();return;}
-              if (isRemoved) demo.setTopic(parent.id,topic.id,true);
-              setPlanningOrigin(isOther ? "other" : "selected");
-              setPlanningTopicId(topic.id);
-            }}>
-            <Plus size={15} aria-hidden="true"/>
           </button>}
         <button type="button" className="pd-topic-icon pd-topic-more"
           aria-label={"More options for " + topic.title} title="More options"
@@ -217,6 +194,33 @@ export default function CourseTopicReview({
       </div>
       {menuOpen && <div className="pd-topic-menu" role="group"
         aria-label={"More options for " + topic.title}>
+        <Link href={"/books?course="+encodeURIComponent(topic.id)}
+          onClick={()=>setTopicMenuId(null)}>
+          <BookOpen size={14} aria-hidden="true"/> View books
+        </Link>
+        {mode==="plan" && savedChoice && !isRemoved &&
+          <button type="button" onClick={()=>{
+            setEditingTopicId(editing?null:topic.id);
+            onTopicEditingChange?.(!editing);
+            setTopicMenuId(null);
+          }}>
+            <UsersRound size={14} aria-hidden="true"/>
+            {editing?"Close students":"Edit students"}
+          </button>}
+        {mode==="think" && demo.ready && savedChoice &&
+          (planning || !assignedInThisCourse(topic)) &&
+          <button type="button" onClick={()=>{
+            if(planning) finishPlanningTopic();
+            else {
+              if(isRemoved) demo.setTopic(parent.id,topic.id,true);
+              setPlanningOrigin(isOther?"other":"selected");
+              setPlanningTopicId(topic.id);
+            }
+            setTopicMenuId(null);
+          }}>
+            <UsersRound size={14} aria-hidden="true"/>
+            {planning?"Close students":"Add / edit students"}
+          </button>}
         {mode === "think" && !isOther && <button type="button"
           onClick={() => {
             if (savedChoice) demo.toggleListIdea(parent.id,topic.id);

@@ -10,6 +10,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
@@ -216,6 +217,19 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const selectedTopicIds = course.topics.filter(topic => topic.included &&
                 demo.students.some(student=>isTopicAssigned(course,topic.topicId,student.id)))
                 .map(topic=>topic.topicId);
+              const assignedPriorities = course.topics.filter(topic=>topic.included)
+                .flatMap(topic=>demo.students.filter(student=>
+                  isTopicAssigned(course,topic.topicId,student.id))
+                  .map(student=>effectivePlanningPriority(
+                    demo.sharedPriorities,demo.assignmentPriorities,
+                    course.courseId,topic.topicId,student.id)));
+              if (!assignedPriorities.length) for (const student of demo.students) {
+                if (course.studentIds.includes(student.id)) assignedPriorities.push(
+                  effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+                    course.courseId,null,student.id));
+              }
+              const displayPriority = assignedPriorities.length ?
+                priorityRollup(assignedPriorities) : undefined;
               return <div className={"pd-idea myplan-row" + (open ? " is-open" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -237,26 +251,14 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     </span>
                   </button>
                   <button type="button" className="pd-row-tool pd-mini-info-action"
-                    aria-label={(open ? "Hide" : "View") + " details for " + title}
-                    title={open ? "Hide details" : "View details"}
+                    aria-label={(open?"Hide":"View")+" details for "+title}
+                    title={open?"Hide details":"View details"}
                     aria-expanded={open} aria-controls={detailsId}
-                    onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
+                    onClick={event=>toggleDetails(course.courseId,event.currentTarget)}>
                     <Info size={15} aria-hidden="true"/>
                   </button>
-                  <Link className="pd-row-tool pd-think-books"
-                    href={"/books?course=" + encodeURIComponent(course.courseId)}
-                    aria-label={"View books for " + title} title="View books">
-                    <BookOpen size={15} aria-hidden="true"/>
-                  </Link>
                   <SharedPriorityEditor courseId={course.courseId}
-                    selectedTopicIds={selectedTopicIds}/>
-                  <button type="button" className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"
-                    aria-label={"Edit students and priorities for " + title}
-                    title={"Edit students for " + title} aria-expanded={editing}
-                    aria-controls={detailsId}
-                    onClick={event => toggleStudentEdit(course.courseId,event.currentTarget)}>
-                    <UsersRound size={15} aria-hidden="true"/>
-                  </button>
+                    selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
                   <button type="button" className="pd-more"
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
@@ -267,6 +269,15 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                 </div>
                 {menuOpen && <div className="pd-inline-actions" role="group"
                   aria-label={"More options for " + title}>
+                  <Link href={"/books?course="+encodeURIComponent(course.courseId)}
+                    onClick={()=>setOpenMenuId(null)}>
+                    <BookOpen size={14} aria-hidden="true"/> View books
+                  </Link>
+                  <button type="button" onClick={event=>
+                    toggleStudentEdit(course.courseId,event.currentTarget)}>
+                    <UsersRound size={14} aria-hidden="true"/>
+                    {editing ? "Close students" : "Edit students"}
+                  </button>
                   <button type="button" onClick={() => {
                     demo.setStage(course.courseId,"idea");
                     setOpenId(null);
