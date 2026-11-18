@@ -8,6 +8,7 @@ const desk=read("app/components/PlanningDesk.tsx");
 const plan=read("app/components/MyPlanPanel.tsx");
 const topic=read("app/components/CourseTopicReview.tsx");
 const students=read("app/components/StudentAssignmentEditor.tsx");
+const studentPriority=read("app/components/StudentPriorityControl.tsx");
 
 test("all three familiar Course Planning images are used in one compact control",()=>{
   for(const name of ["Core%20Subjects.png","High%20Interest%20Subjects.png","Additional%20Subjects.png"]){
@@ -33,14 +34,20 @@ test("Think Tank, My Plan, and topic rows share the same priority affordance",()
   assert.doesNotMatch(desk,/shared-priority-heading-summary/);
   assert.doesNotMatch(plan,/shared-priority-heading-summary/);
 });
-test("Student editor priority is in header utilities and individual customization stays optional",()=>{
+test("Student editor keeps utilities in header and personal controls beside roster rows",()=>{
   const header=students.slice(students.indexOf('<div className="plan-assign-head">'),
     students.indexOf('{addingStudent && <form'));
-  assert.match(header,/plan-assign-priority/);
+  assert.match(header,/plan-assign-secondary-tools/);
   assert.match(header,/SharedPriorityEditor/);
-  assert.match(students,/Advanced assignment/);
-  assert.match(students,/setAssignmentPriority/);
-  assert.doesNotMatch(students,/Use course default \(/);
+  assert.match(header,/pd-assignment-quick-actions/);
+  assert.match(students,/plan-student-row/);
+  assert.match(students,/StudentPriorityControl/);
+  assert.match(students,/plan-student-detail/);
+  assert.match(students,/setAssignmentArrangement/);
+  assert.doesNotMatch(students,/Advanced assignment/);
+  assert.match(studentPriority,/setAssignmentPriority/);
+  assert.match(studentPriority,/effectivePlanningPriority/);
+  assert.match(studentPriority,/Same as plan/);
 });
 test("setting priority on an unchosen item establishes an idea rather than an assignment",()=>{
   assert.match(control,/plan\.addChoice\(courseId\)/);
