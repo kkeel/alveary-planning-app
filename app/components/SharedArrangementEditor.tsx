@@ -72,7 +72,7 @@ export default function SharedArrangementEditor({
     (compact?" is-compact":"")+(!isUnset?" has-priority":"")+
     (inherited?" is-inherited":"")+(isUnset?" is-unset":"")}
     onClick={event=>event.stopPropagation()}>
-    <button ref={triggerRef} type="button" className="priority-control-trigger"
+    <button ref={triggerRef} type="button" className="planning-icon-control priority-control-trigger"
       disabled={disabled||!plan.ready} aria-expanded={open} aria-controls={id}
       aria-label={"Arrangement: "+label+(inherited?" (same as course)":"")}
       title={"Arrangement: "+label+(inherited?" (same as course)":"")}
