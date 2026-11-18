@@ -106,7 +106,7 @@
   color:var(--planning-icon-hover-foreground);
 }
 :is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
-  :is(button.planning-icon-control,.priority-control button.planning-icon-control)[aria-expanded="true"]:not(:disabled) {
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control)[aria-expanded="true"]:not(.is-selected):not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-member):not(:disabled) {
   border-color:var(--planning-icon-open-border);
   background:var(--planning-icon-open-background);
   color:var(--planning-icon-hover-foreground);
