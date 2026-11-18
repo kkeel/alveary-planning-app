@@ -13,10 +13,10 @@ const studentPriority=read("app/components/StudentPriorityControl.tsx");
 const contextSwitch=read("app/components/SharedTopicStudentEditor.tsx");
 const globals=read("app/globals.css");
 
-test("Compact, Expanded topic rows, Detailed full content, default Detailed",()=>{
+test("Compact, Expanded topic rows, Detailed full content, default Expanded",()=>{
  for(const value of ['"compact"','"topics"','"detailed"']) assert.match(sw,new RegExp(value));
  for(const label of ["Compact","Expanded","Detailed"]) assert.match(sw,new RegExp(label));
- assert.match(context,/listDetails: "detailed"/);
+ assert.match(context,/listDetails: "topics", thinkDetails: "topics", planDetails: "topics"/);
  assert.match(context,/saved\.listDetails === "topics"/);
  assert.match(explorer,/visibleMode !== "compact"/);
  assert.match(explorer,/showFullDetails = visibleMode === "detailed"/);
@@ -61,4 +61,22 @@ test("Course-level toolbar matches topic priority, info, More and shared chooser
  assert.match(contextSwitch,/↔ Shared course options/);
  assert.match(contextSwitch,/Choose a course to edit/);
  assert.doesNotMatch(contextSwitch,/Changes below apply only/);
+});
+
+test("Think Tank and My Plan share independent three-mode switches and inline guidance",()=>{
+ const think=read("app/components/PlanningDesk.tsx");
+ const plan=read("app/components/MyPlanPanel.tsx");
+ const topics=read("app/components/CourseTopicReview.tsx");
+ const schedule=read("app/components/PlanningScheduleGradeMeta.tsx");
+ assert.match(think,/<DetailViewSwitch label="Think Tank" value=\{desk\.thinkDetails\}/);
+ assert.match(plan,/<DetailViewSwitch label="My Plan" value=\{desk\.planDetails\}/);
+ assert.match(think,/desk\.thinkDetails !== "compact"/);
+ assert.match(plan,/desk\.planDetails !== "compact"/);
+ assert.match(topics,/detailMode === "detailed"/);
+ for(const source of [think,plan]) {
+   assert.match(source,/className="pd-course-inline-details"/);
+   assert.doesNotMatch(source,/Description &amp; tips/);
+ }
+ assert.match(schedule,/shortSchedule\(course\)/);
+ assert.match(schedule,/schedule\.text/);
 });
