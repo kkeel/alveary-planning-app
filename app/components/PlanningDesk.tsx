@@ -314,6 +314,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                              {reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}
                           </span>
                         </button>
+                        {savedChoice && <SharedPriorityEditor courseId={idea.id}
+                          selectedTopicIds={selectedTopicIds}/>}
                         <button type="button" className="pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
                           aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
@@ -321,8 +323,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           onClick={event => toggleThinkDetails(idea.id,event.currentTarget)}>
                           <Info size={15} aria-hidden="true"/>
                         </button>
-                        {savedChoice && <SharedPriorityEditor courseId={idea.id}
-                          selectedTopicIds={selectedTopicIds}/>}
                         <div className="pd-more-anchor">
                         <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
                           title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
