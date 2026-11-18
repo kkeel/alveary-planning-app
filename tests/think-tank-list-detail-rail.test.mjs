@@ -46,8 +46,9 @@ assert.match(desk,
 assert.ok(desk.includes('<div className="pd-subject-heading">'));
 assert.ok(css.includes("box-shadow:inset 3px 0 0 var(--pd-subject-edge,transparent);"),
   "Detail rail and subject heading must use the same color token");
-assert.ok(desk.includes('desk.thinkDetails !== "compact" || activeThinkCourseId === idea.id;'),
-  "Compact preserves one open course; Expanded/Detailed show all course topic lists");
+assert.ok(desk.includes('const reviewOpen = Boolean(') &&
+  desk.includes('const topicsOnly = desk.thinkDetails === "topics" && hasTopics'),
+  "Expanded creates a topic list only for combined courses");
 
 // The change is strictly to the Think Tank presentation.
 assert.ok(myPlan.includes('className="pd-idea myplan-row"') ||
