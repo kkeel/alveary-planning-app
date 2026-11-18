@@ -208,10 +208,12 @@ assert.match(explorer,/const hasSharedTopic = nested && \(sharedTopicEditions\.h
 assert.match(explorer,/const selectedHere = mode === "plan" && \(status\.planActive \|\| status\.ideaActive\)/);
 assert.match(explorer,/const selectedInAnyCourse = selectedHere \|\| \(mode === "plan" && presentElsewhere\.length > 0\)/);
 assert.match(explorer,/\(selectedInAnyCourse \? " is-active" : ""\)/);
-assert.match(explorer,/publishedParentTitles\.join\("; "\)/,
-  "tooltip must name the actual published parent courses");
-assert.match(explorer,/Also selected under " \+ place\.courseTitle/,
-  "tooltip names where the shared edition was selected");
+assert.match(explorer,/const presenceDescription = "Included in:\\n" \+ publishedParentTitles\.join\("\\n"\)/,
+  "tooltip lists only the published parent courses, one per line");
+assert.match(explorer,/localeCompare\(b, undefined, \{ numeric: true \}\)/,
+  "courses should appear in natural grade order, not lexicographic order");
+assert.doesNotMatch(explorer,/Also selected under " \+ place\.courseTitle/,
+  "tooltip must not include Think Tank or My Plan status explanations");
 assert.match(explorer,/\{hasSharedTopic && <span className=\{"cx-topic-elsewhere" \+/);
 assert.match(listCss,/\.cx-topic-elsewhere\.is-active \{\s*color:var\(--cx-subject\);/);
 assert.match(listCss,/\.cx-topic-elsewhere \{[\s\S]*?border:0;[\s\S]*?background:transparent;/);
