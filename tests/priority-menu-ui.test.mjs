@@ -9,6 +9,7 @@ const plan=read("app/components/MyPlanPanel.tsx");
 const topic=read("app/components/CourseTopicReview.tsx");
 const students=read("app/components/StudentAssignmentEditor.tsx");
 const studentPriority=read("app/components/StudentPriorityControl.tsx");
+const arrangement=read("app/components/StudentArrangementControl.tsx");
 
 test("all three familiar Course Planning images are used in one compact control",()=>{
   for(const name of ["Core%20Subjects.png","High%20Interest%20Subjects.png","Additional%20Subjects.png"]){
@@ -34,18 +35,21 @@ test("Think Tank, My Plan, and topic rows share the same priority affordance",()
   assert.doesNotMatch(desk,/shared-priority-heading-summary/);
   assert.doesNotMatch(plan,/shared-priority-heading-summary/);
 });
-test("Student editor keeps utilities in header and personal controls beside roster rows",()=>{
+test("Student editor keeps Cancel/Done in header and planning shortcuts together",()=>{
   const header=students.slice(students.indexOf('<div className="plan-assign-head">'),
-    students.indexOf('{addingStudent && <form'));
-  assert.match(header,/plan-assign-secondary-tools/);
-  assert.match(header,/SharedPriorityEditor/);
+    students.indexOf('<div className="plan-assign-layout">'));
   assert.match(header,/pd-assignment-quick-actions/);
-  assert.match(students,/plan-student-row/);
-  assert.match(students,/isAssigned && <StudentPriorityControl/);
+  assert.match(header,/pd-done-action/);
+  assert.doesNotMatch(header,/SharedPriorityEditor/);
+  const shortcuts=students.slice(students.indexOf('<div className="plan-group-shortcuts"'),
+    students.indexOf('<div className="plan-student-list"'));
+  assert.match(shortcuts,/plan-select-all/);
+  assert.match(shortcuts,/plan-group-create/);
+  assert.match(shortcuts,/plan-add-student-action/);
+  assert.match(shortcuts,/SharedPriorityEditor/);
   assert.match(students,/StudentPriorityControl/);
-  assert.match(students,/plan-student-detail/);
-  assert.match(students,/setAssignmentArrangement/);
-  assert.doesNotMatch(students,/Advanced assignment/);
+  assert.match(students,/StudentArrangementControl/);
+  assert.doesNotMatch(students,/plan-student-detail|Advanced assignment/);
   assert.match(studentPriority,/setAssignmentPriority/);
   assert.match(studentPriority,/effectivePlanningPriority/);
   assert.match(studentPriority,/Same as plan/);
@@ -73,4 +77,25 @@ test("Student selection is a multi-column roster with priority shown only if ass
   assert.match(css,/grid-template-columns:repeat\(auto-fit/);
   assert.match(students,/isAssigned && <StudentPriorityControl/);
   assert.match(students,/plan-select-all/);
+});
+
+test("Arrangement offers combined, separate, later and topic inheritance inline",()=>{
+  assert.match(arrangement,/setAssignmentArrangement/);
+  assert.match(arrangement,/Same as course/);
+  assert.match(arrangement,/Combined/);
+  assert.match(arrangement,/Separate/);
+  assert.match(arrangement,/Decide later/);
+  assert.match(arrangement,/closeOutside/);
+  assert.match(arrangement,/Escape/);
+  assert.doesNotMatch(students,/detailsStudentId/);
+});
+test("More menus remain one-row icons and My Plan shows only student-level topic counts",()=>{
+  const css=read("app/components/planning-desk.css");
+  assert.match(css,/\.pd-idea \.pd-inline-actions,[\s\S]*?flex-wrap:nowrap/);
+  assert.match(css,/\.pd-think-review \.pd-topic-menu/);
+  for(const src of [desk,plan,topic]) assert.match(src,/pd-sr-only/);
+  assert.doesNotMatch(plan,/showTopicCount|selectionTopicCount/);
+  assert.match(plan,/studentSummary\(course,demo\.students/);
+  assert.match(css,/@container student-editor \(min-width:670px\)/);
+  assert.match(css,/repeat\(3,minmax\(0,1fr\)\)/);
 });
