@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Info, Lightbulb, Link2, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
@@ -19,6 +19,7 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import SharedPriorityEditor from "../components/SharedPriorityEditor";
+import { buildTopicPresenceIndex, otherTopicPresence, type TopicPresenceIndex } from "../components/topic-sharing";
 import { coursePriorityRollup, topicPriorityRollup } from "../components/shared-priority.mjs";
 import { useDemoPlan, type PlanningStudent, type SavedCourse, type SharedPriority, type AssignmentPriority } from "../components/DemoPlanContext";
 
@@ -118,6 +119,7 @@ type CourseRowProps = {
   students: readonly PlanningStudent[];
   sharedPriorities: readonly SharedPriority[];
   assignmentPriorities: readonly AssignmentPriority[];
+  topicPresence: TopicPresenceIndex;
   planningTarget: PlanTarget | null;
   onStartPlan: (courseId: string, topicId: string | null) => void;
   onEndPlan: () => void;
@@ -149,6 +151,7 @@ function CourseRow({
   students,
   sharedPriorities,
   assignmentPriorities,
+  topicPresence,
   planningTarget,
   onStartPlan,
   onEndPlan,
@@ -172,6 +175,12 @@ function CourseRow({
   const sourceChoice = sourceChoiceForRow(course.id, parentCourseId);
   const sourceCourseId = sourceChoice.courseId;
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
+  const presentElsewhere=nested ? otherTopicPresence(topicPresence,course.editionId,sourceCourseId) : [];
+  const otherPlan=presentElsewhere.some(place=>place.location==="My Plan");
+  const presenceLabel=otherPlan ? "Also in My Plan" : "Also in Think Tank";
+  const presenceDescription=presentElsewhere.map(place=>
+    place.location+" in "+place.courseTitle).join("; ")+
+    ". Choose students independently for this course.";
   const status = listRowStatus(parentChoice, students, sourceChoice.topicId,
     isCombined, planned.includes(sourceCourseId));
   const activePlanEditor = planningTarget?.courseId === sourceCourseId &&
@@ -221,7 +230,7 @@ function CourseRow({
     // Expanded exposes topic rows but keeps their description panels closed.
     // Detailed (or a parent manually opened in detail) reveals all topic detail.
     detailMode: showFullDetails ? "detailed" : "compact", detailRevision,
-    savedCourses, students, sharedPriorities, assignmentPriorities, planningTarget,
+    savedCourses, students, sharedPriorities, assignmentPriorities, topicPresence, planningTarget,
     onStartPlan, onEndPlan,
   };
 
@@ -239,6 +248,11 @@ function CourseRow({
         disabled={!canExpand} title={canExpand ? (showFullDetails ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
+          {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere"
+            title={presenceDescription} aria-label={presenceDescription}>
+            <Link2 size={12} aria-hidden="true"/>
+            <span>{presenceLabel}</span>
+          </span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
             {choiceTags.map(tag => <span className="cx-choice-tag" key={tag}>{tag}</span>)}
           </span> : null}
@@ -367,6 +381,8 @@ export default function CourseExplorer() {
   const gradeButtonRef = useRef<HTMLButtonElement>(null);
   const gradePanelRef = useRef<HTMLDivElement>(null);
   const planned = desk.thinkTankIds;
+  const topicPresence = useMemo(() => buildTopicPresenceIndex(
+    cloud.courses,cloud.students),[cloud.courses,cloud.students]);
   function updateDetailMode(next: DetailMode) {
     if (desk.listDetails === next) return;
     desk.setListDetails(next);
@@ -515,6 +531,7 @@ export default function CourseExplorer() {
     students: cloud.students,
     sharedPriorities: cloud.sharedPriorities,
     assignmentPriorities: cloud.assignmentPriorities,
+    topicPresence,
     planningTarget,
     onStartPlan: startDirectPlan,
     onEndPlan: () => setPlanningTarget(null),
