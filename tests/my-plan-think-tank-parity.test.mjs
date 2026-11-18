@@ -54,11 +54,13 @@ assert.ok(plan.includes("focusCourseId, focusRevision"),
 // My Plan adds student data, retains checkmarks, and provides normal course
 // grade/scheduling information, plus student names per planned topic.
 assert.ok(plan.includes("<SquareCheckBig") && topics.includes("<SquareCheckBig"));
-assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements,demo.assignmentPriorities)"));
+assert.ok(plan.includes("studentSummary(course,demo.students,demo.assignmentArrangements)"));
 assert.ok(plan.includes("{open && item && <PlanningScheduleGradeMeta course={item}/>}")
 );
 assert.ok(topics.includes("const assignedNames = mode === \"plan\" && savedChoice && !isRemoved"));
-assert.ok(topics.includes('assignedNames.join(" / ")'));
+assert.ok(topics.includes('assignedNames.map((name,index)=>')); 
+assert.ok(topics.includes('StudentPriorityDot'));
+assert.ok(!plan.includes('Customized priorities'), "Course metadata leaves priority differences to the icon");
 assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic}/>"),
   "My Plan topic details should show same schedule/grade metadata as Think Tank");
 
@@ -88,7 +90,7 @@ assert.ok(plan.includes('className="pd-inline-actions"'));
 assert.ok(plan.includes("demo.setStage(course.courseId,\"idea\")"));
 assert.ok(plan.includes("Return to Think Tank"));
 assert.ok(!plan.includes('pd-myplan-toolbar-edit'));
-assert.ok(topics.includes('className="pd-topic-icon pd-topic-info"'));
+assert.ok(topics.includes('className="pd-topic-icon pd-topic-info-action"'));
 assert.ok(!topics.includes('className="pd-topic-icon pd-topic-edit"'));
 assert.ok(!plan.includes('className="pd-review-actions"'));
 
