@@ -567,40 +567,58 @@
   .cx-topic-elsewhere span { display:none; }
 }
 
-/* Shared toolbar selection language.
- * One planned or Think Tank topic tints that topic's controls and its
- * parent course controls. A whole-course selection tints every included
- * selected topic. The existing status logic decides which rows qualify:
- * this changes buttons only, never rails, backgrounds, or membership. */
+/* Selected course / topic toolbars share a consistent visual hierarchy.
+ * These styles use existing parent-aware listRowStatus flags. They never
+ * alter rails, row backgrounds, topic inclusion, or student assignments.
+ *
+ * The click's own action (full) remains SATURATED, every other button on
+ * that selected row is PALE. A single topic selection gives its parent
+ * a pale toolbar but leaves unrelated siblings neutral. */
 .cx-course.cx-has-planning-selection > .cx-course-head
   .cx-course-actions button.planning-icon-control:not(.cx-info-action) {
-  background:var(--cx-subject-soft);
-  border-color:var(--cx-subject-medium);
-  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c);
+  background:var(--cx-subject-pale);
+  border-color:color-mix(in srgb,var(--cx-subject) 26%,white);
+  color:color-mix(in srgb,var(--cx-subject) 65%,#344536);
 }
 .cx-course.cx-has-planning-selection > .cx-course-head
   .cx-course-actions button.planning-icon-control:not(.cx-info-action):hover:not(:disabled) {
-  background:color-mix(in srgb,var(--cx-subject) 23%,white);
-  border-color:color-mix(in srgb,var(--cx-subject) 48%,white);
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
   color:color-mix(in srgb,var(--cx-subject) 80%,#25372c);
 }
-/* The shared unset-tag rule intentionally uses !important so untouched
- * courses stay faint. A saved selection is the one deliberate exception. */
+/* Untouched priority uses an !important neutral rule in the shared
+ * stylesheet. This selected-row exception must be equally explicit. */
 .cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
   .priority-control:not(.shared-arrangement-control):not(.has-priority)
   button.planning-icon-control.priority-control-trigger:not(:hover):not(:focus-visible) {
-  background:var(--cx-subject-soft) !important;
-  border-color:var(--cx-subject-medium) !important;
-  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c) !important;
+  background:var(--cx-subject-pale) !important;
+  border-color:color-mix(in srgb,var(--cx-subject) 26%,white) !important;
+  color:color-mix(in srgb,var(--cx-subject) 65%,#344536) !important;
 }
 .cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
   .priority-control:not(.has-priority) .priority-control-trigger > :is(svg,img),
 .cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
   .cx-idea-action:not(.is-selected) > svg { opacity:1; }
 
-/* View is always plain, unboxed text and icon. Opening it changes the
- * action label to Hide, which uses the same tinted button language as its
- * neighbors (subject tint on selected rows, neutral tint otherwise). */
+/* Restore the full, saturated subject color ONLY to the action clicked:
+ * whole-course Think Tank bulb / +All, or direct individual topic bulb / +.
+ * A partial/inherited choice stays pale even while its neighbor is full. */
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  button.planning-icon-control:is(.cx-idea-action,.cx-direct-plan-action).is-tone-full {
+  background:var(--cx-subject);
+  border-color:var(--cx-subject);
+  color:#fff;
+}
+.cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
+  button.planning-icon-control:is(.cx-idea-action,.cx-direct-plan-action).is-tone-full:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--cx-subject) 86%,#263a2d);
+  border-color:color-mix(in srgb,var(--cx-subject) 86%,#263a2d);
+  color:#fff;
+}
+
+/* VIEW is always plain, unboxed and muted regardless of row selection.
+ * HIDE is an ordinary boxed action: pale subject tint on selected rows,
+ * neutral open tint on unselected rows, medium subject wash on hover. */
 .cx-course .cx-course-actions button.planning-icon-control.cx-info-action:not(.is-open) {
   background:transparent;
   border-color:transparent;
@@ -623,13 +641,13 @@
 }
 .cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
   button.planning-icon-control.cx-info-action.is-open {
-  background:var(--cx-subject-soft);
-  border-color:var(--cx-subject-medium);
-  color:color-mix(in srgb,var(--cx-subject) 75%,#25372c);
+  background:var(--cx-subject-pale);
+  border-color:color-mix(in srgb,var(--cx-subject) 26%,white);
+  color:color-mix(in srgb,var(--cx-subject) 65%,#344536);
 }
 .cx-course.cx-has-planning-selection > .cx-course-head .cx-course-actions
   button.planning-icon-control.cx-info-action.is-open:hover:not(:disabled) {
-  background:color-mix(in srgb,var(--cx-subject) 23%,white);
-  border-color:color-mix(in srgb,var(--cx-subject) 48%,white);
+  background:var(--cx-subject-soft);
+  border-color:var(--cx-subject-medium);
   color:color-mix(in srgb,var(--cx-subject) 80%,#25372c);
 }
