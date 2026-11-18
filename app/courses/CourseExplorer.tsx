@@ -260,7 +260,7 @@ function CourseRow({
         </span>
       </button>
       <div className="cx-course-actions">
-        {canExpand && <button type="button" className={"cx-info-action" +
+        {canExpand && <button type="button" className={"planning-icon-control cx-info-action" +
           (showFullDetails ? " is-open" : "") +
           (mode === "plan" && (status.ideaActive || status.planActive)
             ? " is-member" : "")}
@@ -272,7 +272,7 @@ function CourseRow({
           <Info size={16} strokeWidth={1.8} aria-hidden="true"/>
         </button>}
         {mode === "plan" && <>
-          <button type="button" className={"cx-idea-action" +
+          <button type="button" className={"planning-icon-control cx-idea-action" +
             (status.ideaActive ? " is-selected is-tone-" + status.ideaTone : "")}
             aria-label={status.ideaTone === "full"
               ? "Remove " + course.title + " from Think Tank"
@@ -298,7 +298,7 @@ function CourseRow({
           <SharedArrangementEditor courseId={sourceCourseId}
             topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
             compact={nested} disabled={status.excluded}/>
-          <button type="button" className={"cx-direct-plan-action" +
+          <button type="button" className={"planning-icon-control cx-direct-plan-action" +
             (status.planActive ? " is-selected" : "") +
             (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
             (activePlanEditor ? " is-open" : "")}
