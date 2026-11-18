@@ -248,7 +248,7 @@ function CourseRow({
         disabled={!canExpand} title={canExpand ? (showFullDetails ? "Hide details" : "View details") : undefined}
         onClick={toggleDetails}>
         <span className="cx-course-name">{course.title}
-          {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere"
+          {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere" role="img"
             title={presenceDescription} aria-label={presenceDescription}>
             <Link2 size={12} aria-hidden="true"/>
             <span>{presenceLabel}</span>
