@@ -578,3 +578,30 @@ p { line-height: 1.65; }
   position:fixed; width:205px; right:auto; bottom:auto;
   z-index:10020; overflow-x:hidden;
 }
+
+/* One-row overflow actions also escape the scrollable mini desk. Their
+   appearance matches the familiar small square buttons and stays available
+   whether opening below or above the ellipsis. */
+body .priority-control-popover.floating-icon-menu {
+  display:inline-flex; flex-direction:row; flex-wrap:nowrap;
+  align-items:center; justify-content:flex-end;
+  width:max-content; min-width:0; max-width:calc(100vw - 16px);
+  height:auto; min-height:0; margin:0; padding:5px; gap:5px;
+  border:1px solid #dbe4d8; border-radius:6px;
+  background:#fffefa;
+}
+body .priority-control-popover.floating-icon-menu a,
+body .priority-control-popover.floating-icon-menu button {
+  display:inline-flex; flex:none; align-items:center; justify-content:center;
+  box-sizing:border-box; width:33px; min-width:33px;
+  height:33px; min-height:33px; padding:5px; margin:0;
+  border:1px solid #d8e3d4; border-radius:5px;
+  background:white; color:#56725d; text-decoration:none;
+  cursor:pointer; line-height:1;
+}
+body .priority-control-popover.floating-icon-menu a:hover,
+body .priority-control-popover.floating-icon-menu button:hover:not(:disabled),
+body .priority-control-popover.floating-icon-menu a:focus-visible,
+body .priority-control-popover.floating-icon-menu button:focus-visible {
+  border-color:#bfcfbd; background:#ecf3e9; color:#395a42;
+}
