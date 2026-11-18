@@ -6,6 +6,7 @@ const desk = read("app/components/PlanningDesk.tsx");
 const plan = read("app/components/MyPlanPanel.tsx");
 const topics = read("app/components/CourseTopicReview.tsx");
 const editor = read("app/components/StudentAssignmentEditor.tsx");
+const studentPriority = read("app/components/StudentPriorityControl.tsx");
 const css = read("app/components/planning-desk.css");
 
 // Planning has manual single-open disclosures; Course List can keep its own
@@ -23,7 +24,7 @@ for (const marker of [
   'className="pd-subject-items pd-think-course-list"',
   'className={"pd-idea myplan-row" + (open ? " is-open" : "")}',
   'className="pd-idea-review"',
-  'className="pd-row-tool pd-mini-info-action"',
+  'className="pd-title-chevron"',
   'className="pd-review pd-think-review myplan-review"',
   '<CourseInfoDisclosure course={item}/>',
   'className="pd-think-description-section"',
@@ -39,8 +40,8 @@ assert.ok(css.includes(".pd-review.pd-think-review {"),
 assert.ok(css.includes("background:transparent;"),
   "Expanded details no longer need a filled review panel");
 
-// Only one open My Plan course across ALL subjects; both title and info
-// control toggle the same accordion, and focus/scroll stays stable.
+// Only one open My Plan course across ALL subjects; the clickable title
+// toggles the accordion without an extra duplicate info control.
 assert.ok(plan.includes('const [openId, setOpenId] = useState<string | null>(null)'));
 assert.ok(plan.includes('const open = openId === course.courseId;'));
 assert.ok(!plan.includes("openOverrides"), "Remove per-row multi-open preferences");
@@ -70,7 +71,10 @@ assert.ok(topics.includes('className="pd-topic-icon pd-topic-edit"'));
 assert.ok(topics.includes("<SharedTopicStudentEditor"));
 assert.ok(editor.includes('<input type="checkbox" checked={assigned.has(student.id)}'));
 assert.ok(editor.includes("demo.setAssignmentArrangement"));
-assert.ok(editor.includes("demo.setAssignmentPriority"));
+assert.ok(studentPriority.includes("plan.setAssignmentPriority"));
+assert.ok(editor.includes("<StudentPriorityControl"));
+assert.ok(!plan.includes('className="pd-row-tool pd-mini-info-action"'),
+  "Clicking the title replaces the redundant i button");
 assert.ok(plan.includes('href={"/books?course=" + encodeURIComponent(course.courseId)}'));
 assert.ok(topics.includes('href={"/books?course=" + encodeURIComponent(topic.id)}'));
 
@@ -84,7 +88,7 @@ assert.ok(plan.includes("Return to Think Tank"));
 assert.ok(!plan.includes('className="pd-review-actions"'));
 
 // Hover/focus selectors must apply to both Think Tank and My Plan. No whole
-// topic-row hover, while title, info, more, and individual topic controls work.
+// topic-row hover, while title, more, and individual topic controls work.
 assert.ok(css.includes(".pd-idea .pd-idea-review:hover,"));
 assert.ok(css.includes(".pd-idea .pd-mini-info-action:hover,"));
 assert.ok(css.includes(".pd-idea .pd-more:hover,"));
