@@ -217,7 +217,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           <div className="pd-details-toolbar">
             <p className="pd-intro">Ideas to consider for your school year.</p>
             <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
-              onChange={next => { desk.setThinkDetails(next); setOpenThinkCourseId(null); setCourseInfoId(null); }}/>
+              onChange={next => { desk.setThinkDetails(next); setOpenThinkCourseId(assigningId); setCourseInfoId(null); }}/>
           </div>
           {ideas.length ? <div className="pd-subject-list">
             {subjectOrder.map(subject => {
