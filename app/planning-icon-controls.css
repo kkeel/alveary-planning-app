@@ -2,9 +2,9 @@
  *
  * One set of geometry, neutral colors, hover and focus rules for every
  * single-icon action. Only the containing surface determines dimensions:
- *   Course List course = 34px, Course List topic = 29px,
- *   Think Tank/My Plan course = 30px, topic = 27px,
- *   inline assignment utilities = 30px / student row = 28px.
+ *   Shared course/topic controls = 27px across List, Think Tank and My Plan.
+ *   Student-editor controls use the same visual size; labeled buttons grow
+ *   with their text (not with a competing icon size).
  *
  * Intentional selected course/topic statuses retain their existing subject
  * palette. The View/Hide + i disclosure may contain a short text label.
@@ -21,19 +21,19 @@
   --planning-icon-focus-ring: #59836a;
 }
 .cx-course-actions {
-  --planning-icon-size:34px;
-  --planning-icon-glyph:18px;
-  --planning-icon-art:21px;
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
+  --planning-icon-art:18px;
 }
 .cx-course--topic .cx-course-actions {
-  --planning-icon-size:29px;
-  --planning-icon-glyph:16px;
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
   --planning-icon-art:18px;
 }
 .pd-idea-heading {
-  --planning-icon-size:30px;
-  --planning-icon-glyph:17px;
-  --planning-icon-art:20px;
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
+  --planning-icon-art:18px;
 }
 .pd-topic-row {
   --planning-icon-size:27px;
@@ -41,14 +41,14 @@
   --planning-icon-art:18px;
 }
 .plan-group-shortcuts {
-  --planning-icon-size:30px;
-  --planning-icon-glyph:18px;
-  --planning-icon-art:20px;
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
+  --planning-icon-art:18px;
 }
 .plan-student-tools {
-  --planning-icon-size:28px;
-  --planning-icon-glyph:17px;
-  --planning-icon-art:19px;
+  --planning-icon-size:27px;
+  --planning-icon-glyph:15px;
+  --planning-icon-art:18px;
 }
 
 /* Grouping wrappers occupy exactly one action slot. */
@@ -157,16 +157,7 @@
   border-color:var(--cx-subject-medium);
 }
 @media (max-width:760px) {
-  .cx-course-actions {
-    --planning-icon-size:31px;
-    --planning-icon-glyph:17px;
-    --planning-icon-art:19px;
-  }
-  .cx-course--topic .cx-course-actions {
-    --planning-icon-size:27px;
-    --planning-icon-glyph:15px;
-    --planning-icon-art:17px;
-  }
+  /* Keep the same icon size in the narrow desk and course list. */
   .cx-course-actions button.planning-icon-control.cx-info-action {
     width:var(--planning-icon-size);
     padding:3px;
@@ -208,4 +199,51 @@
 }
 @media (prefers-reduced-motion:reduce) {
   .planning-icon-control { transition:none!important; }
+}
+
+/* Labeled actions retain the shared height, but never clip their words. */
+.cx-course-actions button.planning-icon-control.cx-direct-plan-action:has(.cx-plus-all) {
+  width:auto;
+  min-width:61px;
+  flex:0 0 auto;
+  gap:4px;
+  padding-inline:8px;
+  white-space:nowrap;
+}
+.cx-course-actions button.planning-icon-control.cx-direct-plan-action .cx-plus-all {
+  flex:none;
+  white-space:nowrap;
+  font-size:11px;
+  line-height:1;
+}
+/* Overflow is a quiet three-dot action, not another outlined square.
+ * It still has a full-sized keyboard and pointer target. */
+:is(.pd-idea-heading,.pd-topic-row)
+  button.planning-icon-control:is(.pd-more,.pd-topic-more) {
+  border-color:transparent;
+  background:transparent;
+  color:#879987;
+}
+:is(.pd-idea-heading,.pd-topic-row)
+  button.planning-icon-control:is(.pd-more,.pd-topic-more):hover:not(:disabled),
+:is(.pd-idea-heading,.pd-topic-row)
+  button.planning-icon-control:is(.pd-more,.pd-topic-more)[aria-expanded="true"] {
+  border-color:transparent;
+  background:var(--planning-icon-hover-background);
+  color:var(--planning-icon-hover-foreground);
+}
+/* Override old per-surface sizing for these same controls. */
+.pd-idea-heading > .pd-mini-info-action,
+.pd-topic-row > .pd-topic-icon.pd-topic-info-action,
+.pd-idea-heading > .pd-more-anchor,
+.pd-topic-row > .pd-topic-icon.pd-topic-more,
+.pd-idea-heading > .shared-arrangement-control,
+.pd-topic-row > .shared-arrangement-control,
+.plan-group-shortcuts > .shared-arrangement-control {
+  box-sizing:border-box;
+  flex:0 0 var(--planning-icon-size);
+  width:var(--planning-icon-size);
+  min-width:var(--planning-icon-size);
+  height:var(--planning-icon-size);
+  min-height:var(--planning-icon-size);
 }
