@@ -29,14 +29,15 @@ const compare = (a: SavedCourse, b: SavedCourse) => {
 };
 function studentSummary(course: SavedCourse,
   people: ReturnType<typeof useDemoPlan>["students"],
-  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"]) {
+  arrangements: ReturnType<typeof useDemoPlan>["assignmentArrangements"],
+  sharedArrangements: ReturnType<typeof useDemoPlan>["sharedArrangements"]) {
   // If a single topic has been assigned via an individual override, include
   // that student even when no combined-course assignment exists.
   const includedCount = course.topics.filter(topic => topic.included).length;
   const assigned = people.filter(student => effectiveTopicCount(course, student.id) > 0);
   if (!assigned.length) return "Students to be decided";
   return assigned.map((student, index) => {
-    const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id);
+    const defaultArrangement = courseArrangement(arrangements,course.courseId,student.id,sharedArrangements);
     const topicsAssigned = effectiveTopicCount(course, student.id);
     return <span className="myplan-student-summary" key={student.id}>
       {index > 0 && <span className="myplan-student-separator"> / </span>}
@@ -222,7 +223,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
                     <span>{title}
                       <small className="myplan-summary">
-                        {studentSummary(course,demo.students,demo.assignmentArrangements)}
+                        {studentSummary(course,demo.students,demo.assignmentArrangements,demo.sharedArrangements)}
                         {shared && <span className="pd-course-shared"
                           title="A topic is also assigned in another planned course"
                           aria-label="Shared topic"> ↔</span>}
