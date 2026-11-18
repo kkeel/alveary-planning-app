@@ -6,3 +6,5 @@ export function sharedTopicOverride(items:readonly SharedRow[],courseId:string,t
 export function sharedTopicPriority(items:readonly SharedRow[],courseId:string,topicId:string):PriorityValue|null;
 export function sharedCourseSummary(items:readonly SharedRow[],courseId:string,topicIds:readonly string[]):PriorityValue|"Varied"|null;
 export function effectivePlanningPriority(shared:readonly SharedRow[],student:readonly StudentRow[],courseId:string,topicId:string|null,studentId:string):PriorityValue|null;
+
+export function priorityRollup(values:readonly (PriorityValue|null)[]):PriorityValue|"Varied"|null;
