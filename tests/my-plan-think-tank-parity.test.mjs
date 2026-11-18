@@ -10,10 +10,9 @@ const studentPriority = read("app/components/StudentPriorityControl.tsx");
 const arrangement = read("app/components/StudentArrangementControl.tsx");
 const css = read("app/components/planning-desk.css");
 
-// Planning has manual single-open disclosures; Course List can keep its own
-// separate list/compact controls.
-assert.ok(!desk.includes("<DetailViewSwitch"), "Think Tank full-page toggle removed");
-assert.ok(!plan.includes("DetailViewSwitch"), "My Plan full-page toggle removed");
+// Both planning columns now share the same three density choices as Course List.
+assert.ok(desk.includes('<DetailViewSwitch label="Think Tank"'));
+assert.ok(plan.includes('<DetailViewSwitch label="My Plan"'));
 assert.ok(!desk.includes('<div className="pd-full-status">'),
   "Remove redundant notebook / Your Planning Desk row beneath List | Planning");
 
@@ -28,7 +27,7 @@ for (const marker of [
   'className="planning-icon-control pd-row-tool pd-mini-info-action"',
   'className="pd-review pd-think-review myplan-review"',
   '<CourseInfoDisclosure course={item}/>',
-  'className="pd-think-description-section"',
+  'className="pd-course-inline-details"',
   'mode="plan"',
 ]) assert.ok(plan.includes(marker), "Missing My Plan / Think Tank parity: "+marker);
 assert.ok(css.includes(".pd-think-course-list > .pd-idea + .pd-idea"),
@@ -44,7 +43,7 @@ assert.ok(css.includes("background:transparent;"),
 // Only one open My Plan course across ALL subjects; the clickable title
 // and the small i button toggle the same accordion.
 assert.ok(plan.includes('const [openId, setOpenId] = useState<string | null>(null)'));
-assert.ok(plan.includes('const open = openId === course.courseId;'));
+assert.ok(plan.includes('desk.planDetails !== "compact" || openId === course.courseId;'));
 assert.ok(!plan.includes("openOverrides"), "Remove per-row multi-open preferences");
 assert.ok(plan.includes("toggleDetails(course.courseId,event.currentTarget)"));
 assert.ok(plan.includes("rememberAnchor") && plan.includes("useLayoutEffect"));
@@ -61,7 +60,7 @@ assert.ok(topics.includes("const assignedNames = mode === \"plan\" && savedChoic
 assert.ok(topics.includes('assignedNames.map((name,index)=>')); 
 assert.ok(topics.includes('StudentPriorityDot'));
 assert.ok(!plan.includes('Customized priorities'), "Course metadata leaves priority differences to the icon");
-assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic}/>"),
+assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic} detailed/>"),
   "My Plan topic details should show same schedule/grade metadata as Think Tank");
 
 // Course + / +All becomes Edit Students in the toolbar; use exactly the same
