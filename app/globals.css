@@ -446,3 +446,51 @@ p { line-height: 1.65; }
   .shell-save-spinner { animation:none; }
 }
 @media print { .shell-save-status { display:none; } }
+
+/* Shared course/topic priorities: one quiet control across browsing and planning.
+   Kept independent from selection/assignment status and subject hover rules. */
+.shared-priority-editor {
+  display:flex; flex-direction:column; align-items:flex-start; gap:5px;
+  max-width:100%; margin:9px 0; color:#506354;
+}
+.shared-priority-editor label {
+  display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px;
+  max-width:100%; font-size:12px; font-weight:550;
+}
+.shared-priority-editor label span { min-width:115px; }
+.shared-priority-editor select {
+  max-width:100%; min-width:138px; border:1px solid #c7d2c6; border-radius:5px;
+  padding:5px 8px; background:#fff; color:#445448; font:inherit; font-size:12px;
+  cursor:pointer;
+}
+.shared-priority-editor select:hover { border-color:#849b86; }
+.shared-priority-editor select:focus-visible {
+  outline:2px solid #59735d; outline-offset:2px;
+}
+.shared-priority-editor select:disabled { opacity:.55; cursor:wait; }
+.shared-priority-editor.is-compact { margin:3px 0 5px 20px; }
+.shared-priority-editor.is-compact label span { min-width:88px; }
+.shared-priority-summary { font-size:11px; line-height:1.4; color:#738273; }
+.cx-priority-quick {
+  margin:5px 0 8px 25px; padding:9px 12px;
+  border:1px solid #d3ded0; border-radius:7px; background:#fbfcfa;
+  width:max-content; max-width:calc(100% - 25px);
+}
+.cx-priority-quick-title {
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  color:#59735d; font-size:11px; font-weight:600;
+}
+.cx-priority-quick-title span { display:inline-flex; align-items:center; gap:6px; }
+.cx-priority-quick-title button {
+  border:0; background:transparent; color:#677a68; cursor:pointer;
+  padding:2px 7px; border-radius:4px; font-size:17px; line-height:1;
+}
+.cx-priority-quick-title button:hover { background:#e7eee6; }
+@media(max-width:520px) {
+  .shared-priority-editor label { align-items:flex-start; flex-direction:column; gap:5px; }
+  .shared-priority-editor.is-compact { margin-left:8px; }
+  .cx-priority-quick { margin-left:6px; max-width:calc(100% - 12px); }
+}
+@media print {
+  .shared-priority-editor,.cx-priority-quick { display:none!important; }
+}
