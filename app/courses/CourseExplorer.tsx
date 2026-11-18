@@ -19,7 +19,8 @@ import DetailViewSwitch, { type DetailMode } from "../components/DetailViewSwitc
 import StudentAssignmentEditor from "../components/StudentAssignmentEditor";
 import SharedTopicStudentEditor from "../components/SharedTopicStudentEditor";
 import SharedPriorityEditor from "../components/SharedPriorityEditor";
-import { useDemoPlan, type PlanningStudent, type SavedCourse } from "../components/DemoPlanContext";
+import { coursePriorityRollup, topicPriorityRollup } from "../components/shared-priority.mjs";
+import { useDemoPlan, type PlanningStudent, type SavedCourse, type SharedPriority, type AssignmentPriority } from "../components/DemoPlanContext";
 
 type Plan = {
   id: string;
@@ -115,6 +116,8 @@ type CourseRowProps = {
   detailRevision: number;
   savedCourses: readonly SavedCourse[];
   students: readonly PlanningStudent[];
+  sharedPriorities: readonly SharedPriority[];
+  assignmentPriorities: readonly AssignmentPriority[];
   planningTarget: PlanTarget | null;
   onStartPlan: (courseId: string, topicId: string | null) => void;
   onEndPlan: () => void;
@@ -144,6 +147,8 @@ function CourseRow({
   detailRevision,
   savedCourses,
   students,
+  sharedPriorities,
+  assignmentPriorities,
   planningTarget,
   onStartPlan,
   onEndPlan,
@@ -173,6 +178,13 @@ function CourseRow({
     topic.included && (topicIsThinkTankIdea(parentChoice,topic.topicId,students) ||
       students.some(student=>isTopicAssigned(parentChoice,topic.topicId,student.id))))
     .map(topic=>topic.topicId) ?? [];
+  // Same read-only effective rollup as My Plan: student-specific topic
+  // exceptions must also be visible while browsing the Course List.
+  const displayPriority = parentChoice ? nested && sourceChoice.topicId
+    ? topicPriorityRollup(sharedPriorities,assignmentPriorities,parentChoice,
+        students,sourceChoice.topicId)
+    : coursePriorityRollup(sharedPriorities,assignmentPriorities,parentChoice,
+        students,selectedTopicIds) : undefined;
   const subjectHex = subjectColor(parentSubject ?? course.subject);
   const subjectVars = {
     "--cx-subject": subjectHex,
@@ -201,7 +213,8 @@ function CourseRow({
     childTopics, mode, planned, onPlannedToggle, onRemovePlan,
     parentCourseId: sourceCourseId,
     parentSubject: parentSubject ?? course.subject,
-    detailMode, detailRevision, savedCourses, students, planningTarget,
+    detailMode, detailRevision, savedCourses, students,
+    sharedPriorities, assignmentPriorities, planningTarget,
     onStartPlan, onEndPlan,
   };
 
@@ -258,7 +271,7 @@ function CourseRow({
           </button>
           <SharedPriorityEditor courseId={sourceCourseId}
             topicId={sourceChoice.topicId} selectedTopicIds={nested ? [] : selectedTopicIds}
-            compact={nested} disabled={status.excluded}/>
+            compact={nested} disabled={status.excluded} displayPriority={displayPriority}/>
           <button type="button" className={"cx-direct-plan-action" +
             (status.planActive ? " is-selected" : "") +
             (status.planTone !== "none" ? " is-tone-" + status.planTone : "") +
@@ -492,6 +505,8 @@ export default function CourseExplorer() {
     detailRevision,
     savedCourses: cloud.courses,
     students: cloud.students,
+    sharedPriorities: cloud.sharedPriorities,
+    assignmentPriorities: cloud.assignmentPriorities,
     planningTarget,
     onStartPlan: startDirectPlan,
     onEndPlan: () => setPlanningTarget(null),
