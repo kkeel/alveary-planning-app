@@ -1,7 +1,7 @@
 import type { SavedCourse, PlanningStudent } from "./DemoPlanContext";
 import catalog from "../courses/catalog-preview.json";
 import { isTopicAssigned } from "./topic-assignment.mjs";
-import { buildTopicPresence, otherTopicPresence as outsideContext } from "./topic-presence.mjs";
+import { buildTopicPresence } from "./topic-presence.mjs";
 
 const titles = new Map(catalog.courses.map(course => [course.id, course.title]));
 
@@ -79,5 +79,5 @@ export function buildTopicPresenceIndex(
 export function otherTopicPresence(
   index: TopicPresenceIndex, editionId:string, courseId:string,
 ): TopicPresence[] {
-  return outsideContext(index,editionId,courseId);
+  return (index.get(editionId)??[]).filter(place=>place.courseId!==courseId);
 }
