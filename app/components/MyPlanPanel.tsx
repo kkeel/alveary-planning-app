@@ -66,6 +66,22 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
+  useEffect(() => {
+    if (!openMenuId) return;
+    const outside = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) ||
+          !event.target.closest(".pd-more-anchor")) setOpenMenuId(null);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenuId(null);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [openMenuId]);
   const pendingAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
 
   // Changes autosave immediately. Keep a course with its last student removed
