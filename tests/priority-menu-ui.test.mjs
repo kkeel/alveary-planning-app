@@ -84,12 +84,12 @@ test("Student selection is a multi-column roster with priority shown only if ass
   assert.match(students,/plan-select-all/);
 });
 
-test("Arrangement offers combined, separate, later and topic inheritance inline",()=>{
+test("Arrangement offers optional combined, separate and inheritance inline",()=>{
   assert.match(arrangement,/setAssignmentArrangement/);
   assert.match(arrangement,/Same as plan/);
   assert.match(arrangement,/Combined/);
   assert.match(arrangement,/Separate/);
-  assert.match(arrangement,/Decide later/);
+  assert.doesNotMatch(arrangement,/label:"Decide later"/);
   assert.match(arrangement,/FloatingChoiceMenu/);
   assert.match(floating,/onDismiss/);
   assert.doesNotMatch(students,/detailsStudentId/);
@@ -136,7 +136,7 @@ test("Shared arrangement controls exist at every optional planning stage",()=>{
   assert.match(sharedArrangement,/Same as course/);
   assert.match(sharedArrangement,/Combined/);
   assert.match(sharedArrangement,/Separate/);
-  assert.match(sharedArrangement,/Decide later/);
+  assert.doesNotMatch(sharedArrangement,/options.*"Later"/);
   assert.match(sharedArrangement,/FloatingChoiceMenu/);
 });
 test("Only saved member choices populate the authenticated Think Tank",()=>{
