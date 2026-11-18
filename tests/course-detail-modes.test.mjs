@@ -54,7 +54,7 @@ test("Course-level toolbar matches topic priority, info, More and shared chooser
  const desk=read("app/components/PlanningDesk.tsx");
  for(const source of [plan,desk]){
    const priority=source.indexOf("<SharedPriorityEditor courseId=");
-   const info=source.indexOf('className="pd-row-tool pd-mini-info-action"',priority);
+   const info=source.indexOf('className="planning-icon-control pd-row-tool pd-mini-info-action"',priority);
    const more=source.indexOf('className="pd-more-anchor"',info);
    assert.ok(priority>0 && info>priority && more>info);
  }
