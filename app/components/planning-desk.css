@@ -1467,3 +1467,15 @@
   .plan-assign-head-tools .pd-assignment-quick-actions { justify-content:flex-end; }
   .plan-student-row { padding:3px 5px; }
 }
+
+/* Course and topic titles are themselves the info affordances; the tiny
+   chevron replaces duplicate 'i' buttons without competing with the text. */
+.pd-title-chevron {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:13px; height:14px; margin-left:2px;
+  color:#819783; vertical-align:middle; pointer-events:none;
+}
+.pd-idea-review:hover .pd-title-chevron,
+.pd-idea-review:focus-visible .pd-title-chevron,
+.pd-topic-title-button:hover .pd-title-chevron,
+.pd-topic-title-button:focus-visible .pd-title-chevron { color:#466a4d; }
