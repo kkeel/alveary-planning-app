@@ -10,14 +10,17 @@ const topic=read("app/components/CourseTopicReview.tsx");
 const students=read("app/components/StudentAssignmentEditor.tsx");
 const studentPriority=read("app/components/StudentPriorityControl.tsx");
 const arrangement=read("app/components/StudentArrangementControl.tsx");
+const floating=read("app/components/FloatingChoiceMenu.tsx");
+const sharedArrangement=read("app/components/SharedArrangementEditor.tsx");
 
 test("all three familiar Course Planning images are used in one compact control",()=>{
   for(const name of ["Core%20Subjects.png","High%20Interest%20Subjects.png","Additional%20Subjects.png"]){
     assert.match(control,new RegExp(name));
   }
   assert.match(control,/aria-expanded=\{open\}/);
-  assert.match(control,/onPointerDown/);
-  assert.match(control,/Escape/);
+  assert.match(control,/FloatingChoiceMenu/);
+  assert.match(floating,/pointerdown/);
+  assert.match(floating,/Escape/);
   assert.match(control,/Same as course/);
   assert.match(control,/No priority/);
 });
@@ -82,12 +85,12 @@ test("Student selection is a multi-column roster with priority shown only if ass
 
 test("Arrangement offers combined, separate, later and topic inheritance inline",()=>{
   assert.match(arrangement,/setAssignmentArrangement/);
-  assert.match(arrangement,/Same as course/);
+  assert.match(arrangement,/Same as plan/);
   assert.match(arrangement,/Combined/);
   assert.match(arrangement,/Separate/);
   assert.match(arrangement,/Decide later/);
-  assert.match(arrangement,/closeOutside/);
-  assert.match(arrangement,/Escape/);
+  assert.match(arrangement,/FloatingChoiceMenu/);
+  assert.match(floating,/onDismiss/);
   assert.doesNotMatch(students,/detailsStudentId/);
 });
 test("More menus remain one-row icons and My Plan shows only student-level topic counts",()=>{
@@ -113,12 +116,30 @@ test("Course menus anchor below the ellipsis and the small info controls stay ce
 test("Mini roster stays one column; popover flips if it would be cut off",()=>{
  const css=read("app/components/planning-desk.css");
  assert.match(css,/\.plan-editor \.plan-student-list \{ grid-template-columns:minmax\(0,1fr\)/);
- assert.match(arrangement,/setOpensUp/);
- assert.match(arrangement,/scroller\?\.getBoundingClientRect/);
- assert.match(css,/is-flipped \.student-arrangement-popover/);
+ assert.match(floating,/createPortal/);
+ assert.match(floating,/getBoundingClientRect/);
+ assert.match(floating,/vpHeight-pad-anchor\.bottom/);
+ assert.match(floating,/window\.addEventListener\("scroll",place,true\)/);
 });
 test("Course List receives the same effective student rollups as My Plan",()=>{
  assert.match(course,/topicPriorityRollup\(/);
  assert.match(course,/coursePriorityRollup\(/);
  assert.match(plan,/coursePriorityRollup\(/);
+});
+
+test("Shared arrangement controls exist at every optional planning stage",()=>{
+  for(const src of [course,desk,plan,topic,students]){
+    assert.match(src,/SharedArrangementEditor/);
+  }
+  assert.match(sharedArrangement,/setSharedArrangement/);
+  assert.match(sharedArrangement,/Same as course/);
+  assert.match(sharedArrangement,/Combined/);
+  assert.match(sharedArrangement,/Separate/);
+  assert.match(sharedArrangement,/Decide later/);
+  assert.match(sharedArrangement,/FloatingChoiceMenu/);
+});
+test("Only saved member choices populate the authenticated Think Tank",()=>{
+  assert.match(desk,/Retire leftover local-only bookmarks/);
+  assert.match(desk,/cloud\.courses\s*\.filter\(choice=>pendingIdeaCount/);
+  assert.match(course,/signedIn \? \[\] : desk\.thinkTankIds/);
 });
