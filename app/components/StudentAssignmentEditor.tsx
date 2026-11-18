@@ -193,9 +193,10 @@ export default function StudentAssignmentEditor({
                 <span>{student.displayName}</span>
               </label>
               <div className="plan-student-tools">
-                <StudentPriorityControl courseId={course.courseId} topicId={topicId??null}
+                {isAssigned && <StudentPriorityControl
+                  courseId={course.courseId} topicId={topicId??null}
                   studentId={student.id} studentName={student.displayName}
-                  disabled={!isAssigned} onChanged={()=>setHasSavedEdits(true)}/>
+                  onChanged={()=>setHasSavedEdits(true)}/>} 
                 <button type="button" className="plan-student-settings"
                   title={"Other choices for "+student.displayName}
                   aria-label={"Other choices for "+student.displayName}
