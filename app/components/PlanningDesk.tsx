@@ -50,6 +50,22 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const pendingThinkAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [courseInfoId, setCourseInfoId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!openMenu) return;
+    const outside = (event: PointerEvent) => {
+      if (!(event.target instanceof Element) ||
+          !event.target.closest(".pd-more-anchor")) setOpenMenu(null);
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenu(null);
+    };
+    document.addEventListener("pointerdown", outside);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", outside);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [openMenu]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
