@@ -10,6 +10,7 @@ import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
@@ -216,6 +217,19 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
               const selectedTopicIds = course.topics.filter(topic => topic.included &&
                 demo.students.some(student=>isTopicAssigned(course,topic.topicId,student.id)))
                 .map(topic=>topic.topicId);
+              const assignedPriorities = course.topics.filter(topic=>topic.included)
+                .flatMap(topic=>demo.students.filter(student=>
+                  isTopicAssigned(course,topic.topicId,student.id))
+                  .map(student=>effectivePlanningPriority(
+                    demo.sharedPriorities,demo.assignmentPriorities,
+                    course.courseId,topic.topicId,student.id)));
+              if (!assignedPriorities.length) for (const student of demo.students) {
+                if (course.studentIds.includes(student.id)) assignedPriorities.push(
+                  effectivePlanningPriority(demo.sharedPriorities,demo.assignmentPriorities,
+                    course.courseId,null,student.id));
+              }
+              const displayPriority = assignedPriorities.length ?
+                priorityRollup(assignedPriorities) : undefined;
               return <div className={"pd-idea myplan-row" + (open ? " is-open" : "")}
                 key={course.courseId}>
                 <div className="pd-idea-heading">
@@ -242,7 +256,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <BookOpen size={15} aria-hidden="true"/>
                   </Link>
                   <SharedPriorityEditor courseId={course.courseId}
-                    selectedTopicIds={selectedTopicIds}/>
+                    selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
                   <button type="button" className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"
                     aria-label={"Edit students and priorities for " + title}
                     title={"Edit students for " + title} aria-expanded={editing}
