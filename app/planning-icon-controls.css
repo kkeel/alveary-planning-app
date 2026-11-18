@@ -94,15 +94,13 @@
 /* Resting neutral controls share the same tint. Subject-colored selected
  * Lightbulb/Plan controls retain the explicit selected-style rules. */
 :is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
-  :is(button.planning-icon-control,.priority-control button.planning-icon-control)
-  :not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):not(.is-open):not(.is-member) {
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control):not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):not(.is-open):not(.is-member) {
   border-color:var(--planning-icon-border);
   background:#fff;
   color:var(--planning-icon-foreground);
 }
 :is(.cx-course-actions,.pd-idea-heading,.pd-topic-row,.plan-group-shortcuts,.plan-student-tools)
-  :is(button.planning-icon-control,.priority-control button.planning-icon-control)
-  :not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):hover:not(:disabled) {
+  :is(button.planning-icon-control,.priority-control button.planning-icon-control):not(.is-tone-full):not(.is-tone-partial):not(.is-tone-inherited):not(.is-selected):hover:not(:disabled) {
   border-color:var(--planning-icon-hover-border);
   background:var(--planning-icon-hover-background);
   color:var(--planning-icon-hover-foreground);
