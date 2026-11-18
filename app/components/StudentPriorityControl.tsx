@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { Check } from "lucide-react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { effectivePlanningPriority } from "./shared-priority.mjs";
@@ -20,7 +21,6 @@ export default function StudentPriorityControl({
 }) {
   const plan=useDemoPlan();
   const [open,setOpen]=useState(false);
-  const rootRef=useRef<HTMLDivElement>(null);
   const triggerRef=useRef<HTMLButtonElement>(null);
   const menuId=useId();
   const specific=plan.assignmentPriorities.find(p=>p.courseId===courseId &&
@@ -29,21 +29,6 @@ export default function StudentPriorityControl({
     plan.sharedPriorities,plan.assignmentPriorities,courseId,topicId,studentId);
   const inherited=!specific;
   const label=effective ? effective : "No priority";
-  useEffect(()=>{
-    if(!open) return;
-    const outside=(event:PointerEvent)=>{
-      if(!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const keydown=(event:KeyboardEvent)=>{
-      if(event.key==="Escape") {setOpen(false);triggerRef.current?.focus();}
-    };
-    document.addEventListener("pointerdown",outside);
-    document.addEventListener("keydown",keydown);
-    return ()=>{
-      document.removeEventListener("pointerdown",outside);
-      document.removeEventListener("keydown",keydown);
-    };
-  },[open]);
   function choose(priority:Priority|"inherit"|"Not set"){
     // Choosing the inherited value is equivalent to Same as plan.
     // Remove a redundant saved override so future parent edits flow through.
@@ -65,7 +50,7 @@ export default function StudentPriorityControl({
     ...priorities.map(priority=>({value:priority,label:priority,art:priority})),
     ...(topicId ? [{value:"Not set" as const,label:"No priority"}] : []),
   ];
-  return <div ref={rootRef} className={"priority-control student-priority-control"+
+  return <div className={"priority-control student-priority-control"+
     (effective?" has-priority":"")+(inherited?" is-inherited":" is-custom")}
     onClick={event=>event.stopPropagation()}>
     <button ref={triggerRef} type="button" className="priority-control-trigger"
@@ -77,8 +62,8 @@ export default function StudentPriorityControl({
       onClick={()=>setOpen(v=>!v)}>
       <PrioritySymbol priority={effective as Priority|null} size={21}/>
     </button>
-    {open && <div id={menuId} className="priority-control-popover"
-      role="group" aria-label={"Priority for "+studentName}>
+    <FloatingChoiceMenu open={open} triggerRef={triggerRef}
+      onDismiss={()=>setOpen(false)} id={menuId} label={"Priority for "+studentName}>
       <div className="priority-control-heading">{studentName}
         <span>Priority</span></div>
       {items.map(item=><button type="button" key={item.value}
@@ -92,6 +77,6 @@ export default function StudentPriorityControl({
       {specific && <p className="priority-control-note">
         This only changes {studentName}'s priority.
       </p>}
-    </div>}
+    </FloatingChoiceMenu>
   </div>;
 }
