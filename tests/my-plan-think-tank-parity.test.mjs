@@ -68,7 +68,7 @@ assert.ok(plan.includes('Edit students'));
 assert.ok(plan.includes('className="pd-inline-actions" role="group"'));
 assert.ok(plan.includes("toggleStudentEdit(course.courseId,event.currentTarget)"));
 assert.ok(plan.includes("<StudentAssignmentEditor course={course}"));
-assert.ok(topics.includes('className="pd-topic-icon pd-topic-edit"'));
+assert.ok(topics.includes("Edit students"), "Student editor stays reachable through topic More menu");
 assert.ok(topics.includes("<SharedTopicStudentEditor"));
 assert.ok(editor.includes('<input type="checkbox" checked={isAssigned}'));
 assert.ok(editor.includes("demo.setAssignmentArrangement"));
