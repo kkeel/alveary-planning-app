@@ -237,7 +237,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     aria-controls={detailsId}
                     onClick={event => toggleDetails(course.courseId,event.currentTarget)}>
                     <SquareCheckBig size={14} className="pd-plan-choice-mark" aria-hidden="true"/>
-                    <span>{title} <span className="pd-title-chevron">{open ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}</span>
+                    <span>{title}
                       {showTopicCount && <small className="pd-topic-count-note">
                         {topicCount.selected} of {topicCount.total} topics
                       </small>}
@@ -250,20 +250,15 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                       {open && item && <PlanningScheduleGradeMeta course={item}/>}
                     </span>
                   </button>
-                  <Link className="pd-row-tool pd-think-books"
-                    href={"/books?course=" + encodeURIComponent(course.courseId)}
-                    aria-label={"View books for " + title} title="View books">
-                    <BookOpen size={15} aria-hidden="true"/>
-                  </Link>
+                  <button type="button" className="pd-row-tool pd-mini-info-action"
+                    aria-label={(open?"Hide":"View")+" details for "+title}
+                    title={open?"Hide details":"View details"}
+                    aria-expanded={open} aria-controls={detailsId}
+                    onClick={event=>toggleDetails(course.courseId,event.currentTarget)}>
+                    <Info size={15} aria-hidden="true"/>
+                  </button>
                   <SharedPriorityEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
-                  <button type="button" className="pd-plan-action pd-think-toolbar-plus pd-myplan-toolbar-edit"
-                    aria-label={"Edit students and priorities for " + title}
-                    title={"Edit students for " + title} aria-expanded={editing}
-                    aria-controls={detailsId}
-                    onClick={event => toggleStudentEdit(course.courseId,event.currentTarget)}>
-                    <UsersRound size={15} aria-hidden="true"/>
-                  </button>
                   <button type="button" className="pd-more"
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
@@ -274,6 +269,15 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                 </div>
                 {menuOpen && <div className="pd-inline-actions" role="group"
                   aria-label={"More options for " + title}>
+                  <Link href={"/books?course="+encodeURIComponent(course.courseId)}
+                    onClick={()=>setOpenMenuId(null)}>
+                    <BookOpen size={14} aria-hidden="true"/> View books
+                  </Link>
+                  <button type="button" onClick={event=>
+                    toggleStudentEdit(course.courseId,event.currentTarget)}>
+                    <UsersRound size={14} aria-hidden="true"/>
+                    {editing ? "Close students" : "Edit students"}
+                  </button>
                   <button type="button" onClick={() => {
                     demo.setStage(course.courseId,"idea");
                     setOpenId(null);
