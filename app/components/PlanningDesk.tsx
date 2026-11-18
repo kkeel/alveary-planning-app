@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, BookOpen, ChevronDown, ChevronRight, Info,
   SquareCheckBig, Lightbulb, NotebookPen, Maximize2, MoreHorizontal,
-  PanelRightClose, PanelRightOpen, X, Plus, UsersRound,
+  PanelRightClose, PanelRightOpen, X, Plus, UsersRound, Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -316,18 +316,24 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                       {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
                         aria-label={"More options for "+idea.title}>
                         <Link href={"/books?course="+encodeURIComponent(idea.id)}
-                          onClick={closeMobileDrawer}>
-                          <BookOpen size={14} aria-hidden="true"/> View books
+                          onClick={closeMobileDrawer}
+                          title={"View books for "+idea.title} aria-label={"View books for "+idea.title}>
+                          <BookOpen size={17} aria-hidden="true"/>
+                          <span className="pd-sr-only">View books</span>
                         </Link>
                         {cloud.ready && savedChoice && <button type="button"
                           onClick={event=>{
                             const next=assigningId!==idea.id;
                             openThinkForAssignment(idea.id, event.currentTarget);
                             setAssigningId(next?idea.id:null);
-                          }}>
-                          <UsersRound size={14} aria-hidden="true"/> {assigningId===idea.id?"Close students":"Add / edit students"}
+                          }}
+                          title={assigningId===idea.id?"Close students":"Add / edit students"}
+                          aria-label={assigningId===idea.id?"Close students":"Add / edit students"}
+                          aria-expanded={assigningId===idea.id}>
+                          <UsersRound size={17} aria-hidden="true"/>
+                          <span className="pd-sr-only">{assigningId===idea.id?"Close students":"Add / edit students"}</span>
                         </button>}
-                        <button type="button" onClick={() => {
+                        <button type="button" title="Remove idea" aria-label="Remove idea" onClick={() => {
                           // Remove only unscheduled ideas from Think Tank:
                           // never delete the saved parent or assignments in My Plan.
                           if (savedChoice && cloud.ready) {
@@ -345,7 +351,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                             setJustPlannedId(null);
                           }
                           setOpenMenu(null);
-                        }}><X size={13}/> Remove</button>
+                        }}>
+                          <Trash2 size={17} aria-hidden="true"/>
+                          <span className="pd-sr-only">Remove idea</span>
+                        </button>
                       </div>}
                       {reviewOpen && <div className="pd-review pd-think-review" id={reviewId}
                         role="region" aria-label={"Details for " + idea.title}>
