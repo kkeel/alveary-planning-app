@@ -195,7 +195,7 @@ function CourseRow({
     presentElsewhere.length > 0);
   // An arrow shows a curriculum connection. Color refers ONLY to this
   // particular parent context, never to a saved use in a different course.
-  const selectedHere = status.planActive || status.ideaActive;
+  const selectedHere = mode === "plan" && (status.planActive || status.ideaActive);
   const presenceDescription = [
     "Shared topic: also offered through another course.",
     selectedHere
