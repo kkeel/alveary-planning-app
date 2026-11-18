@@ -11,6 +11,7 @@ import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import CourseTopicReview from "./CourseTopicReview";
 import SharedPriorityEditor from "./SharedPriorityEditor";
 import SharedArrangementEditor from "./SharedArrangementEditor";
+import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { coursePriorityRollup } from "./shared-priority.mjs";
 import { isTopicAssigned } from "./topic-assignment.mjs";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
@@ -68,22 +69,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
   const [editingTopicCourseId, setEditingTopicCourseId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [collapsedSubjects, setCollapsedSubjects] = useState<string[]>([]);
-  useEffect(() => {
-    if (!openMenuId) return;
-    const outside = (event: PointerEvent) => {
-      if (!(event.target instanceof Element) ||
-          !event.target.closest(".pd-more-anchor")) setOpenMenuId(null);
-    };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpenMenuId(null);
-    };
-    document.addEventListener("pointerdown", outside);
-    document.addEventListener("keydown", escape);
-    return () => {
-      document.removeEventListener("pointerdown", outside);
-      document.removeEventListener("keydown", escape);
-    };
-  }, [openMenuId]);
+  const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
   const pendingAnchor = useRef<{ row: HTMLElement; top: number; scroller: HTMLElement | null } | null>(null);
 
   // Changes autosave immediately. Keep a course with its last student removed
@@ -245,14 +231,20 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                   </button>
                   <div className="pd-more-anchor">
                   <button type="button" className="pd-more"
+                    ref={element=>{if(element) moreButtons.current.set(course.courseId,element);
+                      else moreButtons.current.delete(course.courseId);}}
+                    aria-controls={"pd-myplan-menu-"+course.courseId}
                     aria-label={"More options for " + title}
                     title={"More options for " + title}
                     aria-expanded={menuOpen}
                     onClick={() => setOpenMenuId(menuOpen ? null : course.courseId)}>
                     <MoreHorizontal size={16} aria-hidden="true"/>
                   </button>
-                                {menuOpen && <div className="pd-inline-actions" role="group"
-                  aria-label={"More options for " + title}>
+                                <FloatingChoiceMenu open={menuOpen}
+                  triggerRef={{current:moreButtons.current.get(course.courseId)??null}}
+                  onDismiss={()=>setOpenMenuId(null)}
+                  id={"pd-myplan-menu-"+course.courseId} className="floating-icon-menu"
+                  label={"More options for "+title}>
                   <Link href={"/books?course="+encodeURIComponent(course.courseId)}
                     onClick={()=>setOpenMenuId(null)}
                     title={"View books for "+title} aria-label={"View books for "+title}>
@@ -277,7 +269,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <Lightbulb size={17} aria-hidden="true"/>
                     <span className="pd-sr-only">Return to Think Tank</span>
                   </button>
-                </div>}
+                </FloatingChoiceMenu>
                   </div>
 </div>
                 {open && <div className="pd-review pd-think-review myplan-review"
