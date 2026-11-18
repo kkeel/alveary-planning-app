@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, BookOpen, ChevronDown, ChevronRight, Info,
   SquareCheckBig, Lightbulb, NotebookPen, Maximize2, MoreHorizontal,
-  PanelRightClose, PanelRightOpen, X, Plus,
+  PanelRightClose, PanelRightOpen, X, Plus, UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -289,7 +289,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                         <button type="button" className="pd-idea-review" aria-expanded={reviewOpen}
                           aria-controls={reviewId}
                           onClick={event => toggleThinkDetails(idea.id, event.currentTarget)}>
-                          <Lightbulb size={14} aria-hidden="true"/><span>{idea.title} <span className="pd-title-chevron">{reviewOpen ? <ChevronDown size={12}/> : <ChevronRight size={12}/>}</span>
+                          <Lightbulb size={14} aria-hidden="true"/><span>{idea.title}
                             {(showTopicCount || partiallyPlanned) && <small className="pd-topic-count-note">
                               {showTopicCount && <>{topicCount.selected} of {topicCount.total} topics</>}
                               {showTopicCount && partiallyPlanned && <span className="pd-meta-divider"> · </span>}
@@ -298,39 +298,35 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                              {reviewOpen && <PlanningScheduleGradeMeta course={idea}/>}
                           </span>
                         </button>
-                        <Link className="pd-row-tool pd-think-books"
-                          href={"/books?course=" + encodeURIComponent(idea.id)}
-                          aria-label={"View books for " + idea.title}
-                          title="View books" onClick={closeMobileDrawer}>
-                          <BookOpen size={15} aria-hidden="true"/>
-                        </Link>
+                        <button type="button" className="pd-row-tool pd-mini-info-action"
+                          title={reviewOpen ? "Hide details" : "View details"}
+                          aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
+                          aria-expanded={reviewOpen} aria-controls={reviewId}
+                          onClick={event => toggleThinkDetails(idea.id,event.currentTarget)}>
+                          <Info size={15} aria-hidden="true"/>
+                        </button>
                         {savedChoice && <SharedPriorityEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
-                        {cloud.ready && <button type="button"
-                          className="pd-plan-action pd-think-toolbar-plus"
-                          aria-label={idea.type === "Combined Course"
-                            ? "Add students to all included topics in " + idea.title
-                            : "Add students to " + idea.title}
-                          title={cloud.courses.some(c=>c.courseId===idea.id)
-                            ? "Assign students"
-                            : "Save this browser idea before assigning"}
-                          aria-expanded={assigningId===idea.id}
-                          disabled={!cloud.courses.some(c=>c.courseId===idea.id)}
-                          onClick={event => {
-                            const next=assigningId!==idea.id;
-                            openThinkForAssignment(idea.id, event.currentTarget);
-                            setAssigningId(next?idea.id:null);
-                          }}>
-                          <Plus size={14} aria-hidden="true"/>
-                          {idea.type === "Combined Course" && <span>All</span>}
-                        </button>}
                         <button type="button" className="pd-more" aria-label={"More options for " + idea.title}
                           title={"More options for " + idea.title} aria-expanded={openMenu === itemMenu}
                           onClick={() => setOpenMenu(openMenu === itemMenu ? null : itemMenu)}>
                           <MoreHorizontal size={16}/>
                         </button>
                       </div>
-                      {openMenu === itemMenu && <div className="pd-inline-actions">
+                      {openMenu === itemMenu && <div className="pd-inline-actions" role="group"
+                        aria-label={"More options for "+idea.title}>
+                        <Link href={"/books?course="+encodeURIComponent(idea.id)}
+                          onClick={closeMobileDrawer}>
+                          <BookOpen size={14} aria-hidden="true"/> View books
+                        </Link>
+                        {cloud.ready && savedChoice && <button type="button"
+                          onClick={event=>{
+                            const next=assigningId!==idea.id;
+                            openThinkForAssignment(idea.id,event.currentTarget);
+                            setAssigningId(next?idea.id:null);
+                          }}>
+                          <UsersRound size={14} aria-hidden="true"/> {assigningId===idea.id?"Close students":"Add / edit students"}
+                        </button>}
                         <button type="button" onClick={() => {
                           // Remove only unscheduled ideas from Think Tank:
                           // never delete the saved parent or assignments in My Plan.
