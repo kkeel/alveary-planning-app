@@ -25,8 +25,8 @@ test("unset is a faint Separate-shaped invitation; Decide Later is not a require
   assert.match(student,/const isUnset=effective==="Later"/);
   assert.doesNotMatch(shared,/\["Combined","Separate","Later"\]/);
   assert.doesNotMatch(student,/\{value:"Later",label:"Decide later"/);
-  assert.match(student,/if \(value==="Later"\) return <Clock3/,
-    "legacy Later values can still be read, but are no longer offered");
+  assert.match(student,/if \(value==="Later"\) return <ArrangementPlaceholderSymbol/,
+    "legacy Later reads as the unset invitation, never a new selection");
   assert.match(css,/\.shared-arrangement-control\.is-unset/);
   assert.match(css,/\.student-arrangement-control\.is-unset/);
   assert.match(css,/opacity:\.66/);
