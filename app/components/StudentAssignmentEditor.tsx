@@ -195,7 +195,7 @@ export default function StudentAssignmentEditor({
                   courseId={course.courseId} topicId={topicId ?? null}
                   studentId={student.id} studentName={student.displayName}
                   onChanged={() => setHasSavedEdits(true)}/>
-              </div>
+              </div>}
             </div>;
           })}
         </div>
