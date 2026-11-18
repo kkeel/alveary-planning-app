@@ -1961,31 +1961,44 @@
 }
 
 
-/* Portable desk: the tabs and density switch are ONE stationary control
- * section outside the scrolling .pd-body. Sticky positioning inside the
- * scrolling subject list caused headers and rows to slip over the switch. */
+/* The mini desk has two visually separate navigation groups: tabs above,
+ * density switch below. Both are fixed siblings OUTSIDE the pd-body scroller.
+ * The thin line is the clear boundary; guidance and subject rows scroll below.
+ * No sticky element inside a scrolling course list may cover its headings. */
 .pd-desk-controls {
   flex:0 0 auto;
   min-width:0;
+  margin-inline:-15px;
+  padding:0 15px 13px;
+  background:#fffefa;
+  border-bottom:1px solid #dfe7da;
 }
 .pd-desk-controls .pd-tabs {
-  margin-top:13px;
-  border-bottom:0;
+  margin:13px 0 0;
+  border:1px solid #e3e8dd;
 }
 .pd-desk .pd-header-density {
   display:flex;
   align-items:center;
   justify-content:flex-start;
   min-width:0;
-  padding:5px 6px 8px;
-  background:#f4f6f0;
-  border:1px solid #e3e8dd;
-  border-top:0;
+  margin-top:11px;
+  padding:0;
+  background:transparent;
+  border:0;
 }
 .pd-header-density .pd-detail-switch {
   max-width:100%;
 }
 .pd-desk .pd-body {
-  /* Only the list and its short introductory copy scroll below the controls. */
+  /* Only the description and subjects scroll beneath the permanent divider. */
   position:relative;
+  padding-top:12px;
+}
+.pd-desk .pd-planning-guidance {
+  margin:6px 0 16px;
+}
+@media (max-width:440px) {
+  .pd-desk-controls .pd-tabs { margin-top:10px; }
+  .pd-desk .pd-header-density { margin-top:9px; }
 }
