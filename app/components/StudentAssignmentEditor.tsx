@@ -5,6 +5,7 @@ import { UsersRound } from "lucide-react";
 import { useDemoPlan, type SavedCourse, type PlanningGroup } from "./DemoPlanContext";
 import { effectiveTopicCount, isTopicAssigned, shouldPromoteChoiceOnDone } from "./topic-assignment.mjs";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
 import StudentPriorityControl from "./StudentPriorityControl";
 import StudentArrangementControl from "./StudentArrangementControl";
 import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
@@ -162,6 +163,8 @@ export default function StudentAssignmentEditor({
           <SharedPriorityEditor courseId={course.courseId} topicId={topicId ?? null}
             selectedTopicIds={topicId ? [] : course.topics.filter(t => t.included).map(t => t.topicId)}
             displayPriority={displayPriority}/>
+          <SharedArrangementEditor courseId={course.courseId} topicId={topicId ?? null}
+            selectedTopicIds={topicId ? [] : course.topics.filter(t => t.included).map(t=>t.topicId)}/>
         </div>
     {addingStudent && <form className="pd-student-inline-form" onSubmit={event => void submitStudent(event)}>
       <label htmlFor={fieldId+"-student"}>Name or nickname</label>
