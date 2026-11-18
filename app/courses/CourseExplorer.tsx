@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDown, Info, Lightbulb, Link2, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, Info, Lightbulb, List, NotebookPen, Plus, Printer, Search, SlidersHorizontal } from "lucide-react";
 import sourceCatalog from "./catalog-preview.json";
 import { sortTopicsForCourse } from "./topic-order.mjs";
 import { matchesCountry } from "./country-filter.mjs";
@@ -177,7 +177,7 @@ function CourseRow({
   const parentChoice = savedCourses.find(choice => choice.courseId === sourceCourseId);
   const presentElsewhere=nested ? otherTopicPresence(topicPresence,course.editionId,sourceCourseId) : [];
   const otherPlan=presentElsewhere.some(place=>place.location==="My Plan");
-  const presenceLabel=otherPlan ? "Also in My Plan" : "Also in Think Tank";
+  const presenceLabel=otherPlan ? "My Plan" : "Think Tank";
   const presenceDescription=presentElsewhere.map(place=>
     place.location+" in "+place.courseTitle).join("; ")+
     ". Choose students independently for this course.";
@@ -250,7 +250,7 @@ function CourseRow({
         <span className="cx-course-name">{course.title}
           {nested && presentElsewhere.length>0 && <span className="cx-topic-elsewhere" role="img"
             title={presenceDescription} aria-label={presenceDescription}>
-            <Link2 size={12} aria-hidden="true"/>
+            <span aria-hidden="true">↔</span>
             <span>{presenceLabel}</span>
           </span>}
           {choiceTags?.length && !nested ? <span className="cx-course-tags">
