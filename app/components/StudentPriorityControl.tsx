@@ -53,7 +53,7 @@ export default function StudentPriorityControl({
   return <div className={"priority-control student-priority-control"+
     (effective?" has-priority":"")+(inherited?" is-inherited":" is-custom")}
     onClick={event=>event.stopPropagation()}>
-    <button ref={triggerRef} type="button" className="priority-control-trigger"
+    <button ref={triggerRef} type="button" className="planning-icon-control priority-control-trigger"
       aria-label={studentName+": "+label+(inherited?", inherited":", customized")+
         (disabled?". Assign student to change.":". Change priority.")}
       title={studentName+" · "+label+(inherited?" (inherited)":" (customized)")}

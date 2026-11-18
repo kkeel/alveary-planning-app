@@ -2,20 +2,23 @@
 
 import { useId, useRef, useState } from "react";
 import FloatingChoiceMenu from "./FloatingChoiceMenu";
-import { Check, Clock3, Columns2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useDemoPlan } from "./DemoPlanContext";
 import { courseArrangement, topicArrangementOverride, effectiveArrangement } from "./arrangement-inheritance.mjs";
 
 type Arrangement = "Combined" | "Separate" | "Later";
-type Choice = Arrangement | "inherit" | "Both";
+type Choice = "Combined" | "Separate" | "inherit" | "Both";
 
-/** Neutral arrangement invitation; unlike the clock, it does not imply
- * that a member has explicitly chosen Decide later. Use this same compact
- * two-panel symbol at course, topic and individual-student levels. */
+/** A quiet invitation to arrange: the exact same two separate circles as
+ * the selected Separate state, only lighter. Unset is NEVER saved as Separate. */
 export function ArrangementPlaceholderSymbol({size=19}:{size?:number}) {
-  return <Columns2 size={size} strokeWidth={1.6} aria-hidden="true"/>;
+  return <svg width={size} height={size} viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="1.7"
+    strokeLinecap="round" aria-hidden="true">
+    <circle cx="7" cy="12" r="5"/>
+    <circle cx="18" cy="12" r="5"/>
+  </svg>;
 }
-
 
 /** The same lightweight, autosaving popover pattern used by priorities.
  * Course-level and topic-level choices stay distinct: selecting a topic
@@ -23,7 +26,7 @@ export function ArrangementPlaceholderSymbol({size=19}:{size?:number}) {
 export function ArrangementSymbol({value, size=19}:{
  value: Arrangement | "Both"; size?:number;
 }) {
-  if (value==="Later") return <Clock3 size={size} aria-hidden="true"/>;
+  if (value==="Later") return <ArrangementPlaceholderSymbol size={size}/>;
   return <svg width={size} height={size} viewBox="0 0 24 24"
       fill="none" stroke="currentColor" strokeWidth="1.8"
       strokeLinecap="round" aria-hidden="true">
@@ -57,21 +60,15 @@ export default function StudentArrangementControl({
   const specific=plan.assignmentArrangements.find(item=>
     item.courseId===courseId && item.studentId===studentId &&
     item.topicId===topicId);
-  const selected:Choice=specific?.arrangement??"inherit";
-  const inherited=!specific;
-  // The default fallback "Later" is not a saved choice. Keep its indicator
-  // neutral, reserving the clock for someone who actually chose Later.
-  const isRelevant=(scopeTopicId:string|null)=>
-    scopeTopicId===null || (topicId!==null && scopeTopicId===topicId);
-  const hasChosenArrangement=
-    plan.sharedArrangements.some(item=>item.courseId===courseId &&
-      isRelevant(item.topicId)) ||
-    plan.assignmentArrangements.some(item=>item.courseId===courseId &&
-      item.studentId===studentId && isRelevant(item.topicId));
-  const isUnset=effective==="Later"&&!hasChosenArrangement;
+  const selected:Choice=specific?.arrangement==="Later"
+    ? "inherit" : specific?.arrangement??"inherit";
+  const inherited=!specific || specific.arrangement==="Later";
+  // No member has to make this choice. Historical "Later" entries are
+  // presented as unset; clear/inherit removes them without a data migration.
+  // Combined and Separate retain their full-strength symbols.
+  const isUnset=effective==="Later";
   const caption=isUnset?"Not chosen yet":
-    effective==="Later"?"Decide later":effective==="Both"?
-    "Both (previous setting)":effective;
+    effective==="Both"?"Both (previous setting)":effective;
   function choose(value:Choice){
     if(value==="Both") return; // legacy read-only value
     const withoutThis=plan.assignmentArrangements.filter(item=>!(
@@ -90,14 +87,13 @@ export default function StudentArrangementControl({
     {value:"inherit",label:topicId?"Same as plan":"Same as everyone",display:base},
     {value:"Combined",label:"Combined",display:"Combined"},
     {value:"Separate",label:"Separate",display:"Separate"},
-    {value:"Later",label:"Decide later",display:"Later"},
     ...(selected==="Both"?[{value:"Both" as Choice,label:"Both (previous setting)",display:"Both" as const}]:[]),
   ];
   return <div
       className={"student-arrangement-control"+(inherited?" is-inherited":"")+
         (isUnset?" is-unset":"")}
       onClick={event=>event.stopPropagation()}>
-    <button type="button" ref={triggerRef} className="student-arrangement-trigger"
+    <button type="button" ref={triggerRef} className="planning-icon-control student-arrangement-trigger"
       disabled={!plan.ready} aria-expanded={open} aria-controls={menuId}
       aria-label={studentName+": "+caption+" arrangement"+(inherited?" (same as course)":"")+". Change arrangement"}
       title={studentName+" · "+caption+" arrangement"+(inherited?" (same as course)":"")}

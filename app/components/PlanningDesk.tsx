@@ -282,7 +282,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           selectedTopicIds={selectedTopicIds}/>}
                         {savedChoice && <SharedArrangementEditor courseId={idea.id}
                           selectedTopicIds={selectedTopicIds}/>}
-                        <button type="button" className="pd-row-tool pd-mini-info-action"
+                        <button type="button" className="planning-icon-control pd-row-tool pd-mini-info-action"
                           title={reviewOpen ? "Hide details" : "View details"}
                           aria-label={(reviewOpen ? "Hide" : "View") + " details for " + idea.title}
                           aria-expanded={reviewOpen} aria-controls={reviewId}
@@ -290,7 +290,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
                           <Info size={15} aria-hidden="true"/>
                         </button>
                         <div className="pd-more-anchor">
-                        <button type="button" className="pd-more"
+                        <button type="button" className="planning-icon-control pd-more"
                           ref={element=>{if(element) moreButtons.current.set(idea.id,element);
                             else moreButtons.current.delete(idea.id);}}
                           aria-controls={"pd-think-menu-"+idea.id}

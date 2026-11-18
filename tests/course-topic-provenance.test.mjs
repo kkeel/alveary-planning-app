@@ -192,7 +192,7 @@ assert.equal(effectivePriority(withoutAncientOverride,g9.id,"AJ",ancient9.topicI
   "Use course default removes the override and restores inheritance");
 // Priority rows remain independent of the membership changes tested below.
 // Arrangement inheritance follows the same independent parent/student/topic
-// scope as priorities; topic Later explicitly overrides a Combined course.
+// scope as priorities; a legacy topic Later now inherits the course choice.
 const placements = [
   {courseId:g9.id,studentId:"AJ",topicId:null,arrangement:"Combined"},
   {courseId:g9.id,studentId:"AJ",topicId:ancient9.topicId,arrangement:"Separate"},
@@ -202,7 +202,8 @@ const placements = [
 assert.equal(courseArrangement(placements,g9.id,"AJ"),"Combined");
 assert.equal(effectiveArrangement(placements,g9.id,"AJ",us9.topicId),"Combined");
 assert.equal(effectiveArrangement(placements,g9.id,"AJ",ancient9.topicId),"Separate");
-assert.equal(effectiveArrangement(placements,g9.id,"AJ",world9.topicId),"Later");
+assert.equal(effectiveArrangement(placements,g9.id,"AJ",world9.topicId),"Combined",
+  "retired Later behaves as unset and inherits the combined course");
 assert.equal(topicArrangementOverride(placements,g9.id,"AJ",us9.topicId),"inherit");
 assert.equal(effectiveArrangement(placements,g1012.id,"Troy",us1012.topicId),"Separate");
 assert.equal(effectiveArrangement(placements,g9.id,"Troy",us9.topicId),"Later");
@@ -216,7 +217,8 @@ const changedCourseDefault = placements.map(p =>
     ? {...p,arrangement:"Separate"} : p);
 assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",us9.topicId),"Separate");
 assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",ancient9.topicId),"Separate");
-assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",world9.topicId),"Later");
+assert.equal(effectiveArrangement(changedCourseDefault,g9.id,"AJ",world9.topicId),"Separate",
+  "the formerly undecided topic follows the new course default");
 
 // Reapply whole Grade-9 History for AJ: one parent group link covers every
 // included topic, and the previous topic-only override is discarded.

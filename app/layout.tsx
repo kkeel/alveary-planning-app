@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import AppShell from "./components/AppShell";
 import "./globals.css";
+import "./planning-icon-controls.css";
 
 const plantin = localFont({
   src: "../public/brand/fonts/plantin-mt-pro.woff2",

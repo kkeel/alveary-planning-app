@@ -222,7 +222,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     selectedTopicIds={selectedTopicIds} displayPriority={displayPriority}/>
                   <SharedArrangementEditor courseId={course.courseId}
                     selectedTopicIds={selectedTopicIds}/>
-                        <button type="button" className="pd-row-tool pd-mini-info-action"
+                        <button type="button" className="planning-icon-control pd-row-tool pd-mini-info-action"
                     aria-label={(open?"Hide":"View")+" details for "+title}
                     title={open?"Hide details":"View details"}
                     aria-expanded={open} aria-controls={detailsId}
@@ -230,7 +230,7 @@ export default function MyPlanPanel({ focusCourseId = null, focusRevision = 0, o
                     <Info size={15} aria-hidden="true"/>
                   </button>
                   <div className="pd-more-anchor">
-                  <button type="button" className="pd-more"
+                  <button type="button" className="planning-icon-control pd-more"
                     ref={element=>{if(element) moreButtons.current.set(course.courseId,element);
                       else moreButtons.current.delete(course.courseId);}}
                     aria-controls={"pd-myplan-menu-"+course.courseId}

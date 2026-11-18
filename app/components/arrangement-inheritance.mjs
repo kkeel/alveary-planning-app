@@ -1,12 +1,15 @@
 /** Four-level arrangement inheritance, matching the priority model:
  * student-topic > shared-topic > student-course > shared-course.
- * "Later" is both the explicit decide-later choice and the fallback when
- * nothing has been set. These reads never rewrite saved defaults. */
+ * Unset is a valid non-decision. Older "Later" rows act as unset/inherit,
+ * never an override that blocks a subsequently chosen parent arrangement.
+ * The internal "Later" fallback is kept for existing consumers, not offered
+ * as a menu selection. No member records are rewritten by these reads. */
+const chosen = value => value === "Later" ? null : value;
 export function sharedCourseArrangement(shared,courseId) {
-  return shared.find(item=>item.courseId===courseId&&item.topicId===null)?.arrangement??null;
+  return chosen(shared.find(item=>item.courseId===courseId&&item.topicId===null)?.arrangement)??null;
 }
 export function sharedTopicArrangementOverride(shared,courseId,topicId) {
-  return shared.find(item=>item.courseId===courseId&&item.topicId===topicId)?.arrangement??"inherit";
+  return chosen(shared.find(item=>item.courseId===courseId&&item.topicId===topicId)?.arrangement)??"inherit";
 }
 export function sharedTopicArrangement(shared,courseId,topicId) {
   const topic=sharedTopicArrangementOverride(shared,courseId,topicId);
@@ -17,13 +20,13 @@ export function sharedArrangementSummary(shared,courseId,topicIds) {
   return arrangementRollup(topicIds.map(id=>sharedTopicArrangement(shared,courseId,id)??"Later"));
 }
 export function courseArrangement(records,courseId,studentId,shared=[]) {
-  return records.find(item=>item.courseId===courseId&&
-    item.studentId===studentId&&item.topicId===null)?.arrangement??
+  return chosen(records.find(item=>item.courseId===courseId&&
+    item.studentId===studentId&&item.topicId===null)?.arrangement)??
     sharedCourseArrangement(shared,courseId)??"Later";
 }
 export function topicArrangementOverride(records,courseId,studentId,topicId) {
-  return records.find(item=>item.courseId===courseId&&
-    item.studentId===studentId&&item.topicId===topicId)?.arrangement??"inherit";
+  return chosen(records.find(item=>item.courseId===courseId&&
+    item.studentId===studentId&&item.topicId===topicId)?.arrangement)??"inherit";
 }
 export function effectiveArrangement(records,courseId,studentId,topicId=null,shared=[]) {
   if(topicId){
