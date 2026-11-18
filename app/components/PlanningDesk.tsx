@@ -20,6 +20,7 @@ import StudentAssignmentEditor from "./StudentAssignmentEditor";
 import CourseInfoDisclosure from "./CourseInfoDisclosure";
 import PlanningScheduleGradeMeta from "./PlanningScheduleGradeMeta";
 import CourseTopicReview from "./CourseTopicReview";
+import SharedPriorityEditor from "./SharedPriorityEditor";
 import catalog from "../courses/catalog-preview.json";
 import "./planning-desk.css";
 
