@@ -33,3 +33,12 @@ export function effectivePlanningPriority(shared, student, courseId, topicId, st
   if (courseStudent) return courseStudent.priority === "Not set" ? null : courseStudent.priority;
   return sharedCoursePriority(shared, courseId);
 }
+
+/** Read-only summary of the actual priorities used by selected students/topics.
+ * Never writes back to the shared course/topic defaults. A mixture of a blank
+ * with a priority is also Varied. */
+export function priorityRollup(values) {
+  if (!values.length) return null;
+  const distinct = new Set(values.map(value=>value ?? null));
+  return distinct.size > 1 ? "Varied" : [...distinct][0];
+}
