@@ -9,6 +9,7 @@ import { isTopicAssigned, topicHasAssignedStudent } from "./topic-assignment.mjs
 import { thinkTankTopicSections, pinTopicWhileEditing } from "./planning-topic-sections.mjs";
 import SharedTopicStudentEditor from "./SharedTopicStudentEditor";
 import SharedPriorityEditor from "./SharedPriorityEditor";
+import SharedArrangementEditor from "./SharedArrangementEditor";
 import { effectivePlanningPriority, priorityRollup } from "./shared-priority.mjs";
 import { effectiveArrangement } from "./arrangement-inheritance.mjs";
 import StudentPriorityDot from "./StudentPriorityDot";
@@ -193,6 +194,8 @@ export default function CourseTopicReview({
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
             displayPriority={displayPriority} compact/>}
+        {savedChoice && !isOther && !isRemoved && linkedTopic &&
+          <SharedArrangementEditor courseId={parent.id} topicId={topic.id} compact/>}
         {hasDetails && <button type="button" className="pd-topic-icon pd-topic-info-action"
           aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
           title={mode==="think"?"Topic details":"Description & tips"}
