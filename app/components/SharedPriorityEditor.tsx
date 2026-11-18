@@ -18,7 +18,7 @@ const priorityArt: Record<Priority, string> = {
 };
 const options: Priority[] = ["Core", "High Interest", "Additional"];
 
-function PrioritySymbol({ priority, size = 18 }: {
+export function PrioritySymbol({ priority, size = 18 }: {
   priority: Priority | "Varied" | null;
   size?: number;
 }) {
