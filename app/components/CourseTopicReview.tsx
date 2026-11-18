@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FloatingChoiceMenu from "./FloatingChoiceMenu";
 import { BookOpen, ChevronDown, ChevronRight, Info, Lightbulb, MoreHorizontal, Plus, RotateCcw, SquareCheckBig, UsersRound, Trash2, CircleMinus } from "lucide-react";
 import Link from "next/link";
@@ -63,6 +63,11 @@ export default function CourseTopicReview({
   const sharingIndex = useMemo(() => buildTopicSharingIndex(demo.courses, demo.students),
     [demo.courses, demo.students]);
   const [infoTopicId, setInfoTopicId] = useState<string | null>(null);
+  const [hiddenDetailedTopicIds, setHiddenDetailedTopicIds] = useState<string[]>([]);
+  useEffect(() => {
+    setInfoTopicId(null);
+    setHiddenDetailedTopicIds([]);
+  }, [detailMode]);
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [planningTopicId, setPlanningTopicId] = useState<string | null>(null);
   const [planningOrigin, setPlanningOrigin] = useState<"selected"|"other"|null>(null);
@@ -126,12 +131,15 @@ export default function CourseTopicReview({
 
   function renderTopic(topic: CatalogCourse, isRemoved = false, isOther = false) {
     const infoOpen = detailMode === "detailed"
-      ? infoTopicId !== "hidden:" + topic.id : infoTopicId === topic.id;
+      ? !hiddenDetailedTopicIds.includes(topic.id) : infoTopicId === topic.id;
     const hasDetails = Boolean(topic.description || topic.tips ||
       topic.schedules.length || topic.gradeDisplay || topic.grades.length);
-    const toggleInfo = () => setInfoTopicId(detailMode === "detailed"
-      ? (infoOpen ? "hidden:" + topic.id : null)
-      : (infoOpen ? null : topic.id));
+    const toggleInfo = () => {
+      if (detailMode === "detailed")
+        setHiddenDetailedTopicIds(previous => previous.includes(topic.id)
+          ? previous.filter(id => id !== topic.id) : [...previous, topic.id]);
+      else setInfoTopicId(previous => previous === topic.id ? null : topic.id);
+    };
     const detailsId = "pd-topic-details-" + parent.id + "-" + topic.id;
     const editing = editingTopicId === topic.id;
     const linkedTopic = savedChoice?.topics.find(item => item.topicId === topic.id && item.included);
@@ -198,17 +206,17 @@ export default function CourseTopicReview({
           : <span className="pd-topic-name">
               {selectionMark}{topicTitle}
             </span>}
+        {hasDetails && <button type="button" className="planning-icon-control pd-topic-icon pd-topic-info-action"
+          aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
+          title="Topic details"
+          aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
+          <Info size={14} aria-hidden="true"/>
+        </button>}
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedPriorityEditor courseId={parent.id} topicId={topic.id}
             displayPriority={displayPriority} compact/>}
         {savedChoice && !isOther && !isRemoved && linkedTopic &&
           <SharedArrangementEditor courseId={parent.id} topicId={topic.id} compact/>}
-        {hasDetails && <button type="button" className="planning-icon-control pd-topic-icon pd-topic-info-action"
-          aria-label={(infoOpen?"Hide":"Show")+" details for "+topic.title}
-          title={mode==="think"?"Topic details":"Description & tips"}
-          aria-expanded={infoOpen} aria-controls={detailsId} onClick={toggleInfo}>
-          <Info size={14} aria-hidden="true"/>
-        </button>}
         {mode === "think" && isOther && !isRemoved && !assignedInThisCourse(topic) &&
           <button type="button" className="planning-icon-control pd-topic-icon pd-topic-save-idea"
             title="Add this topic to Think Tank"
