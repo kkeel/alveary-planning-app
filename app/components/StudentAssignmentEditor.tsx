@@ -176,34 +176,6 @@ export default function StudentAssignmentEditor({
     </form>}
 
 
-        <div className="plan-student-list" aria-label="Assign individual students">
-          {demo.students.map(student => {
-            const isAssigned=assigned.has(student.id);
-            return <div className={"plan-student-row" + (isAssigned?" is-assigned":"")}
-              key={student.id}>
-              <label className="plan-student-check">
-                <input type="checkbox" checked={isAssigned}
-                  onChange={event=>setStudentAssignments([student.id],event.target.checked)}/>
-                <span>{student.displayName}</span>
-              </label>
-              {isAssigned && <div className="plan-student-tools">
-                <StudentPriorityControl
-                  courseId={course.courseId} topicId={topicId ?? null}
-                  studentId={student.id} studentName={student.displayName}
-                  onChanged={() => setHasSavedEdits(true)}/>
-                <StudentArrangementControl
-                  courseId={course.courseId} topicId={topicId ?? null}
-                  studentId={student.id} studentName={student.displayName}
-                  onChanged={() => setHasSavedEdits(true)}/>
-              </div>}
-            </div>;
-          })}
-        </div>
-        {!!topicOnlyStudents.length && <p className="plan-microcopy">
-          {topicOnlyStudents.map(student=>student.displayName).join(", ")}
-          {" "}{topicOnlyStudents.length===1?"has":"have"} individual topics selected.
-          Selecting a name above assigns the included course.
-        </p>}
         {groupEditing && <div className="plan-group-form">
           <label htmlFor={fieldId+"-group-name"}>Group name</label>
           <input id={fieldId+"-group-name"} value={groupName} maxLength={50}
@@ -235,6 +207,35 @@ export default function StudentAssignmentEditor({
             Groups are shortcuts. Changing a group doesn't change saved assignments.
           </p>
         </div>}
+
+        <div className="plan-student-list" aria-label="Assign individual students">
+          {demo.students.map(student => {
+            const isAssigned=assigned.has(student.id);
+            return <div className={"plan-student-row" + (isAssigned?" is-assigned":"")}
+              key={student.id}>
+              <label className="plan-student-check">
+                <input type="checkbox" checked={isAssigned}
+                  onChange={event=>setStudentAssignments([student.id],event.target.checked)}/>
+                <span>{student.displayName}</span>
+              </label>
+              {isAssigned && <div className="plan-student-tools">
+                <StudentPriorityControl
+                  courseId={course.courseId} topicId={topicId ?? null}
+                  studentId={student.id} studentName={student.displayName}
+                  onChanged={() => setHasSavedEdits(true)}/>
+                <StudentArrangementControl
+                  courseId={course.courseId} topicId={topicId ?? null}
+                  studentId={student.id} studentName={student.displayName}
+                  onChanged={() => setHasSavedEdits(true)}/>
+              </div>}
+            </div>;
+          })}
+        </div>
+        {!!topicOnlyStudents.length && <p className="plan-microcopy">
+          {topicOnlyStudents.map(student=>student.displayName).join(", ")}
+          {" "}{topicOnlyStudents.length===1?"has":"have"} individual topics selected.
+          Selecting a name above assigns the included course.
+        </p>}
       </div>
     </div>
   </div>;
