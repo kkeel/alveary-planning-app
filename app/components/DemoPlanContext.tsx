@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 import { demoteIfNoAssignedTopics, isTopicAssigned } from "./topic-assignment.mjs";
+import { nextCourseIdeaAll } from "../courses/list-row-status.mjs";
 import catalog from "../courses/catalog-preview.json";
 import { previewTopicsForCourse } from "../courses/optimistic-topics.mjs";
 
@@ -246,13 +247,7 @@ export function DemoPlanProvider({ children }: { children: ReactNode }) {
           // the selection only when every eligible topic was already an idea.
           // Student-assigned topics remain in My Plan and are not counted as
           // pending ideas in this parent context.
-          const eligible=topics.filter(t=>t.included &&
-            !current.students.some(student=>isTopicAssigned(c,t.topicId,student.id)));
-          const selected=(t: SavedTopic)=>t.ideaChoice==="on" ||
-            (t.ideaChoice==="inherit" && c.ideaAll);
-          const hasMissing=eligible.some(t=>!selected(t));
-          const hasSelected=eligible.some(selected);
-          const nextAll=hasMissing || !hasSelected;
+          const nextAll=nextCourseIdeaAll({...c,topics},current.students);
           return {...c,ideaAll:nextAll,
             topics:topics.map(t=>({...t,ideaChoice:"inherit" as const}))};
         }
