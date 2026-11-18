@@ -64,7 +64,7 @@ assert.ok(topics.includes("<PlanningScheduleGradeMeta course={topic}/>"),
 
 // Course + / +All becomes Edit Students in the toolbar; use exactly the same
 // persisted student checkboxes, groups, priorities and Done flow.
-assert.ok(plan.includes('<UsersRound size={14} aria-hidden="true"/>'));
+assert.ok(plan.includes('<UsersRound size={17} aria-hidden="true"/>'));
 assert.ok(plan.includes('Edit students'));
 assert.ok(plan.includes('className="pd-inline-actions" role="group"'));
 assert.ok(plan.includes("toggleStudentEdit(course.courseId,event.currentTarget)"));
