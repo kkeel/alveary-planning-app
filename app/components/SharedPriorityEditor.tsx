@@ -102,7 +102,7 @@ export default function SharedPriorityEditor({
       (shown === "Varied" ? " is-varied" : "") +
       (topicId !== null && topicValue === "inherit" ? " is-inherited" : "")}
     onClick={event=>event.stopPropagation()}>
-    <button type="button" ref={triggerRef} className="priority-control-trigger"
+    <button type="button" ref={triggerRef} className="planning-icon-control priority-control-trigger"
       aria-label={hint} title={hint} aria-expanded={open} aria-controls={id}
       disabled={disabled || !plan.ready}
       onClick={()=>setOpen(value=>!value)}>
