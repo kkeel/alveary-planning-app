@@ -84,14 +84,14 @@ test("Companion is the singular Compass shortcut, not a duplicate navigation ite
     "Companion remains discoverable in search and breadcrumbs");
 });
 
-test("Overview Help me think it through opens priorities immediately and both welcome/navigation returns remain accessible", () => {
+test("Overview Help me think it through opens priorities immediately, while guidance can return to Companion home", () => {
   const page = read("app/components/PlanningCompanionPage.tsx");
   assert.match(home, /href="\/companion" onClick=\{\(\) => companion\.chooseSection\("priorities\/core"\)\}/);
   assert.doesNotMatch(home,/href="\/companion" onClick=\{\(\) => companion\.chooseSection\("welcome"\)\}/);
   assert.match(page, /companion\.section === "welcome" \? <CompanionWelcome/);
   assert.match(page, /companion\.chooseSection\("welcome"\)/);
-  assert.match(page, /className="pc-overview-back"/);
-  assert.match(page, /href="\/" className="pc-overview-back"/);
+  assert.doesNotMatch(page, /pc-overview-back|ALVEARY PLANNING/,
+    "Page navigation and breadcrumbs already provide the way back");
   assert.match(page, /<h1>Your Planning Companion<\/h1>/);
 });
 
@@ -106,4 +106,30 @@ test("Companion colors come from established Alveary tokens rather than a parall
   }
   assert.doesNotMatch(css,/#[a-f\d]{3,8}\b/i,
     "Companion should not introduce a competing set of hard-coded green colors");
+});
+
+test("Companion page matches the ordinary page layout without redundant navigation", () => {
+  const styles = read("app/components/planning-companion.css");
+  const globalStyles = read("app/globals.css");
+  const guide = read("app/components/PlanningCompanionGuide.tsx");
+  assert.match(globalStyles,/\.shell-main \{ flex: 1; padding: 45px 44px 70px;/);
+  assert.match(globalStyles,/h1 \{ font-size: clamp\(32px, 2\.4vw, 39px\)/);
+  assert.match(page, /<h1>Your Planning Companion<\/h1>/);
+  assert.match(page, /<p className="lead">/);
+  assert.match(styles,/\.pc-workspace \{ width:100%; min-width:0; color:var\(--ink\); \}/);
+  assert.doesNotMatch(styles,/\.pc-workspace-heading h1\s*\{/,
+    "The Companion h1 must inherit standard page typography");
+  assert.doesNotMatch(styles,/\.pc-workspace-heading h1 \{ font-size:/);
+  assert.doesNotMatch(page,/ALVEARY PLANNING|pc-overview-back|Planning Overview/);
+  assert.doesNotMatch(page,/pc-workspace-next|Go to Course List|Already know what you want\?/);
+  assert.doesNotMatch(styles,/\.pc-workspace-next/);
+  assert.match(guide,/export function CourseListIcon/);
+  assert.match(guide,/<polygon points="5\.5 20 18 20 19\.5 18\.5 19\.5 3\.5 18 2 5\.5 2 5\.5 20"\/>/);
+  const continueButton = guide.slice(guide.indexOf('<button type="button" onClick={onContinue}>'));
+  assert.ok(continueButton.startsWith('<button type="button" onClick={onContinue}>'));
+  assert.match(continueButton,/^<button type="button" onClick=\{onContinue\}>\s*<CourseListIcon\/>/);
+  assert.match(continueButton,/Continue my planning/);
+  assert.equal((continueButton.match(/<ArrowRight/g)||[]).length,1,
+    "Continue should have only one directional arrow, after its label");
+  assert.match(home,/<CourseListIcon size=\{17\}\/> Continue my planning/);
 });
