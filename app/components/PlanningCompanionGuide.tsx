@@ -94,6 +94,7 @@ export function CompanionPriorities({
       Alveary offers a feast of learning, and the Course List is your menu.
       You don't need everything on your plate to create a rich, well-balanced education.
       Choose what fits your family this year, and leave room for more later.
+      A Charlotte Mason education should fit the child, not force the child to fit the curriculum.
     </p>
     <div className="pc-priority-tabs" role="group" aria-label="Planning priorities">
       {priorities.map(item => <button type="button" key={item.id}
