@@ -97,16 +97,18 @@ a { color: inherit; }
 .announcement-tag span { font-size: 9px; }
 .shell-main { flex: 1; padding: 45px 44px 70px; max-width: 1600px; width: 100%; }
 .shell-page-layout { min-width: 0; flex: 1; }
-/* Give the Companion + mini Planning Desk more room when the workspace
-   allows (roughly 415px with the sidebar open and 430px collapsed).
-   Preserve the Course List as the flexible column. The drawer switch
-   still follows workspace width, not browser width, at 810px. */
+/* Two responsive right-rail sizes: about 450px with the navigation
+   expanded, and up to 520px when it is collapsed. Keep the Course List
+   flexible, and preserve the workspace-based 810px drawer breakpoint. */
 .shell-page-layout.has-planning-desk {
   display:grid;
-  grid-template-columns:minmax(0,1fr) clamp(370px,36%,430px);
+  grid-template-columns:minmax(0,1fr) clamp(370px,39%,465px);
   gap:18px;
   align-items:start;
   padding-right:16px;
+}
+.alveary-shell.is-collapsed .shell-page-layout.has-planning-desk {
+  grid-template-columns:minmax(0,1fr) clamp(370px,41%,520px);
 }
 .shell-page-layout.has-planning-desk .shell-main {
   min-width:0;
