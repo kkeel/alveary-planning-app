@@ -1,16 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowRight, Compass, HeartHandshake, NotebookPen } from "lucide-react";
+import { usePlanningCompanion } from "./PlanningCompanionContext";
+import { usePlanningDesk } from "./PlanningDeskContext";
 import { usePlannerAuth } from "./PlannerAuthProvider";
 
 /** Public browsing is open; member planning entry points use an auth-aware preview. */
 export default function PlanningOverview() {
   const { status, authenticated, planAccess } = usePlannerAuth();
   const signedIn = status === "signed-in";
+  const companion = usePlanningCompanion();
+  const desk = usePlanningDesk();
 
   return <>
     <h1>Planning Overview</h1>
     <p className="lead">Start with what you already know and build your school-year plan from there.</p>
+    {signedIn && <section className="pc-overview-intro" aria-label="Planning Companion starting point">
+      <div className="pc-overview-heading">
+        <Compass size={25} aria-hidden="true"/>
+        <div><h2>Planning a year that fits your family</h2>
+          <p>Choose a little guidance, or start with what you already know. Both are good places to begin.</p></div>
+      </div>
+      <div className="pc-overview-actions">
+        <Link href="/companion" onClick={() => companion.chooseSection("welcome")}>
+          <HeartHandshake size={17} aria-hidden="true"/> Help me think it through <ArrowRight size={15} aria-hidden="true"/>
+        </Link>
+        <Link href="/courses" onClick={() => {
+          desk.setCourseMode("browse");
+          desk.setTab("plan");
+          desk.setQuiet(false);
+          companion.close();
+        }}>
+          <NotebookPen size={17} aria-hidden="true"/> Continue my planning <ArrowRight size={15} aria-hidden="true"/>
+        </Link>
+      </div>
+    </section>}
     <div className="grid">
       {signedIn && <Link className="card" href="/students">
         <h2>Add students</h2><p>Organize students and their grades when you&apos;re ready.</p>
