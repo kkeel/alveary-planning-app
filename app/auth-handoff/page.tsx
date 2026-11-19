@@ -96,8 +96,23 @@ export default function AuthHandoffProofPage() {
         const memberJwt = await sharedMemberstackToken();
         if (!active) return;
         if (!memberJwt) {
-          setPhase("website-needed");
-          setMessage("This browser is not sharing your Alveary website login with the Planning App. You do not need to re-enter your password. The remaining step is enabling the secure website-to-planner handoff on the Alveary testing dashboard.");
+          // Safari does not reliably share Memberstack cookies with the
+          // planner. Kathryn's test-dashboard script can read the website's
+          // own signed member JWT and complete the same PKCE-bound exchange.
+          // Keep the secret verifier on this origin, never in the URL.
+          const verifier = secret();
+          const state = secret();
+          const pkce = await challenge(verifier);
+          if (!active) return;
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+            state, verifier, issued: Date.now(),
+          }));
+          const dashboard = new URL(TEST_DASHBOARD);
+          dashboard.searchParams.set("alveary_handoff_state", state);
+          dashboard.searchParams.set("alveary_handoff_challenge", pkce);
+          setPhase("redirecting");
+          setMessage("Connecting securely through your Alveary dashboard…");
+          window.location.replace(dashboard.toString());
           return;
         }
 
