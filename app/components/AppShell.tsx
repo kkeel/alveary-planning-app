@@ -25,7 +25,6 @@ type NavItem = {
 
 const navigation: NavItem[] = [
   { href: "/", label: "Planning overview", icon: "planning" },
-  { href: "/companion", label: "Planning Companion", icon: "planning" },
   { href: "/students", label: "Students", icon: "students" },
   { href: "/courses", label: "Courses", icon: "courses" },
   { href: "/scheduling", label: "Schedule", icon: "schedule" },
@@ -34,6 +33,9 @@ const navigation: NavItem[] = [
   { href: "/supplies", label: "Supplies", icon: "supplies" },
   { href: "/exams", label: "Exams", icon: "exams" },
 ];
+
+// The Companion is the dedicated shortcut above ordinary page navigation.
+const companionItem: NavItem = { href: "/companion", label: "Planning Companion", icon: "planning" };
 
 const memberOnlyPaths = new Set(["/companion", "/students", "/scheduling", "/lesson-plans", "/exams", "/year-at-a-glance"]);
 
@@ -67,14 +69,14 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const currentPath = pathname.replace(/\/$/, "") || "/";
   // The old /planning URL is a compatibility alias for the new home page.
   const activePath = currentPath === "/planning" ? "/" : currentPath;
-  const current = [...navigation, ...planningItems].find((item) => item.href === activePath);
+  const current = [...navigation, ...planningItems, companionItem].find((item) => item.href === activePath);
   const currentName = current?.label ?? "Planning";
   const [collapsed, setCollapsed] = useState(true); // Start with the slim icon rail; members can expand it any time.
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
   const { courseMode, ready: deskReady } = usePlanningDesk();
-  const { ready: companionReady } = usePlanningCompanion();
+  const { ready: companionReady, chooseSection } = usePlanningCompanion();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
   // Wait for saved view preferences and verified sign-in before rendering the
@@ -84,7 +86,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     (activePath === "/courses" && courseMode === "browse"));
   const showCompanionRail = showDesk && activePath === "/courses";
 
-  const allRoutes = [...navigation, ...planningItems]
+  const allRoutes = [...navigation, ...planningItems, companionItem]
     .filter(item => signedIn || !memberOnlyPaths.has(item.href));
   const matches = search.trim()
     ? allRoutes.filter((item) => item.label.toLowerCase().includes(search.trim().toLowerCase()))
@@ -152,13 +154,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <div className="sidebar-prep-wrap">
-          <Link className="sidebar-prep" href="/" title="Prepare your school year">
+        {signedIn && <div className="sidebar-prep-wrap">
+          <Link className={"sidebar-prep" + (activePath === "/companion" ? " is-active" : "")}
+            href="/companion" aria-current={activePath === "/companion" ? "page" : undefined}
+            title="Planning Companion"
+            onClick={() => { chooseSection("welcome"); setMobileOpen(false); }}>
             <Compass size={17} strokeWidth={1.6} aria-hidden="true" />
-            <span>Prepare your school year</span>
+            <span>Planning Companion</span>
             {!collapsed && <ChevronRight size={15} aria-hidden="true" />}
           </Link>
-        </div>
+        </div>}
 
         <nav className="side-nav" aria-label="Planning pages">
           {navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href)).map(renderItem)}
