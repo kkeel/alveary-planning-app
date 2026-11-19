@@ -62,3 +62,52 @@ Private API checks must validate a genuine Supabase session and its server-trust
 - Do not copy member JWTs, token hashes, email addresses, or secrets into telemetry, URLs or public app assets.
 - Maintain GitHub Pages + Supabase; no Vercel or paid custom domain required.
 - Never modify the 2026–27 app on `planning.alveary.org`.
+
+
+## Staged first-time tester provisioning — PR after launch rule staging
+
+The `memberstack-handoff-proof` Edge Function has an **off-by-default**
+server-side switch `MEMBERSTACK_TEST_AUTO_PROVISION_ENABLED`. Do not set
+it until the schema migration and function deployment are complete and the
+security review/test account is ready.
+
+When enabled, only an ACTIVE 2027–28 **Testing Plan** member whose signed
+Memberstack JWT passed JWKS verification may start the PKCE handoff.
+On redeem, the one-time PKCE code is **atomically consumed** and the active
+Testing Plan rechecked before account creation can occur.
+
+- An existing service-only `memberstack_handoff_test_accounts` mapping
+  is always reused, including existing manually provisioned pilot identities.
+- For a new Memberstack ID, a single permanent unique claim is inserted in
+  `memberstack_tester_provisioning_claims`; concurrent or failed attempts
+  **never automatically steal an existing claim**. Operations requiring
+  recovery fail closed until an operator examines the Auth and mapping records.
+- A Supabase Auth user is created server-side with an opaque non-deliverable
+  internal address under `auth.alveary.invalid`, app metadata restricted to
+  the signed website handoff, and without member-facing verification emails.
+  **The email is merely a limitation of this temporary session adapter.**
+  Memberstack ID controls account selection; member emails are not consulted.
+- Backend binds the created Auth UUID to the verified Memberstack ID, then
+  generates a single-use Auth exchange for a renewable Supabase session.
+  Existing private Edge Functions still validate the signed Supabase caller,
+  the exact server-only mapping, the unchanged account email binding, and the
+  live Memberstack Testing Plan; student/course workspace UUIDs still derive
+  from the Memberstack ID.
+- The new claim table and internal email adapter are **not the production
+  session design**. Before broad release, use an audited session mechanism
+  that removes the possibility of email-provider account recovery, proves
+  revocation behavior, and reconciles prior OIDC Auth identities.
+
+**Rollout checklist:** merge migration and code, apply claim-table migration
+in development, deploy the updated Edge Function, check existing pilot sign-in
+unchanged with the switch absent, then explicitly enable the tester switch
+only after a fresh Testing Plan member is available for the test. Verify
+new tester first access, same member second access, concurrent taps,
+incorrect plans, expiry, revoke, and existing pilot data. Leave all 2027–28
+production Basic/Plus/School grants disabled and keep Kathryn's Webflow
+script unchanged during this stage.
+
+**Recovery:** a failed claimed account is not automatically deleted or
+recreated. Inspect service-only claim and Auth UUID; resolve with an audited
+manual procedure rather than guessing by email or assigning another member's
+workspace.
