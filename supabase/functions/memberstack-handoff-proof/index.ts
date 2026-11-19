@@ -194,6 +194,18 @@ async function getOrProvisionTestAccount(memberId: string,
   if (existing) return existing;
   if (!testerProvisioningEnabled()) return null;
 
+  // This Memberstack member may already have an older Custom OIDC Supabase
+  // identity, even without a pilot handoff mapping. Never silently create
+  // another Auth user and treat that as account reconciliation; the canonical
+  // workspace is stable, but account unification must be explicitly reviewed.
+  const { data: legacyLinks, error: legacyError } = await admin
+    .from("member_identity_links")
+    .select("auth_user_id")
+    .eq("memberstack_member_id", memberId)
+    .limit(1);
+  if (legacyError) throw Error("legacy_identity_lookup_failed");
+  if (legacyLinks?.length) throw Error("legacy_identity_requires_review");
+
   const claim = randomCode();
   const claimHash = await hashHex(claim);
   const { error: claimError } = await admin
