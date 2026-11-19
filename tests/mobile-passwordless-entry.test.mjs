@@ -7,6 +7,29 @@ const page = read("app/auth-handoff/page.tsx");
 const layout = read("app/layout.tsx");
 const fn = read("supabase/functions/memberstack-handoff-proof/index.ts");
 const docs = read("docs/webflow-dashboard-passwordless-handoff.md");
+
+const directClick = read("docs/webflow-dashboard-direct-click-handoff.md");
+// New flow must keep PKCE verifier in the planner tab; the dashboard only
+// receives public state/challenge and issues the existing 60s one-use code.
+assert.ok(page.includes('get("bridge") === "1"'));
+assert.ok(page.includes('window.opener'));
+assert.ok(page.includes('event.source !== opener || event.origin !== origin'));
+assert.ok(page.includes('type: "alveary:planner:ready"'));
+assert.ok(page.includes('type !== "alveary:planner:code"'));
+assert.ok(page.includes('window.sessionStorage.setItem(STORAGE_KEY'));
+assert.ok(page.includes('const pkce = await challenge(verifier)'));
+assert.ok(page.includes('window.location.replace('));
+assert.ok(directClick.includes('window.open('));
+assert.ok(directClick.includes('"auth-handoff/?auto=1&bridge=1"') ||
+  directClick.includes('"/auth-handoff/?auto=1&bridge=1"'));
+assert.ok(directClick.includes('event.origin !== PLANNER_ORIGIN'));
+assert.ok(directClick.includes('authorizedWindows.has(event.source)'));
+assert.ok(directClick.includes('action: "issue", state: payload.state, challenge: payload.challenge'));
+assert.ok(directClick.includes('event.source.postMessage({'));
+assert.ok(!directClick.includes('encodeURIComponent(token)'));
+assert.ok(!directClick.includes('location.replace('));
+assert.ok(directClick.includes('2026–27'));
+
 const launchRules = read("supabase/migrations/20261119161000_register_2027_member_plans_disabled.sql");
 const architecture = read("docs/memberstack-planner-auth-architecture.md");
 // Three official 2027-28 plans must be registered fail-closed, with school
