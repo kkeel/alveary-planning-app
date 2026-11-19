@@ -100,10 +100,12 @@ export function CompanionPriorities({
     <div className="pc-priority-tabs" role="group" aria-label="Planning priorities">
       {priorities.map(item => <button type="button" key={item.id}
         aria-pressed={companion.section === item.id}
+        aria-label={item.label + " Subjects"}
+        title={item.label + " Subjects"}
         className={companion.section === item.id ? "is-current" : ""}
         onClick={() => companion.chooseSection(item.id)}>
         <PrioritySymbol priority={item.label} size={22}/>
-        <span>{item.label}</span>
+        <span className="pc-priority-label" aria-hidden="true">{item.label}</span>
       </button>)}
     </div>
     <div className="pc-priority-guidance">
