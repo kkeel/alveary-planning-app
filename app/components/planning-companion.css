@@ -3,7 +3,7 @@
  * Avoid a second Companion-only green palette. */
 /* The optional Planning Companion complements, never replaces, the
  * Course List or its mini desk. It shares Alveary's warm paper and sage. */
-.pc-workspace { max-width:860px; margin:0 auto 20px; color:var(--ink); }
+.pc-workspace { max-width:860px; margin:0 auto 20px; color:var(--ink); background:var(--paper); }
 .pc-workspace-heading { margin-bottom:23px; }
 .pc-heading-top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
 .pc-heading-top > span { display:flex; align-items:center; gap:10px; color:var(--sage);
