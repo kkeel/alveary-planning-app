@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import Script from "next/script";
+import MemberstackRuntime from "./components/MemberstackRuntime";
 import AppShell from "./components/AppShell";
 import "./globals.css";
 import "./planning-icon-controls.css";
@@ -29,19 +29,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <head>
-        <Script id="memberstack-cross-subdomain-config" strategy="beforeInteractive">
-          {`window.memberstackConfig = { useCookies: true, setCookieOnRootDomain: true };`}
-        </Script>
-        <Script
-          id="alveary-memberstack"
-          strategy="beforeInteractive"
-          src="https://static.memberstack.com/scripts/v2/memberstack.js"
-          data-memberstack-app="app_clbb9rspy00160ujl6tsxbsrj"
-          data-memberstack-use-cookies=""
-        />
-      </head>
       <body className={`${plantin.variable} ${circular.variable}`}>
+        <MemberstackRuntime />
         <AppShell>{children}</AppShell>
       </body>
     </html>
