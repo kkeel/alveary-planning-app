@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
-import { CompanionPriorities, CompanionWelcome } from "./PlanningCompanionGuide";
+import { CompanionPlanYear, CompanionPriorities, CompanionWelcome } from "./PlanningCompanionGuide";
 import "./planning-companion.css";
 
 export default function PlanningCompanionPage() {
@@ -18,6 +18,10 @@ export default function PlanningCompanionPage() {
     desk.setCourseMode("browse");
     companion.openGuide();
     router.push("/courses");
+  }
+  function openScheduling() {
+    companion.minimize();
+    router.push("/scheduling");
   }
   function continueMyPlan() {
     desk.setCourseMode("browse");
@@ -35,15 +39,18 @@ export default function PlanningCompanionPage() {
     <div className="pc-workspace-card">
       {companion.section === "welcome" ? <CompanionWelcome
         onHelp={() => companion.chooseSection("priorities/core")}
-        onContinue={continueMyPlan}/>
+        onContinue={continueMyPlan}
+        onPlanYear={() => companion.chooseSection("plan/year")}/>
         : <>
           <button type="button" className="pc-back" onClick={() => companion.chooseSection("welcome")}>
             <ArrowLeft size={14} aria-hidden="true"/> Companion home
           </button>
           <div className="pc-workspace-guide-heading">
-            <h2>Choosing your priorities</h2>
+            <h2>{companion.section === "plan/year" ? "Plan your year" : "Choosing your priorities"}</h2>
           </div>
-          <CompanionPriorities onBrowse={browseWithGuidance}/>
+          {companion.section === "plan/year"
+            ? <CompanionPlanYear onOpenPlan={continueMyPlan} onOpenSchedule={openScheduling}/>
+            : <CompanionPriorities onBrowse={browseWithGuidance}/>}
         </>}
     </div>
   </div>;
