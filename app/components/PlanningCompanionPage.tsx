@@ -30,9 +30,12 @@ export default function PlanningCompanionPage() {
 
   return <div className="pc-workspace">
     <div className="pc-workspace-heading">
-      <span><Compass size={21} aria-hidden="true"/> YOUR PLANNING COMPANION</span>
-      <h1>A school year that fits your family.</h1>
-      <p>A little guidance whenever you want it. You can explore ideas here, or head directly into the tools and get started.</p>
+      <div className="pc-heading-top">
+        <span><Compass size={21} aria-hidden="true"/> ALVEARY PLANNING</span>
+        <Link href="/" className="pc-overview-back"><ArrowLeft size={14} aria-hidden="true"/> Planning Overview</Link>
+      </div>
+      <h1>Your Planning Companion</h1>
+      <p>A little guidance whenever you want it. Explore ideas here, or head straight into your planning tools.</p>
     </div>
     <div className="pc-workspace-card">
       {companion.section === "welcome" ? <CompanionWelcome

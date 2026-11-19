@@ -23,7 +23,7 @@ export default function PlanningOverview() {
           <p>Choose a little guidance, or start with what you already know. Both are good places to begin.</p></div>
       </div>
       <div className="pc-overview-actions">
-        <Link href="/companion" onClick={() => companion.chooseSection("welcome")}>
+        <Link href="/companion" onClick={() => companion.chooseSection("priorities/core")}>
           <HeartHandshake size={17} aria-hidden="true"/> Help me think it through <ArrowRight size={15} aria-hidden="true"/>
         </Link>
         <Link href="/courses" onClick={() => {
