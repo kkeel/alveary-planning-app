@@ -153,8 +153,9 @@ export function CompanionPlanYear({
       </section>
       <section>
         <strong>Save possibilities in Think Tank</strong>
-        <p>Not ready to include something? Save the course or topic in Think Tank
-          instead of making a separate list. Move it into My Plan when there's room.</p>
+        <p>Not ready to include something? Save the course or topic in Think Tank,
+          where it stays alongside your other planning choices. Move it into My Plan
+          when there's room.</p>
       </section>
       <section>
         <strong>Build a flexible schedule</strong>
