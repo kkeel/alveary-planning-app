@@ -56,9 +56,6 @@
 .pc-reflection div { display:flex; flex-direction:column; gap:5px; }
 .pc-reflection strong { color:var(--sage); font-size:13px; font-weight:650; line-height:1.5; }
 .pc-reflection span { color:var(--muted); font-size:12px; line-height:1.55; }
-.pc-reassurance { display:flex; align-items:flex-start; gap:7px; color:var(--sage);
-  font-size:12px; line-height:1.55; margin:0; }
-.pc-reassurance svg { flex:none; margin-top:2px; }
 /* Light reading surface; the reflective question keeps its softer sage wash.
  * The same original Alveary priority art is used by the Course List controls. */
 .pc-feast-intro { margin:0; color:var(--sage); font-size:14px; line-height:1.65; }
@@ -71,11 +68,10 @@
 .pc-resources[open] summary svg { transform:rotate(180deg); }
 .pc-resources ul { padding:0; margin:11px 0 6px; list-style:none; display:grid; gap:11px; }
 .pc-resources li { display:flex; flex-wrap:wrap; gap:4px 8px; font-size:12px; line-height:1.45; }
-.pc-resources li a,.pc-original-guide { color:var(--sage); font-weight:650;
+.pc-resources li a { color:var(--sage); font-weight:650;
   text-decoration:underline; text-underline-offset:3px; }
-.pc-resources li a:hover,.pc-original-guide:hover { color:var(--ink); }
+.pc-resources li a:hover { color:var(--ink); }
 .pc-resources li span { color:var(--muted); }
-.pc-original-guide { display:inline-block; font-size:12px; margin-top:7px; }
 .pc-primary-action { display:inline-flex; align-items:center; gap:9px; align-self:flex-start;
   padding:10px 14px; border:1px solid var(--sage); border-radius:4px; background:var(--sage);
   color:var(--white); font-size:13px; font-weight:650; cursor:pointer; }
@@ -164,15 +160,13 @@
 .pc-panel .pc-considerations { font-size:12px; margin-left:17px; margin-bottom:12px; }
 .pc-panel .pc-resources summary { font-size:11px; }
 .pc-panel .pc-resources li { font-size:10px; }
-.pc-panel .pc-original-guide { font-size:10px; }
-.pc-panel .pc-priority-tabs button { flex-direction:column; gap:3px; font-size:11px; padding:6px 3px; }
+.pc-panel .pc-panel .pc-priority-tabs button { flex-direction:column; gap:3px; font-size:11px; padding:6px 3px; }
 .pc-panel .pc-priority-guidance { padding:12px; }
 .pc-panel .pc-priority-guidance h3 { font-size:19px; margin-bottom:0; }
 .pc-panel .pc-priority-guidance > p:not(.pc-eyebrow) { font-size:12px; line-height:1.6; margin-bottom:11px; }
 .pc-panel .pc-reflection { padding:10px; }
 .pc-panel .pc-reflection strong { font-size:11px; }
 .pc-panel .pc-reflection span { font-size:10px; }
-.pc-panel .pc-reassurance { font-size:10px; }
 .pc-current-tip h3 { font-size:20px; margin:9px 0; }
 .pc-current-tip p { font-size:12px; line-height:1.65; color:var(--sage); margin:0 0 12px; }
 .pc-current-tip button { border:1px solid var(--line); background:var(--sage-light); color:var(--sage);
