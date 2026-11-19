@@ -84,8 +84,32 @@ assert.ok(fn.includes('await hashHex(code)'));
 assert.ok(fn.includes('pkce_challenge: body.challenge'));
 assert.ok(fn.includes('memberstack_consume_handoff'));
 assert.ok(fn.includes('expires_at: new Date(Date.now() + 60000)'));
-assert.ok(!fn.includes('admin.auth.admin.createUser('),
-  "Automatic pilot must not provision unreviewed synthetic email accounts");
+// New test accounts can be created ONLY behind an explicit off-by-default
+// server setting, after live Memberstack verification and PKCE consumption.
+const claims = read("supabase/migrations/20261119173000_memberstack_tester_provisioning_claims.sql");
+assert.ok(fn.includes('Deno.env.get("MEMBERSTACK_TEST_AUTO_PROVISION_ENABLED") === "true"'),
+  "First-time provisioning must be explicitly activated server-side");
+assert.ok(fn.includes("admin.auth.admin.createUser("),
+  "Eligible first-time testers need a backend-only account creation path");
+assert.ok(fn.includes("const account = await getOrProvisionTestAccount(memberId, admin);"));
+assert.ok(fn.indexOf("memberstack_consume_handoff") <
+  fn.indexOf("const account = await getOrProvisionTestAccount"),
+  "Account creation must follow atomic one-use handoff proof");
+assert.ok(fn.includes("memberstack_tester_provisioning_claims"),
+  "Concurrent first visits must not create multiple Auth users");
+assert.ok(fn.includes('if (claimError.code === "23505")'),
+  "Competing claimant must be refused, not provision a duplicate");
+assert.ok(fn.includes('if (!testerProvisioningEnabled()) return null'),
+  "Feature gate must be closed unless explicitly enabled");
+assert.ok(fn.includes("@auth.alveary.invalid"),
+  "Internal transport address must never be a user's Memberstack email");
+assert.ok(fn.includes('memberstack_app_id: APP_ID'));
+assert.ok(!fn.includes("memberstackEmail"));
+assert.ok(claims.includes("member_id text primary key"));
+assert.ok(claims.includes("enable row level security"));
+assert.ok(claims.includes("revoke all on public.memberstack_tester_provisioning_claims"));
+assert.ok(!claims.includes("security definer"));
+assert.ok(!claims.includes("grant select, insert, update on public.memberstack_tester_provisioning_claims to authenticated"));
 assert.ok(fn.includes('"handoff_pilot_not_enabled"'));
 assert.ok(fn.includes('if (!account) return response(req, 403'));
 
