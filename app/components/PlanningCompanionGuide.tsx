@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ChevronDown, HeartHandshake, Lightbulb, MessageCircleQuestion } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronDown, HeartHandshake, MessageCircleQuestion } from "lucide-react";
 import { PrioritySymbol } from "./SharedPriorityEditor";
 import { usePlanningCompanion, type CompanionSection } from "./PlanningCompanionContext";
 
@@ -18,7 +18,7 @@ export function CourseListIcon({ size = 19 }: { size?: number }) {
 
 type Priority = "Core" | "High Interest" | "Additional";
 type PriorityGuide = {
-  id: Exclude<CompanionSection, "welcome">;
+  id: Exclude<CompanionSection, "welcome" | "plan/year">;
   label: Priority;
   title: string;
   paragraphs: string[];
@@ -34,7 +34,7 @@ const priorities: PriorityGuide[] = [
     id: "priorities/core", label: "Core", title: "Start with what matters most",
     paragraphs: [
       "Begin with subjects required by your state and those your family considers essential, such as Bible, History, Geography, English/Reading, Literature, Science, and Math.",
-      "You can modify a subject to fit your family. For example, grades 4 and up might study only one History stream (World, Ancient, or U.S./Canadian). You might combine students for a subject, such as 2nd and 3rd graders sharing 3rd-grade Science. Make a note of those choices as you plan.",
+      "You can modify a subject to fit your family. For example, grades 4 and up might study only one History stream (World, Ancient, or U.S./Canadian). You might combine students for a subject, such as 2nd and 3rd graders sharing 3rd-grade Science. In My Plan, include the course or topics that fit, and assign students together where it makes sense.",
     ],
     question: "What learning do you most want to protect in your week?",
     suggestion: "Begin with what you already know you want to teach. You can refine the rest as your plan takes shape.",
@@ -61,7 +61,7 @@ const priorities: PriorityGuide[] = [
       "Align with a child's passions or future goals.",
     ],
     question: "Is there anything else you'd particularly like to make room for?",
-    suggestion: "You can keep possibilities in Think Tank and add them when there's room.",
+    suggestion: "Save possibilities in Think Tank while you decide. Move them into My Plan when there's room.",
   },
 ];
 
@@ -95,6 +95,7 @@ export function CompanionPriorities({
       You don't need everything on your plate to create a rich, well-balanced education.
       Choose what fits your family this year, and leave room for more later.
       A Charlotte Mason education should fit the child, not force the child to fit the curriculum.
+      These priorities are optional. None of these labels is required to begin.
     </p>
     <div className="pc-priority-tabs" role="group" aria-label="Planning priorities">
       {priorities.map(item => <button type="button" key={item.id}
@@ -128,14 +129,46 @@ export function CompanionPriorities({
         <div><strong>{selected.question}</strong><span>{selected.suggestion}</span></div>
       </div>
     </div>
-    <p className="pc-reassurance"><Lightbulb size={14} aria-hidden="true"/>
-      You can choose courses now and set priorities later. None of these labels is required.
-    </p>
-    <div className="pc-plan-next">
-      <strong>When you're ready to shape your year</strong>
-      <p>Use the Alveary scheduling tools to arrange the subjects you've chosen.
-        If you'd like to add more later, keep a list of what interests you and why.
-        You can bring those subjects in when time allows.</p>
+    {onBrowse && <button type="button" className="pc-primary-action" onClick={onBrowse}>
+      Browse courses with this guidance <ArrowRight size={15} aria-hidden="true"/>
+    </button>}
+  </div>;
+}
+
+/** A separate, optional library tip. Keep the three priority tips focused on
+ * choosing subjects; this one bridges My Plan, Think Tank and scheduling. */
+export function CompanionPlanYear({
+  compact = false, onOpenPlan, onOpenSchedule,
+}: { compact?: boolean; onOpenPlan: () => void; onOpenSchedule: () => void }) {
+  return <div className={"pc-plan-year" + (compact ? " is-compact" : "")}>
+    <div className="pc-plan-year-intro">
+      <h3>From choices to a workable rhythm</h3>
+      <p>After choosing your subjects, use your Alveary planning tools to shape a year
+        that fits your family. You can begin simply and adjust as you go.</p>
+    </div>
+    <div className="pc-plan-year-steps">
+      <section>
+        <strong>Review My Plan</strong>
+        <p>See the courses and topics you've chosen and who will study them.</p>
+      </section>
+      <section>
+        <strong>Save possibilities in Think Tank</strong>
+        <p>Not ready to include something? Save the course or topic in Think Tank
+          instead of making a separate list. Move it into My Plan when there's room.</p>
+      </section>
+      <section>
+        <strong>Build a flexible schedule</strong>
+        <p>Arrange your chosen subjects with the Schedule Builder. It's a starting point,
+          not a promise that everything will run smoothly on the first day.</p>
+      </section>
+    </div>
+    <div className="pc-plan-year-actions">
+      <button type="button" className="pc-primary-action" onClick={onOpenPlan}>
+        Review My Plan <ArrowRight size={15} aria-hidden="true"/>
+      </button>
+      <button type="button" className="pc-secondary-action" onClick={onOpenSchedule}>
+        Open Schedule Builder <ArrowRight size={15} aria-hidden="true"/>
+      </button>
     </div>
     <details className="pc-resources" open={!compact}>
       <summary>Helpful Alveary resources <ChevronDown size={14} aria-hidden="true"/></summary>
@@ -145,20 +178,13 @@ export function CompanionPriorities({
           <span>{resource.description}</span>
         </li>)}
       </ul>
-      <a className="pc-original-guide" href="https://planning.alveary.org/"
-        target="_blank" rel="noopener noreferrer">
-        Read the full Course Planning Guide
-      </a>
     </details>
-    {onBrowse && <button type="button" className="pc-primary-action" onClick={onBrowse}>
-      Browse courses with this guidance <ArrowRight size={15} aria-hidden="true"/>
-    </button>}
   </div>;
 }
 
 export function CompanionWelcome({
-  onHelp, onContinue, compact = false,
-}: { onHelp: () => void; onContinue: () => void; compact?: boolean }) {
+  onHelp, onContinue, onPlanYear, compact = false,
+}: { onHelp: () => void; onContinue: () => void; onPlanYear: () => void; compact?: boolean }) {
   return <div className={"pc-welcome" + (compact ? " is-compact" : "")}>
     <h3>A school year that fits your family.</h3>
     <p>You don't have to plan everything at once. Start with what you know, explore what matters most, and build from there.</p>
@@ -171,6 +197,14 @@ export function CompanionWelcome({
       <button type="button" onClick={onContinue}>
         <CourseListIcon/>
         <span><strong>Continue my planning</strong><small>Head directly to My Plan and your courses.</small></span>
+        <ArrowRight size={15} aria-hidden="true"/>
+      </button>
+    </div>
+    <div className="pc-tip-library">
+      <h4>Planning tips</h4>
+      <button type="button" onClick={onPlanYear}>
+        <CalendarDays size={18} aria-hidden="true"/>
+        <span><strong>Plan your year</strong><small>Take your chosen subjects into My Plan, Think Tank and Scheduling.</small></span>
         <ArrowRight size={15} aria-hidden="true"/>
       </button>
     </div>
