@@ -13,11 +13,15 @@ const studentPriority=read("app/components/StudentPriorityControl.tsx");
 const contextSwitch=read("app/components/SharedTopicStudentEditor.tsx");
 const globals=read("app/globals.css");
 
-test("Compact, Expanded topic rows, Detailed full content, default Expanded",()=>{
+test("Compact, Expanded topic rows, Detailed full content, Detailed default for Explore/List",()=>{
  for(const value of ['"compact"','"topics"','"detailed"']) assert.match(sw,new RegExp(value));
  for(const label of ["Compact","Expanded","Detailed"]) assert.match(sw,new RegExp(label));
- assert.match(context,/listDetails: "topics", thinkDetails: "topics", planDetails: "topics"/);
+ assert.match(context,/listDetails: "detailed", thinkDetails: "topics", planDetails: "topics"/);
  assert.match(context,/saved\.listDetails === "topics"/);
+  assert.match(context,/saved\.listDetails === "compact" \? "compact" :/,
+    "explicit Compact preference still wins over first-visit Detailed default");
+  assert.match(context,/saved\.listDetails === "topics" \? "topics" : "detailed"/,
+    "explicit Expanded preference still wins; old legacy expanded maps to Detailed");
  assert.match(explorer,/visibleMode !== "compact"/);
  assert.match(explorer,/showFullDetails = visibleMode === "detailed"/);
  assert.match(explorer,/showFullDetails && course\.description/);
