@@ -1,0 +1,151 @@
+/* The optional Planning Companion complements, never replaces, the
+ * Course List or its mini desk. It shares Alveary's warm paper and sage. */
+.pc-workspace { max-width:860px; margin:0 auto 20px; color:#334435; }
+.pc-workspace-heading { margin-bottom:23px; }
+.pc-workspace-heading > span { display:flex; align-items:center; gap:10px; color:#628069;
+  font-size:12px; letter-spacing:.08em; font-weight:700; }
+.pc-workspace-heading h1 { font-family:var(--font-plantin),Georgia,serif;
+  font-weight:200; font-size:clamp(32px,3.4vw,48px); margin:15px 0 10px; }
+.pc-workspace-heading > p { max-width:65ch; color:#586d5b; font-size:15px; line-height:1.65; }
+.pc-workspace-card { border:1px solid #d5dfd1; border-radius:7px; background:#fffefa;
+  padding:clamp(18px,3vw,35px); box-shadow:0 3px 16px #3347330b; }
+.pc-workspace-card .pc-welcome h3 { font-size:27px; }
+.pc-workspace-next { display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:15px; margin-top:22px; color:#637763; font-size:12px; }
+.pc-workspace-next > div { display:flex; align-items:center; gap:10px; max-width:55ch; }
+.pc-workspace-next a { display:inline-flex; align-items:center; gap:7px; color:#42654a;
+  font-weight:650; text-decoration:underline; text-underline-offset:3px; }
+.pc-back { display:inline-flex; align-items:center; gap:7px; color:#68836d; background:transparent;
+  border:0; padding:0 0 15px; font-size:12px; cursor:pointer; }
+.pc-back:hover { color:#365840; text-decoration:underline; }
+.pc-workspace-guide-heading { display:flex; align-items:flex-start; gap:10px; margin-bottom:18px;
+  color:#486a4f; }
+.pc-workspace-guide-heading h2 { color:#2e4333; font-size:26px; margin:0 0 5px; }
+.pc-workspace-guide-heading p { color:#667b69; font-size:13px; line-height:1.6; margin:0; }
+
+/* Shared guide content; no mandatory steps or score-keeping. */
+.pc-welcome h3 { color:#2d4232; font-size:22px; font-weight:400; line-height:1.3; margin:0 0 9px; }
+.pc-welcome > p { color:#526a57; font-size:14px; line-height:1.65; margin:0 0 17px; }
+.pc-welcome-choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.pc-welcome-choices button { display:flex; align-items:center; gap:11px; min-width:0;
+  border:1px solid #dbe5d8; border-radius:5px; background:#fbfcf9;
+  padding:14px 12px; text-align:left; color:#53735a; cursor:pointer; }
+.pc-welcome-choices button:hover { background:#f0f5ee; border-color:#adbea9; }
+.pc-welcome-choices button > span { flex:1; min-width:0; }
+.pc-welcome-choices strong,.pc-welcome-choices small { display:block; }
+.pc-welcome-choices strong { font-size:13px; color:#364b3b; font-weight:650; }
+.pc-welcome-choices small { margin-top:5px; color:#708371; font-size:11px; line-height:1.4; }
+.pc-priorities { display:flex; flex-direction:column; gap:14px; }
+.pc-priority-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px;
+  border:1px solid #dae4d6; border-radius:5px; background:#f0f3eb; padding:3px; }
+.pc-priority-tabs button { min-width:0; border:0; background:transparent; color:#68816a;
+  padding:10px 6px; border-radius:4px; font-size:12px; font-weight:650; cursor:pointer; }
+.pc-priority-tabs button.is-current { background:#fff; color:#385940; box-shadow:0 1px 4px #22332215; }
+.pc-priority-tabs button:hover:not(.is-current) { background:#e6eee3; }
+.pc-priority-guidance { border:1px solid #e2e9de; border-radius:5px; padding:20px;
+  background:#fafbf8; }
+.pc-eyebrow { font-size:11px; letter-spacing:.025em; text-transform:uppercase;
+  font-weight:750; color:#728d75; margin:0 0 6px; }
+.pc-priority-guidance h3 { margin:0 0 12px; font-size:24px; color:#354b39; }
+.pc-priority-guidance > p:not(.pc-eyebrow) { font-size:14px; line-height:1.68; color:#415348; margin:0 0 17px; }
+.pc-reflection { border-top:1px solid #dde7d9; padding-top:14px; display:flex;
+  gap:10px; color:#638569; }
+.pc-reflection div { display:flex; flex-direction:column; gap:5px; }
+.pc-reflection strong { color:#44614a; font-size:13px; font-weight:650; line-height:1.5; }
+.pc-reflection span { color:#718272; font-size:12px; line-height:1.55; }
+.pc-reassurance { display:flex; align-items:flex-start; gap:7px; color:#6c826e;
+  font-size:12px; line-height:1.55; margin:0; }
+.pc-reassurance svg { flex:none; margin-top:2px; }
+.pc-primary-action { display:inline-flex; align-items:center; gap:9px; align-self:flex-start;
+  padding:10px 14px; border:1px solid #54745a; border-radius:4px; background:#5e7b61;
+  color:#fff; font-size:13px; font-weight:650; cursor:pointer; }
+.pc-primary-action:hover { background:#466a50; }
+
+/* Desktop sidebar directly above the mini Planning Desk. */
+.shell-planning-rail { display:flex; flex-direction:column; gap:14px; min-width:0;
+  align-self:start; position:sticky; top:90px; margin-top:45px;
+  max-height:calc(100vh - 103px); }
+.shell-planning-rail > .pd-wrapper { position:static; top:auto; margin-top:0;
+  min-height:0; max-height:none; flex:1 1 auto; }
+.shell-planning-rail > .pd-wrapper > .pd-desk { max-height:100%; }
+.pc-panel { display:flex; flex-direction:column; min-width:0; flex:0 0 auto;
+  max-height:min(46vh,405px); background:#fffefa; border:1px solid #d4dfd0;
+  border-radius:5px; box-shadow:0 3px 13px #2631280d; color:#3b523f; overflow:hidden; }
+.pc-panel-header { display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:12px 12px 10px 14px; border-bottom:1px solid #e6ede3; background:#f7faf5; }
+.pc-panel-header > span { display:inline-flex; align-items:center; gap:8px;
+  font-family:var(--font-plantin),Georgia,serif; font-size:19px; color:#38563e; }
+.pc-panel-header > span svg { color:#66896a; }
+.pc-panel-actions { display:flex; gap:2px; }
+.pc-panel-actions button { border:0; border-radius:4px; background:transparent; color:#728976;
+  display:flex; align-items:center; justify-content:center; width:27px; height:27px; cursor:pointer; }
+.pc-panel-actions button:hover { background:#eaf1e7; color:#385b40; }
+.pc-panel-body { padding:15px; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+.pc-panel-footer { border-top:1px solid #e7ece3; padding:9px 13px;
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  color:#9ba99b; font-size:10px; }
+.pc-panel-footer a { display:inline-flex; align-items:center; gap:6px; color:#5d7b61;
+  text-decoration:underline; text-underline-offset:3px; font-weight:650; font-size:11px; }
+.pc-panel-footer span { text-align:right; }
+.pc-panel .pc-welcome h3 { font-size:18px; }
+.pc-panel .pc-welcome > p { font-size:12px; margin-bottom:12px; }
+.pc-panel .pc-welcome-choices { grid-template-columns:1fr; gap:6px; }
+.pc-panel .pc-welcome-choices button { padding:9px 10px; }
+.pc-panel .pc-welcome-choices button > svg:first-child { width:16px; }
+.pc-panel .pc-welcome-choices small { font-size:10px; }
+.pc-panel .pc-priorities { gap:11px; }
+.pc-panel .pc-priority-tabs button { font-size:11px; padding:7px 3px; }
+.pc-panel .pc-priority-guidance { padding:12px; }
+.pc-panel .pc-priority-guidance h3 { font-size:19px; margin-bottom:9px; }
+.pc-panel .pc-priority-guidance > p:not(.pc-eyebrow) { font-size:12px; line-height:1.6; margin-bottom:11px; }
+.pc-panel .pc-reflection { padding-top:9px; }
+.pc-panel .pc-reflection strong { font-size:11px; }
+.pc-panel .pc-reflection span { font-size:10px; }
+.pc-panel .pc-reassurance { font-size:10px; }
+.pc-current-tip h3 { font-size:20px; margin:9px 0; }
+.pc-current-tip p { font-size:12px; line-height:1.65; color:#516955; margin:0 0 12px; }
+.pc-current-tip button { border:1px solid #c8dac7; background:#f4f8f1; color:#426b49;
+  border-radius:4px; padding:7px 9px; font-size:11px; cursor:pointer; }
+.pc-minimized,.pc-closed button { min-width:0; display:flex; align-items:center; gap:9px;
+  width:100%; border:1px solid #d2dfcd; border-radius:5px; background:#f7faf5;
+  color:#507256; padding:11px 12px; font-size:12px; font-weight:650;
+  text-align:left; cursor:pointer; }
+.pc-minimized > span:first-of-type { flex:1; }
+.pc-minimized:hover,.pc-closed button:hover { background:#edf4e9; }
+.pc-minimized.has-tip { border-color:#b29f72; background:#f8f3e7; color:#745d37; }
+.pc-minimized.has-tip:hover { background:#f2ead7; }
+.pc-tip-indicator { display:inline-flex; align-items:center; gap:4px; font-size:10px;
+  font-weight:700; white-space:nowrap; }
+.pc-closed button { border:0; background:transparent; padding:6px 10px; color:#6d876f; }
+.pc-closed button:hover { background:#f0f5ed; }
+
+/* Reuse existing mini desk drawer pattern instead of competing sticky panels. */
+@container planning-workspace (max-width:810px) {
+  .shell-planning-rail { position:static; max-height:none; margin:0; display:block; }
+  .shell-planning-rail > .pd-wrapper { position:static; max-height:none; flex:none; }
+  .shell-planning-rail > .pd-wrapper > .pd-desk { max-height:none; }
+  .shell-planning-rail .pc-minimized,.shell-planning-rail .pc-closed {
+    position:fixed; bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+    right:86px; z-index:72; width:auto; max-width:calc(100vw - 168px);
+    padding:12px 10px; box-shadow:0 3px 16px #26312820; }
+  .shell-planning-rail .pc-minimized > span:first-of-type { white-space:nowrap; }
+  .shell-planning-rail .pc-panel.is-open {
+    position:fixed; z-index:100; top:82px; right:12px;
+    bottom:calc(85px + env(safe-area-inset-bottom, 0px));
+    width:min(380px,calc(100vw - 24px)); max-height:none;
+    box-shadow:0 10px 35px #20352035; }
+  .shell-planning-rail .pc-panel.is-open .pc-panel-body { flex:1 1 auto; max-height:none; }
+  .shell-planning-rail:has(.pc-panel.is-open) .pd-mobile-launcher { display:none; }
+  .shell-planning-rail:has(.pd-wrapper.is-mobile-open) .pc-minimized,
+  .shell-planning-rail:has(.pd-wrapper.is-mobile-open) .pc-closed { display:none; }
+}
+@media(max-width:600px) {
+  .pc-welcome-choices { grid-template-columns:1fr; }
+  .pc-workspace-heading h1 { font-size:34px; }
+  .pc-workspace-card { padding:15px; }
+  .pc-priority-guidance { padding:14px; }
+}
+@media print {
+  .pc-panel,.pc-minimized,.pc-closed { display:none !important; }
+  .shell-planning-rail { display:none !important; }
+}
