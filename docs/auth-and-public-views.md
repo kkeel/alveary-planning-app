@@ -76,3 +76,31 @@ The public/Planning shell now consumes a single Supabase Auth session state thro
 ### SSO retest
 
 Memberstack Custom SSO now has both Skip authorization screen and Skip login for members already signed in enabled, with the website check URL set to `https://www.alveary.org/`. The extra login screenshot shows Chrome **Incognito**; confirm whether the Alveary website session was established **in the same Incognito window**. Separate normal/incognito browser contexts do not share cookies. If the same-context test still prompts again, confirm the website URL truly loads Memberstack and compare canonical `www` vs non-`www` host; check Memberstack-hosted auth behavior. The logged-in test arriving "Signed in" establishes basic OIDC auth completion only; verification-email and member entitlement rules are separate unresolved tasks.
+
+
+## November 19 — Explicit no-login public website links
+
+**Use these links on public pages of the Alveary website:**
+- Course List: `https://plan.alveary.org/public/courses/`
+- Book List: `https://plan.alveary.org/public/books/` (currently a visible coming-soon placeholder)
+
+These are intentionally separate from the member planner's `/courses/` and `/books/` routes. Public links:
+- render the Course List in read-only browsing mode;
+- do **not** restore a Supabase session, invoke the `memberstack-plan-access` verification, load the Memberstack browser SDK, or initiate a login handoff;
+- do not show the planning sign-in, eligibility status or connecting screen;
+- link between the public Course List and Book List without leaving public browsing.
+
+Do **not** use `?connect=1` on public links. That parameter is reserved for
+an explicit member-dashboard sign-in action. Landing from a particular Webflow
+referrer **no longer** initiates a member handoff by itself. A logged-in planner
+session is not sufficient to expose private data from a public route: the public
+provider explicitly supplies no authenticated identity, and private member
+queries remain disabled. This is *not* a substitute for server-side entitlement
+checks on actual private API calls.
+
+**Member path remains unchanged:** the member dashboard's dedicated planning
+entry can continue to use the authenticated flow (including its intentional
+`?connect=1` handoff). This preserves My Plan and student assignments.
+
+The public Book List does not yet contain its forthcoming full catalog.
+Do not promote it as a finished browsing tool.
