@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, HeartHandshake, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, HeartHandshake, Lightbulb, MessageCircleQuestion } from "lucide-react";
+import { PrioritySymbol } from "./SharedPriorityEditor";
 import { usePlanningCompanion, type CompanionSection } from "./PlanningCompanionContext";
 
 /** Matches the app's existing Course List navigation icon, in button text color. */
@@ -14,28 +15,71 @@ export function CourseListIcon({ size = 19 }: { size?: number }) {
   </svg>;
 }
 
-const priorities: { id: Exclude<CompanionSection, "welcome">; label: string; title: string;
-  lead: string; description: string; question: string; suggestion: string }[] = [
+
+type Priority = "Core" | "High Interest" | "Additional";
+type PriorityGuide = {
+  id: Exclude<CompanionSection, "welcome">;
+  label: Priority;
+  title: string;
+  paragraphs: string[];
+  considerations?: string[];
+  question: string;
+  suggestion: string;
+};
+
+// Based on Alveary's Course Planning Guide. Keep the useful examples and
+// linked resources, rather than replacing them with generic priority advice.
+const priorities: PriorityGuide[] = [
   {
     id: "priorities/core", label: "Core", title: "Start with what matters most",
-    lead: "Core Subjects",
-    description: "Consider the subjects required by your state and the learning your family sees as essential. Some subjects may be simplified or combined between students. Core is a family decision, not a universal list every member must complete.",
+    paragraphs: [
+      "Begin with subjects required by your state and those your family considers essential, such as Bible, History, Geography, English/Reading, Literature, Science, and Math.",
+      "You can modify a subject to fit your family. For example, grades 4 and up might study only one History stream (World, Ancient, or U.S./Canadian). You might combine students for a subject, such as 2nd and 3rd graders sharing 3rd-grade Science. Make a note of those choices as you plan.",
+    ],
     question: "What learning do you most want to protect in your week?",
-    suggestion: "Begin with what you already know you'd like to teach. You can refine the rest as your plan takes shape.",
+    suggestion: "Begin with what you already know you want to teach. You can refine the rest as your plan takes shape.",
   },
   {
-    id: "priorities/interest", label: "High Interest", title: "Make room for delight",
-    lead: "High Interest Subjects",
-    description: "Notice which subjects especially capture your children's interest. You may enjoy one all year, rotate subjects by term, or spread a term's lessons over a longer period.",
+    id: "priorities/interest", label: "High Interest",
+    title: "Make room for delight",
+    paragraphs: [
+      "Choose a few subjects that spark interest for each child or that your whole family would enjoy together.",
+      "You can enjoy a subject all year or rotate topics by term. For example, Shakespeare, Plutarch, and Composer Study could each have a term rather than filling a whole year. Or spread a term of lessons across two terms for a slower pace. Art Instruction and Singing can work especially well that way.",
+    ],
     question: "What would your children particularly love to explore?",
-    suggestion: "A rich school year doesn't require every wonderful subject every week.",
+    suggestion: "You can enjoy a rich feast without serving every subject each week.",
   },
   {
-    id: "priorities/additional", label: "Additional", title: "Consider what else is meaningful",
-    lead: "Additional Subjects",
-    description: "Think about family interests, high school credits, and future goals. Some subjects may come from outside Alveary, and others may be better saved for another term or year.",
+    id: "priorities/additional", label: "Additional",
+    title: "Consider what else is meaningful",
+    paragraphs: [
+      "Review the remaining subjects and choose one or two that feel especially important but aren't included yet. Consider those that:",
+    ],
+    considerations: [
+      "Fulfill high school credit requirements.",
+      "Reflect your family's priorities or interests.",
+      "Align with a child's passions or future goals.",
+    ],
     question: "Is there anything else you'd particularly like to make room for?",
-    suggestion: "You can save ideas in Think Tank before deciding whether they fit in My Plan.",
+    suggestion: "You can keep possibilities in Think Tank and add them when there's room.",
+  },
+];
+
+const planningResources = [
+  {
+    title: "Relational Education",
+    description: "See which subjects are intertwined.",
+    href: "https://www.alveary.org/whats-new/a-relational-education",
+  },
+  {
+    title: "Balancing the Feast",
+    description: "Discover the value of often-overlooked subjects.",
+    href: "https://www.alveary.org/whats-new/balancing-the-feast",
+  },
+  {
+    title: "Tips for Combining Students",
+    description: "Consider practical ways to teach together.",
+    href: "https://www.alveary.org/whats-new/tips-for-combining-students",
   },
 ];
 
@@ -44,25 +88,67 @@ export function CompanionPriorities({
 }: { compact?: boolean; onBrowse?: () => void }) {
   const companion = usePlanningCompanion();
   const selected = priorities.find(item => item.id === companion.section) ?? priorities[0];
+
   return <div className={"pc-priorities" + (compact ? " is-compact" : "")}>
+    <p className="pc-feast-intro">
+      Alveary offers a feast of learning, and the Course List is your menu.
+      You don't need everything on your plate to create a rich, well-balanced education.
+      Choose what fits your family this year, and leave room for more later.
+    </p>
     <div className="pc-priority-tabs" role="group" aria-label="Planning priorities">
       {priorities.map(item => <button type="button" key={item.id}
         aria-pressed={companion.section === item.id}
         className={companion.section === item.id ? "is-current" : ""}
-        onClick={() => companion.chooseSection(item.id)}>{item.label}</button>)}
+        onClick={() => companion.chooseSection(item.id)}>
+        <PrioritySymbol priority={item.label} size={22}/>
+        <span>{item.label}</span>
+      </button>)}
     </div>
     <div className="pc-priority-guidance">
-      <p className="pc-eyebrow">{selected.lead}</p>
-      <h3>{selected.title}</h3>
-      <p>{selected.description}</p>
+      <div className="pc-priority-heading">
+        <PrioritySymbol priority={selected.label} size={compact ? 43 : 58}/>
+        <div>
+          <p className="pc-eyebrow">{selected.label} Subjects</p>
+          <h3>{selected.title}</h3>
+        </div>
+      </div>
+      {selected.paragraphs.map((paragraph, index) =>
+        <p key={index}>{paragraph}</p>)}
+      {selected.considerations && <ul className="pc-considerations">
+        {selected.considerations.map(item => <li key={item}>{item}</li>)}
+      </ul>}
+      {selected.id === "priorities/additional" && <p>
+        Some possibilities use Alveary resources without daily lesson plans
+        (such as cooking or car maintenance), or resources outside Alveary
+        (such as co-op classes or ACT preparation).
+      </p>}
       <div className="pc-reflection">
-        <Sparkles size={15} aria-hidden="true"/>
+        <MessageCircleQuestion size={18} aria-hidden="true"/>
         <div><strong>{selected.question}</strong><span>{selected.suggestion}</span></div>
       </div>
     </div>
     <p className="pc-reassurance"><Lightbulb size={14} aria-hidden="true"/>
       You can choose courses now and set priorities later. None of these labels is required.
     </p>
+    <div className="pc-plan-next">
+      <strong>When you're ready to shape your year</strong>
+      <p>Use the Alveary scheduling tools to arrange the subjects you've chosen.
+        If you'd like to add more later, keep a list of what interests you and why.
+        You can bring those subjects in when time allows.</p>
+    </div>
+    <details className="pc-resources" open={!compact}>
+      <summary>Helpful Alveary resources <ChevronDown size={14} aria-hidden="true"/></summary>
+      <ul>
+        {planningResources.map(resource => <li key={resource.href}>
+          <a href={resource.href} target="_blank" rel="noopener noreferrer">{resource.title}</a>
+          <span>{resource.description}</span>
+        </li>)}
+      </ul>
+      <a className="pc-original-guide" href="https://planning.alveary.org/"
+        target="_blank" rel="noopener noreferrer">
+        Read the full Course Planning Guide
+      </a>
+    </details>
     {onBrowse && <button type="button" className="pc-primary-action" onClick={onBrowse}>
       Browse courses with this guidance <ArrowRight size={15} aria-hidden="true"/>
     </button>}
