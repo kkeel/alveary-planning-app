@@ -41,15 +41,6 @@ function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get(ENTRY_QUERY) === "1";
 }
-function fromAlvearyTestDashboard(): boolean {
-  if (typeof document === "undefined" || !document.referrer) return false;
-  try {
-    const referrer = new URL(document.referrer);
-    return referrer.protocol === "https:" &&
-      (referrer.hostname === "alveary.org" || referrer.hostname === "www.alveary.org") &&
-      /^\/alveary-2027-2028\/dashboard-test\/?$/.test(referrer.pathname);
-  } catch { return false; }
-}
 function clearEntryIntent() {
   if (typeof window === "undefined") return;
   const current = new URL(window.location.href);
@@ -170,8 +161,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           setStarting(false);
           setError("Sign-in returned without a planning session. Please try Alveary SSO again.");
           clearEntryIntent();
-        } else if (!isHandoffProofRoute() &&
-                   (memberEntryIntent() || fromAlvearyTestDashboard())) {
+        } else if (!isHandoffProofRoute() && memberEntryIntent()) {
           // The Alveary dashboard should NEVER send a logged-in member to
           // the hosted Memberstack password page. First attempt a signed
           // member-token handoff on the planner's own subdomain; where the

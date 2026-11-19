@@ -76,3 +76,37 @@ The public/Planning shell now consumes a single Supabase Auth session state thro
 ### SSO retest
 
 Memberstack Custom SSO now has both Skip authorization screen and Skip login for members already signed in enabled, with the website check URL set to `https://www.alveary.org/`. The extra login screenshot shows Chrome **Incognito**; confirm whether the Alveary website session was established **in the same Incognito window**. Separate normal/incognito browser contexts do not share cookies. If the same-context test still prompts again, confirm the website URL truly loads Memberstack and compare canonical `www` vs non-`www` host; check Memberstack-hosted auth behavior. The logged-in test arriving "Signed in" establishes basic OIDC auth completion only; verification-email and member entitlement rules are separate unresolved tasks.
+
+
+## November 19 — Canonical shared public/member catalog URLs
+
+**Use exactly these links for both public Alveary website visitors and members:**
+- Course List: `https://plan.alveary.org/courses/`
+- Book List: `https://plan.alveary.org/books/` (currently a public coming-soon placeholder)
+
+The same URL is the public entrypoint: the course catalog renders immediately as
+browse-only content even when the planner is still restoring a cached session.
+There is **no full-page Connecting to Alveary or membership-check gate** on
+Course List / Book List. These pages show neither a sign-in banner nor any
+private member data while access has not been established.
+
+When a member already has a planner session, the existing Supabase session
+restoration and server-side current-year entitlement check can upgrade the
+same page with verified member-only planning tools. No automatic login flow is
+initiated for anonymous visitors. Real private API calls remain subject to
+server-side plan verification.
+
+- The Memberstack browser SDK loads on the explicit `/auth-handoff/` path only;
+  it does **not** load when anonymously browsing /courses/ or /books/.
+- `?connect=1` is the deliberate member entry and remains reserved for
+  website member-dashboard integrations. An Alveary Webflow referrer alone
+  never initiates authentication.
+- Do not add alternate `/public/courses` or `/public/books` paths.
+- When the Book List adds product links, ensure the Amazon Associates links and
+  their original accompanying content are reachable in a fresh private browser
+  session without login. The Book List currently has no finished public
+  content, so it should not be promoted as a finished affiliate surface.
+
+The Amazon Associates Site list should include the publicly accessible
+origin/page where affiliate links are actually shown; recording extra URLs
+does not make gated content compliant.

@@ -79,9 +79,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const { ready: companionReady, chooseSection } = usePlanningCompanion();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
-  // Wait for saved view preferences and verified sign-in before rendering the
-  // member workspace. Do not reset a previously selected Planning view.
-  const checking = status === "checking" || !deskReady || !companionReady;
+  // Catalog pages must be viewable immediately without asking visitors to
+  // establish membership. Existing member sessions still verify in the
+  // background before we reveal any private planning controls.
+  const publicCatalog = activePath === "/courses" || activePath === "/books";
+  const checking = !publicCatalog &&
+    (status === "checking" || !deskReady || !companionReady);
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
   const showCompanionRail = showDesk && activePath === "/courses";
@@ -117,9 +120,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
     setSearchActive(false);
   }
 
-  // Do not render public navigation, list pages, or private links while
-  // restoring the SSO session AND verifying the current-year plan.
-  // This single calm screen replaces the public-to-member flash.
+  // Gating belongs to private planning pages, never to public catalogs.
+  // Course and Book Lists remain visible during a background member check.
   if (checking) {
     return <div className="alveary-connecting" role="status" aria-live="polite">
       <div className="alveary-connecting-content">
@@ -258,7 +260,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <AuthStatusBar />
+        {!publicCatalog && <AuthStatusBar />}
 
         <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "") +
           (showCompanionRail ? " has-companion-rail" : "")}>
