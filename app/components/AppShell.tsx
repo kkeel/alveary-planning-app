@@ -12,6 +12,7 @@ import PlanningCompanionPanel from "./PlanningCompanionPanel";
 import { PlanningCompanionProvider, usePlanningCompanion } from "./PlanningCompanionContext";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
 import { DemoPlanProvider } from "./DemoPlanContext";
+import { isPublicCatalogPath } from "./public-catalog-routes";
 import {
   ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
@@ -68,7 +69,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const currentPath = pathname.replace(/\/$/, "") || "/";
   // The old /planning URL is a compatibility alias for the new home page.
-  const activePath = currentPath === "/planning" ? "/" : currentPath;
+  const publicOnly = isPublicCatalogPath(currentPath);
+  // The public URL is a separate browsing experience, not an authenticated
+  // member route. Match its normal catalog name and navigation icon.
+  const activePath = publicOnly ? currentPath.slice("/public".length)
+    : currentPath === "/planning" ? "/" : currentPath;
   const current = [...navigation, ...planningItems, companionItem].find((item) => item.href === activePath);
   const currentName = current?.label ?? "Planning";
   const [collapsed, setCollapsed] = useState(true); // Start with the slim icon rail; members can expand it any time.
@@ -81,13 +86,21 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const signedIn = status === "signed-in";
   // Wait for saved view preferences and verified sign-in before rendering the
   // member workspace. Do not reset a previously selected Planning view.
-  const checking = status === "checking" || !deskReady || !companionReady;
+  const checking = !publicOnly && (status === "checking" || !deskReady || !companionReady);
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
   const showCompanionRail = showDesk && activePath === "/courses";
+  const returnUrl = publicOnly ? "https://www.alveary.org/" : alvearyReturnUrl;
+  const returnLabel = publicOnly ? "Alveary website" : alvearyReturnLabel;
 
-  const allRoutes = [...navigation, ...planningItems, companionItem]
-    .filter(item => signedIn || !memberOnlyPaths.has(item.href));
+  const visibleNavigation = publicOnly
+    ? navigation.filter(item => item.href === "/courses" || item.href === "/books")
+    : navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href));
+  const publicRouteHref = (href: string) =>
+    publicOnly && (href === "/courses" || href === "/books") ? "/public" + href : href;
+  const allRoutes = (publicOnly ? visibleNavigation : [...navigation, ...planningItems, companionItem]
+    .filter(item => signedIn || !memberOnlyPaths.has(item.href)))
+    .map(item => ({ ...item, href: publicRouteHref(item.href) }));
   const matches = search.trim()
     ? allRoutes.filter((item) => item.label.toLowerCase().includes(search.trim().toLowerCase()))
     : [];
@@ -96,7 +109,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     const active = activePath === item.href;
     return (
       <Link
-        href={item.href}
+        href={publicRouteHref(item.href)}
         key={item.href}
         className={`side-link ${active ? "is-active" : ""}`}
         aria-current={active ? "page" : undefined}
@@ -166,7 +179,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </div>}
 
         <nav className="side-nav" aria-label="Planning pages">
-          {navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href)).map(renderItem)}
+          {visibleNavigation.map(renderItem)}
           {signedIn && <>
             <div className="side-divider" />
             <p className="side-group-heading">Your planning workspace</p>
@@ -175,9 +188,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="sidebar-bottom">
-          <a className="sidebar-return" href={alvearyReturnUrl}>
+          <a className="sidebar-return" href={returnUrl}>
             <ArrowLeft size={17} aria-hidden="true" />
-            <span>Return to {alvearyReturnLabel}</span>
+            <span>Return to {returnLabel}</span>
           </a>
           <div className="sidebar-preview">
             <span className="preview-dot" aria-hidden="true" />
@@ -198,15 +211,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
             >
               {mobileOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
-            <a href={alvearyReturnUrl} className="breadcrumb-alveary" title="Return to member dashboard">Alveary</a>
+            <a href={returnUrl} className="breadcrumb-alveary" title={"Return to " + returnLabel}>Alveary</a>
             <ChevronRight size={13} aria-hidden="true" />
-            <Link href="/">Planning</Link>
+            <Link href={publicOnly ? "/public/courses" : "/"}>{publicOnly ? "Explore" : "Planning"}</Link>
             <ChevronRight size={13} aria-hidden="true" />
             <strong>{currentName}</strong>
           </div>
 
           <div className="shell-top-actions">
-            <AppSaveStatus />
+            {!publicOnly && <AppSaveStatus />}
             <form
               className="page-search"
               role="search"
@@ -249,16 +262,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
             </form>
             <a
               className="topbar-return topbar-return-icon"
-              href={alvearyReturnUrl}
-              title="Return to Alveary member dashboard"
-              aria-label="Return to Alveary member dashboard"
+              href={returnUrl}
+              title={"Return to " + returnLabel}
+              aria-label={"Return to " + returnLabel}
             >
               <img src={iconUrl("dashboard")} width={21} height={21} alt="" aria-hidden="true" />
             </a>
           </div>
         </header>
 
-        <AuthStatusBar />
+        {!publicOnly && <AuthStatusBar />}
 
         <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "") +
           (showCompanionRail ? " has-companion-rail" : "")}>
@@ -274,7 +287,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div> : showDesk && <PlanningDesk />}
         </div>
         <footer className="shell-footer">
-          Alveary Planning · Development preview · Not the live member planner
+          {publicOnly ? "Alveary curriculum · Public browsing · No sign-in required"
+            : "Alveary Planning · Development preview · Not the live member planner"}
         </footer>
       </div>
     </div>
@@ -299,5 +313,9 @@ function SessionPlanningShell({ children }: { children: ReactNode }) {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  return <PlannerAuthProvider><SessionPlanningShell>{children}</SessionPlanningShell></PlannerAuthProvider>;
+  const pathname = usePathname();
+  const publicOnly = isPublicCatalogPath(pathname);
+  return <PlannerAuthProvider publicOnly={publicOnly}>
+    <SessionPlanningShell>{children}</SessionPlanningShell>
+  </PlannerAuthProvider>;
 }
