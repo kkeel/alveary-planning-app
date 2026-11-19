@@ -149,3 +149,23 @@
   .pc-panel,.pc-minimized,.pc-closed { display:none !important; }
   .shell-planning-rail { display:none !important; }
 }
+
+/* A gentle initial choice on the existing Planning Overview page. */
+.pc-overview-intro { margin:20px 0 27px; padding:20px 22px; background:#fafcf8;
+  border:1px solid #d9e4d4; border-radius:6px; }
+.pc-overview-heading { display:flex; align-items:flex-start; gap:12px; color:#678b6c; }
+.pc-overview-heading h2 { margin:0 0 8px; color:#304932; font-size:25px; font-weight:400; }
+.pc-overview-heading p { margin:0; font-size:13px; color:#637965; line-height:1.6; }
+.pc-overview-actions { display:flex; gap:10px; margin:16px 0 0 37px; flex-wrap:wrap; }
+.pc-overview-actions a { display:inline-flex; align-items:center; gap:8px; border:1px solid #b8cbb4;
+  padding:10px 14px; border-radius:4px; text-decoration:none; font-size:12px; font-weight:650;
+  color:#456b4b; background:#fffefa; }
+.pc-overview-actions a:first-child { color:white; background:#5b7d61; border-color:#5b7d61; }
+.pc-overview-actions a:hover { background:#ecf4e9; }
+.pc-overview-actions a:first-child:hover { background:#496b50; }
+@media(max-width:600px) {
+  .pc-overview-intro { padding:15px; }
+  .pc-overview-heading h2 { font-size:22px; }
+  .pc-overview-actions { margin-left:0; }
+  .pc-overview-actions a { width:100%; justify-content:center; }
+}
