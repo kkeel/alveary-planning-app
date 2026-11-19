@@ -107,8 +107,10 @@ test("Companion colors come from established Alveary tokens rather than a parall
   for(const token of ["--surface","--ink","--sage","--sage-light","--olive","--line"]) {
     assert.ok(css.includes("var("+token+")"),"Companion should use existing "+token+" token");
   }
-  assert.doesNotMatch(css,/#[a-f\d]{3,8}\b/i,
-    "Companion should not introduce a competing set of hard-coded green colors");
+  assert.match(css,/\.pc-priority-guidance \{[^}]*background:#fbfbf9;/,
+    "The user-requested near-white reading surface is the one deliberate exception");
+  assert.doesNotMatch(css.replace(/#fbfbf9/gi,""),/#[a-f\d]{3,8}\b/i,
+    "Companion should not introduce other competing hard-coded colors");
 });
 
 test("Companion page matches the ordinary page layout without redundant navigation", () => {
@@ -135,4 +137,48 @@ test("Companion page matches the ordinary page layout without redundant navigati
   assert.equal((continueButton.match(/<ArrowRight/g)||[]).length,1,
     "Continue should have only one directional arrow, after its label");
   assert.match(home,/<CourseListIcon size=\{17\}\/> Continue my planning/);
+});
+
+test("Priority guidance uses existing Alveary illustrations and quieter question icon", () => {
+  const shared = read("app/components/SharedPriorityEditor.tsx");
+  assert.match(shared,/Core%20Subjects\.png/);
+  assert.match(shared,/High%20Interest%20Subjects\.png/);
+  assert.match(shared,/Additional%20Subjects\.png/);
+  assert.match(guide,/import \{ PrioritySymbol \} from "\.\/SharedPriorityEditor";/);
+  assert.match(guide,/<PrioritySymbol priority=\{item\.label\} size=\{22\}\/>/,
+    "Each priority toggle should show its corresponding Alveary illustration");
+  assert.match(guide,/<PrioritySymbol priority=\{selected\.label\} size=\{compact \? 43 : 58\}\/>/,
+    "The tip card must show the selected category's actual artwork");
+  assert.match(guide,/<MessageCircleQuestion size=\{18\} aria-hidden="true"\/>/);
+  assert.doesNotMatch(guide,/Sparkles/,
+    "The reflection question should not use decorative stars");
+  assert.doesNotMatch(page,/<BookOpen|import \{ ArrowLeft, BookOpen/,
+    "Choosing your priorities needs a title but no decorative book icon");
+  assert.match(css,/\.pc-reflection \{[^}]*background:color-mix\(in srgb,var\(--sage-light\) 42%,var\(--surface\)\)/);
+});
+
+test("Companion keeps the Course Planning Guide's concrete examples and verified resource links", () => {
+  for(const phrase of [
+    "A Charlotte Mason education should fit the child",
+    "feast of learning, and the Course List is your menu",
+    "English/Reading, Literature, Science, and Math",
+    "one History stream",
+    "2nd and 3rd graders",
+    "Shakespeare, Plutarch, and Composer Study",
+    "Art Instruction and Singing",
+    "high school credit requirements",
+    "cooking or car maintenance",
+    "co-op classes or ACT preparation",
+    "Alveary scheduling tools",
+    "keep a list of what interests you and why",
+  ]) assert.ok(guide.includes(phrase), "Missing Course Planning Guide content: " + phrase);
+  for(const url of [
+    "https://www.alveary.org/whats-new/a-relational-education",
+    "https://www.alveary.org/whats-new/balancing-the-feast",
+    "https://www.alveary.org/whats-new/tips-for-combining-students",
+    "https://planning.alveary.org/",
+  ]) assert.ok(guide.includes(url), "Missing verified Alveary resource link: " + url);
+  assert.match(guide,/<details className="pc-resources" open=\{!compact\}>/,
+    "Resource links should remain accessible without crowding the small mini desk");
+  assert.match(guide,/rel="noopener noreferrer"/);
 });
