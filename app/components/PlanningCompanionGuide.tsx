@@ -3,6 +3,17 @@
 import { ArrowRight, HeartHandshake, Lightbulb, Sparkles } from "lucide-react";
 import { usePlanningCompanion, type CompanionSection } from "./PlanningCompanionContext";
 
+/** Matches the app's existing Course List navigation icon, in button text color. */
+export function CourseListIcon({ size = 19 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth={1.5} strokeMiterlimit={10}
+    aria-hidden="true" focusable="false">
+    <polygon points="5.5 20 18 20 19.5 18.5 19.5 3.5 18 2 5.5 2 5.5 20"/>
+    <line x1="9" y1="20" x2="9" y2="22.5"/>
+    <line x1="15" y1="2" x2="15" y2="20"/>
+  </svg>;
+}
+
 const priorities: { id: Exclude<CompanionSection, "welcome">; label: string; title: string;
   lead: string; description: string; question: string; suggestion: string }[] = [
   {
@@ -71,7 +82,7 @@ export function CompanionWelcome({
         <ArrowRight size={15} aria-hidden="true"/>
       </button>
       <button type="button" onClick={onContinue}>
-        <ArrowRight size={19} aria-hidden="true"/>
+        <CourseListIcon/>
         <span><strong>Continue my planning</strong><small>Head directly to My Plan and your courses.</small></span>
         <ArrowRight size={15} aria-hidden="true"/>
       </button>
