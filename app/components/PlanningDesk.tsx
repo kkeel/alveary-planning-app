@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
+import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
 import type { CSSProperties } from "react";
@@ -43,6 +44,7 @@ const sorted = (a: CatalogPlan, b: CatalogPlan) =>
 
 export default function PlanningDesk({ variant = "portable" }: { variant?: "portable" | "full" }) {
   const desk = usePlanningDesk();
+  const companion = usePlanningCompanion();
   const cloud = useDemoPlan();
   const pathname = usePathname();
   const router = useRouter();
@@ -55,6 +57,10 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const [hiddenDetailedCourseIds, setHiddenDetailedCourseIds] = useState<string[]>([]);
   const moreButtons=useRef<Map<string,HTMLButtonElement>>(new Map());
   const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    // Only one portable help drawer should be open on narrow screens.
+    if (!onBooks && companion.visibility === "open" && drawerOpen) setDrawerOpen(false);
+  }, [onBooks, companion.visibility, drawerOpen]);
   const [assigningId, setAssigningId] = useState<string | null>(null);
   const [justPlannedId, setJustPlannedId] = useState<string | null>(null);
   // Keep My Plan focus independent from the temporary Think Tank row pin.
