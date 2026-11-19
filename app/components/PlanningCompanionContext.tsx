@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDemoPlan } from "./DemoPlanContext";
 
-export type CompanionSection = "welcome" | "priorities/core" | "priorities/interest" | "priorities/additional";
+export type CompanionSection = "welcome" | "priorities/core" | "priorities/interest" | "priorities/additional" | "plan/year";
 export type CompanionVisibility = "open" | "minimized" | "closed";
 
 type CompanionState = {
@@ -28,7 +28,7 @@ const defaults: CompanionState = {
   tipPending: false, tipOpen: false, firstChoiceTipSeen: false,
 };
 const sections: CompanionSection[] = [
-  "welcome", "priorities/core", "priorities/interest", "priorities/additional",
+  "welcome", "priorities/core", "priorities/interest", "priorities/additional", "plan/year",
 ];
 function isSection(value: unknown): value is CompanionSection {
   return typeof value === "string" && sections.includes(value as CompanionSection);
