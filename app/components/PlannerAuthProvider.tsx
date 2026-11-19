@@ -41,15 +41,6 @@ function memberEntryIntent(): boolean {
   return typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get(ENTRY_QUERY) === "1";
 }
-function fromAlvearyTestDashboard(): boolean {
-  if (typeof document === "undefined" || !document.referrer) return false;
-  try {
-    const referrer = new URL(document.referrer);
-    return referrer.protocol === "https:" &&
-      (referrer.hostname === "alveary.org" || referrer.hostname === "www.alveary.org") &&
-      /^\/alveary-2027-2028\/dashboard-test\/?$/.test(referrer.pathname);
-  } catch { return false; }
-}
 function clearEntryIntent() {
   if (typeof window === "undefined") return;
   const current = new URL(window.location.href);
@@ -70,9 +61,11 @@ function callbackError(): string | null {
 
 const AuthContext = createContext<PlannerAuthValue | null>(null);
 
-export function PlannerAuthProvider({ children }: { children: ReactNode }) {
+export function PlannerAuthProvider({ children, publicOnly = false }: {
+  children: ReactNode; publicOnly?: boolean;
+}) {
   const [session, setSession] = useState<Session | null>(null);
-  const [starting, setStarting] = useState(Boolean(client));
+  const [starting, setStarting] = useState(Boolean(client) && !publicOnly);
   const [planAccess, setPlanAccess] = useState<PlanAccess>("checking");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +78,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   const currentUserRef = useRef<string | null>(null);
 
   const signIn = useCallback(async () => {
-    if (!client || typeof window === "undefined" || signInStarted.current) return;
+    if (publicOnly || !client || typeof window === "undefined" || signInStarted.current) return;
     signInStarted.current = true;
     setStarting(true);
     setBusy(true);
@@ -110,10 +103,12 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
       setError("We couldn't start Alveary sign-in. Public browsing is still available.");
       setBusy(false);
     }
-  }, []);
+  }, [publicOnly]);
 
   useEffect(() => {
-    if (!client) return;
+    // Explicit website-facing catalog routes must not initialize an auth
+    // session, start SSO, or verify entitlement. Member routes remain strict.
+    if (publicOnly || !client) return;
     let active = true;
     const { data: listener } = client.auth.onAuthStateChange((event, next) => {
       if (!active || event === "INITIAL_SESSION") return;
@@ -170,8 +165,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
           setStarting(false);
           setError("Sign-in returned without a planning session. Please try Alveary SSO again.");
           clearEntryIntent();
-        } else if (!isHandoffProofRoute() &&
-                   (memberEntryIntent() || fromAlvearyTestDashboard())) {
+        } else if (!isHandoffProofRoute() && memberEntryIntent()) {
           // The Alveary dashboard should NEVER send a logged-in member to
           // the hosted Memberstack password page. First attempt a signed
           // member-token handoff on the planner's own subdomain; where the
@@ -195,11 +189,12 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     }
     void initialize();
     return () => { active = false; listener.subscription.unsubscribe(); };
-  }, [signIn]);
+  }, [signIn, publicOnly]);
 
   // Recheck on return to the tab, so changes/revocations are picked up
   // without trusting cached browser-side plan information.
   useEffect(() => {
+    if (publicOnly) return;
     const onVisible = () => {
       if (document.visibilityState !== "visible" || !currentUserRef.current) return;
       const now = Date.now();
@@ -212,9 +207,10 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, []);
+  }, [publicOnly]);
 
   useEffect(() => {
+    if (publicOnly) return;
     if (!session) {
       verifiedAtRef.current = 0;
       setPlanAccess("none");
@@ -263,7 +259,7 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
     }
     void checkActiveYear();
     return () => { active = false; };
-  }, [session?.access_token, recheck]);
+  }, [session?.access_token, recheck, publicOnly]);
 
   const signOut = useCallback(async () => {
     if (!client) return;
@@ -288,20 +284,23 @@ export function PlannerAuthProvider({ children }: { children: ReactNode }) {
   // The token is for authenticated API calls, not a membership grant.
   // Each private Edge Function independently verifies current Demo eligibility.
   const getAccessToken = useCallback(async (): Promise<string | null> => {
-    if (!client) return null;
+    if (publicOnly || !client) return null;
     const { data, error: sessionError } = await client.auth.getSession();
     return sessionError ? null : data.session?.access_token ?? null;
-  }, []);
+  }, [publicOnly]);
 
-  const authenticated = Boolean(session?.user && !session.user.is_anonymous);
+  const authenticated = !publicOnly && Boolean(session?.user && !session.user.is_anonymous);
   // There is deliberately no intermediate "signed-in = member" UI. A member
   // must pass BOTH a validated OIDC login and current-year plan verification.
-  const status: AuthStatus = starting || (authenticated && planAccess === "checking")
-    ? "checking" : authenticated && planAccess === "demo" ? "signed-in" : "public";
+  const status: AuthStatus = publicOnly ? "public"
+    : starting || (authenticated && planAccess === "checking")
+      ? "checking" : authenticated && planAccess === "demo" ? "signed-in" : "public";
 
   return <AuthContext.Provider value={{
-    status, userId: session?.user.id ?? null, authenticated, planAccess,
-    configured: Boolean(client), busy, error, signIn, signOut, getAccessToken,
+    status, userId: publicOnly ? null : session?.user.id ?? null, authenticated,
+    planAccess: publicOnly ? "none" : planAccess,
+    configured: !publicOnly && Boolean(client), busy: !publicOnly && busy,
+    error: publicOnly ? null : error, signIn, signOut, getAccessToken,
   }}>{children}</AuthContext.Provider>;
 }
 
