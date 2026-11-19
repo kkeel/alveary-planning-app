@@ -5,6 +5,7 @@ const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8"
 const auth = read("app/components/PlannerAuthProvider.tsx");
 const page = read("app/auth-handoff/page.tsx");
 const layout = read("app/layout.tsx");
+const runtime = read("app/components/MemberstackRuntime.tsx");
 const fn = read("supabase/functions/memberstack-handoff-proof/index.ts");
 const docs = read("docs/webflow-dashboard-passwordless-handoff.md");
 
@@ -47,15 +48,23 @@ assert.ok(architecture.includes("without returning to the protected dashboard"))
 // The existing explicit signIn action remains as a manual fallback.
 assert.ok(auth.includes('destination.searchParams.set("auto", "1")'));
 assert.ok(auth.includes('window.location.replace(destination.toString())'));
-assert.ok(auth.includes('memberEntryIntent() || fromAlvearyTestDashboard()'));
+assert.ok(auth.includes('!isHandoffProofRoute() && memberEntryIntent()'),
+  "Only explicit connect=1 should start the member handoff");
+assert.ok(!auth.includes('fromAlvearyTestDashboard()'),
+  "Public links must not be converted to sign-in merely because Webflow referred them");
 assert.ok(auth.includes('!isHandoffProofRoute()'));
 assert.ok(auth.includes('client.auth.signInWithOAuth('));
 
-// Both domains configure Memberstack to share the root-domain cookie.
-assert.ok(layout.includes('useCookies: true, setCookieOnRootDomain: true'));
-assert.ok(layout.includes('static.memberstack.com/scripts/v2/memberstack.js'));
-assert.ok(layout.includes('data-memberstack-use-cookies=""'),
+// The Memberstack SDK still supports shared cookies during an actual handoff,
+// but must not be loaded on a fresh public Course/Book link.
+assert.ok(layout.includes('<MemberstackRuntime />'));
+assert.ok(runtime.includes('useCookies: true,'));
+assert.ok(runtime.includes('setCookieOnRootDomain: true'));
+assert.ok(runtime.includes('static.memberstack.com/scripts/v2/memberstack.js'));
+assert.ok(runtime.includes('script.setAttribute("data-memberstack-use-cookies", "")'),
   "Planner Memberstack script must explicitly attempt the shared root cookie");
+assert.ok(runtime.includes('if (isPublicCatalogPath(pathname)) return;'),
+  "Do not load Memberstack's SDK on a website-facing public catalog page");
 
 // No new secret is put in a URL. The server verifies the member JWT and the
 // client retains a PKCE verifier in sessionStorage before one-use redemption.
