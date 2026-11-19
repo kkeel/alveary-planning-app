@@ -20,17 +20,22 @@ assert.ok(!shell.includes("@media (max-width: 1280px)"),
 assert.ok(!desk.includes("@media (max-width: 1280px)"),
   "The drawer breakpoint must follow the workspace container");
 
-// Allow a roomier shared Companion + mini-desk rail when the workspace
-// permits, without squeezing the Course List at the 810px drawer threshold.
-assert.match(shell, /grid-template-columns:minmax\(0,1fr\) clamp\(370px,36%,430px\);/);
-const railWidth = workspace => Math.max(370, Math.min(workspace * .36, 430));
-assert.equal(railWidth(810),370,"The rail must retain its safe minimum at the drawer threshold");
-assert.ok(railWidth(1150) >= 410 && railWidth(1150) <= 420,
-  "With expanded left nav, give both right-hand cards approximately 415px");
-assert.equal(railWidth(1450),430,"With collapsed nav, stop rail growth at 430px");
-for(const workspace of [950,1100,1150,1450]) {
-  const remaining = workspace - railWidth(workspace) - 18 - 16 - 44;
-  assert.ok(remaining >= 500, "Course List retains reasonable width above the drawer threshold");
+// Navigation expansion and collapse give the shared right-hand rail two
+// different responsive targets while retaining the same workspace breakpoint.
+assert.match(shell, /grid-template-columns:minmax\(0,1fr\) clamp\(370px,39%,465px\);/);
+assert.match(shell, /\.alveary-shell\.is-collapsed \.shell-page-layout\.has-planning-desk\s*\{\s*grid-template-columns:minmax\(0,1fr\) clamp\(370px,41%,520px\);/);
+const railWidth = (workspace, collapsed = false) => Math.max(370,
+  Math.min(workspace * (collapsed ? .41 : .39), collapsed ? 520 : 465));
+assert.equal(railWidth(810),370,"The rail retains its minimum at the drawer threshold");
+assert.ok(railWidth(1150) >= 440 && railWidth(1150) <= 455,
+  "With full sidebar, both right-hand cards gain about 35px of breathing room");
+assert.equal(railWidth(1450,true),520,
+  "With collapsed navigation, the rail can grow substantially wider");
+assert.ok(railWidth(1450,true) > railWidth(1450,false),
+  "Collapsing navigation must give the two right-hand cards more width");
+for(const [workspace, collapsed] of [[950,false],[1100,false],[1150,false],[1450,true]]) {
+  const remaining = workspace - railWidth(workspace,collapsed) - 18 - 16 - 44;
+  assert.ok(remaining >= 490, "Course List retains usable desktop width above the drawer threshold");
 }
 const deskWidth = railWidth(breakpoint);
 const gap = 18;
@@ -65,4 +70,4 @@ assert.ok(!component.includes('window.matchMedia("(max-width: 1280px)")'));
 assert.ok(desk.includes(".pd-full-columns { display:grid;"));
 assert.ok(desk.includes(".pd-think-course-list > .pd-idea.is-open"));
 
-console.log("Planning Desk responsive 370–430px rail and drawer breakpoint: OK");
+console.log("Planning Desk responsive 370–465/520px rail and drawer breakpoint: OK");
