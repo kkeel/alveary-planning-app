@@ -1,6 +1,6 @@
 # Planning Companion: welcoming entry and Course List handoff (v1)
 
-Status: Agreed design direction, **not yet implemented** (except Detailed first-visit default for Explore / Course List).
+Status: **First working slice implemented in PR #123**: member Companion welcome, priority guidance, context-preserving Course List handoff, right-column panel, minimize/close/reopen, and one quiet first-choice tip. Future guidance topics and richer tip triggers are intentionally deferred.
 
 ## Purpose
 Make Alveary planning feel manageable and encouraging. The Companion offers optional guidance based on the existing Course Planning and 2026–27 Planning Guides; it must never become a required setup wizard or a second Course List.
@@ -53,3 +53,15 @@ Start with a tiny set of contextual tips, tied to meaningful events (for instanc
 5. Iterate on copy and responsive layout only after those behaviors work.
 
 Reference source material: Course Planning Guide and 2026–27 Planning Guide from the member planning workflow.
+
+## First-release implementation notes
+
+- Member overview entry and direct `/companion` route require current planning access; public Explore remains available with its Detailed default and no member-only Companion panel.
+- `PlanningCompanionContext` stores only section, visibility, and one-tip read state in member-scoped local storage, never course/student data.
+- The normal Course List is `courseMode="browse"`, with its existing planning action toolbar and portable mini desk. A guide handoff sets that mode and opens the panel on the saved priority section. The full two-column desk remains a separate `courseMode="plan"` choice.
+- Open panel sits above mini desk in `.shell-planning-rail`. On narrow workspace widths, the Companion uses a compact fixed surface and avoids opening the Planning Desk drawer concurrently.
+- Tip v1 is strictly one per member: adding a first new saved course after the current plan has loaded makes the minimized Companion subtly say **Tip available**. It does not auto-open, change priorities or fire for choices restored from an earlier visit.
+- The original source Course Planning Guide remains the basis for copy; further planning topics (combining students, pacing, scheduling) should be built only when their associated tools are ready.
+
+### Browser review still needed
+Inspect actual desktop layout and mobile positioning, confirm which content should remain visible in minimized state, and refine message brevity. Automated builds are not a substitute for the real visual walkthrough.
