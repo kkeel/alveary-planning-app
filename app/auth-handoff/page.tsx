@@ -62,6 +62,98 @@ export default function AuthHandoffProofPage() {
   useEffect(() => {
     const auto = new URLSearchParams(window.location.search).get("auto") === "1";
     setAutomaticMode(auto);
+    // Direct dashboard-click prototype: the planner is opened by the user's
+    // click and generates its OWN PKCE verifier. The already signed-in Webflow
+    // dashboard is the opener, not a redirect destination. The two windows
+    // exchange only the public challenge and a short-lived one-use code,
+    // using exact-origin, source-bound postMessage. Tokens never cross.
+    const bridge = new URLSearchParams(window.location.search).get("bridge") === "1";
+    if (bridge) {
+      let active = true;
+      let settled = false;
+      let ticker: ReturnType<typeof setInterval> | null = null;
+      const origin = "https://alveary.org";
+      const opener = window.opener;
+      if (!opener) {
+        setPhase("error");
+        setError("This connection needs to start from the Alveary dashboard button. Please return to your dashboard and try again.");
+        return;
+      }
+      const verifier = secret();
+      const state = secret();
+      const onMessage = (event: MessageEvent) => {
+        if (!active || settled || event.source !== opener || event.origin !== origin) return;
+        const data: unknown = event.data;
+        if (!data || typeof data !== "object") return;
+        const payload = data as { type?: unknown; state?: unknown; code?: unknown };
+        if (payload.type !== "alveary:planner:code" || payload.state !== state ||
+            typeof payload.code !== "string" ||
+            !/^[A-Za-z0-9_-]{43}$/.test(payload.code)) return;
+        settled = true;
+        if (ticker) clearInterval(ticker);
+        window.removeEventListener("message", onMessage);
+        // Keep PKCE verifier private on the planner origin, exactly as in
+        // the already-proven one-time redemption path.
+        window.location.replace(
+          "/auth-handoff/?auto=1#code=" + encodeURIComponent(payload.code) +
+          "&state=" + encodeURIComponent(state)
+        );
+      };
+      window.addEventListener("message", onMessage);
+      setPhase("connecting");
+      setMessage("Gathering your planner…");
+      void (async () => {
+        try {
+          if (plannerSupabaseClient) {
+            const existing = await plannerSupabaseClient.auth.getUser();
+            if (!active) return;
+            if (!existing.error && existing.data.user &&
+                !existing.data.user.is_anonymous) {
+              settled = true;
+              window.location.replace("/");
+              return;
+            }
+          }
+          const pkce = await challenge(verifier);
+          if (!active) return;
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+            state, verifier, issued: Date.now(),
+          }));
+          const ready = () => {
+            if (!active || settled) return;
+            try {
+              opener.postMessage({
+                type: "alveary:planner:ready",
+                state,
+                challenge: pkce,
+              }, origin);
+            } catch {
+              // The opener may have closed; the recovery screen will be shown.
+            }
+          };
+          ready();
+          ticker = setInterval(ready, 500);
+          window.setTimeout(() => {
+            if (!active || settled) return;
+            settled = true;
+            if (ticker) clearInterval(ticker);
+            window.removeEventListener("message", onMessage);
+            window.sessionStorage.removeItem(STORAGE_KEY);
+            setPhase("error");
+            setError("The Alveary dashboard did not finish the secure connection. Please return to your dashboard and try again.");
+          }, 30000);
+        } catch {
+          if (!active) return;
+          setPhase("error");
+          setError("The secure connection could not start in this browser.");
+        }
+      })();
+      return () => {
+        active = false;
+        if (ticker) clearInterval(ticker);
+        window.removeEventListener("message", onMessage);
+      };
+    }
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const code = fragment.get("code");
     const state = fragment.get("state");
