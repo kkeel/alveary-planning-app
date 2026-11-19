@@ -53,8 +53,9 @@ type PlanningDeskContextValue = PlanningDeskState & {
 
 const keyPrefix = "alveary:shared-planning-desk-preview:2027-28:";
 const defaults: PlanningDeskState = {
-  // Expanded shows the curriculum structure without overwhelming new members.
-  listDetails: "topics", thinkDetails: "topics", planDetails: "topics",
+  // Explore / List first opens with full curriculum descriptions and tips.
+  // The planning workspaces keep their calmer Expanded topic-first defaults.
+  listDetails: "detailed", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
   collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
