@@ -130,7 +130,8 @@ test("Companion page matches the ordinary page layout without redundant navigati
   assert.doesNotMatch(styles,/\.pc-workspace-next/);
   assert.match(guide,/export function CourseListIcon/);
   assert.match(guide,/<polygon points="5\.5 20 18 20 19\.5 18\.5 19\.5 3\.5 18 2 5\.5 2 5\.5 20"\/>/);
-  const continueButton = guide.slice(guide.indexOf('<button type="button" onClick={onContinue}>'));
+  const continueStart = guide.indexOf('<button type="button" onClick={onContinue}>');
+  const continueButton = guide.slice(continueStart,guide.indexOf("</button>",continueStart)+9);
   assert.ok(continueButton.startsWith('<button type="button" onClick={onContinue}>'));
   assert.match(continueButton,/^<button type="button" onClick=\{onContinue\}>\s*<CourseListIcon\/>/);
   assert.match(continueButton,/Continue my planning/);
