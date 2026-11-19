@@ -67,6 +67,25 @@ test("Companion lives above mini desk and respects the narrow drawer pattern", (
   assert.match(desk, /companion\.visibility === "open" && drawerOpen/);
 });
 
+test("Both mini cards occupy the same full-width right rail", () => {
+  assert.match(css,/\.shell-planning-rail > \.pd-wrapper \{[^}]*width:100%;[^}]*align-self:stretch;/,
+    "Mini Planning Desk should not shrink-wrap its contents");
+  assert.match(css,/\.shell-planning-rail > \.pc-panel,[\s\S]*?\.shell-planning-rail > \.pc-closed \{ width:100%; box-sizing:border-box; align-self:stretch; \}/,
+    "Companion open, closed and minimized states must share the same column width");
+  assert.match(css,/\.pc-panel \{[^}]*container:mini-companion \/ inline-size;/,
+    "Priority label switching must depend on actual Companion width");
+});
+
+test("Compact priority buttons never wrap and retain accessible full names", () => {
+  assert.match(css,/\.pc-panel \.pc-priority-tabs button \.pc-priority-label \{ white-space:nowrap; \}/);
+  assert.match(css,/@container mini-companion \(max-width:455px\)/);
+  assert.match(css,/\.pc-priority-tabs button \.pc-priority-label \{ display:none; \}/);
+  assert.match(guide,/aria-label=\{item\.label \+ " Subjects"\}/);
+  assert.match(guide,/title=\{item\.label \+ " Subjects"\}/);
+  assert.match(guide,/<span className="pc-priority-label" aria-hidden="true">\{item\.label\}<\/span>/);
+  assert.match(guide,/<PrioritySymbol priority=\{item\.label\} size=\{22\}\/>/);
+});
+
 test("Companion is the singular Compass shortcut, not a duplicate navigation item", () => {
   const navStart = shell.indexOf("const navigation: NavItem[] = [");
   const navEnd = shell.indexOf("];",navStart);
