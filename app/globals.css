@@ -97,13 +97,13 @@ a { color: inherit; }
 .announcement-tag span { font-size: 9px; }
 .shell-main { flex: 1; padding: 45px 44px 70px; max-width: 1600px; width: 100%; }
 .shell-page-layout { min-width: 0; flex: 1; }
-/* The Course List gets all remaining space and can shrink alongside
-   the 370px desk until the two columns are approximately equal. The
-   slide-out switch is based on the *workspace*, not the viewport, so
-   opening/collapsing the navigation automatically updates the layout. */
+/* Give the Companion + mini Planning Desk more room when the workspace
+   allows (roughly 415px with the sidebar open and 430px collapsed).
+   Preserve the Course List as the flexible column. The drawer switch
+   still follows workspace width, not browser width, at 810px. */
 .shell-page-layout.has-planning-desk {
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,370px);
+  grid-template-columns:minmax(0,1fr) clamp(370px,36%,430px);
   gap:18px;
   align-items:start;
   padding-right:16px;

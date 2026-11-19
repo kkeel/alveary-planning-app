@@ -20,10 +20,19 @@ assert.ok(!shell.includes("@media (max-width: 1280px)"),
 assert.ok(!desk.includes("@media (max-width: 1280px)"),
   "The drawer breakpoint must follow the workspace container");
 
-// The desk stays at 370px and the list takes the remaining width,
-// right up to approximately a 50/50 share.
-assert.match(shell, /grid-template-columns:minmax\(0,1fr\) minmax\(0,370px\);/);
-const deskWidth = 370;
+// Allow a roomier shared Companion + mini-desk rail when the workspace
+// permits, without squeezing the Course List at the 810px drawer threshold.
+assert.match(shell, /grid-template-columns:minmax\(0,1fr\) clamp\(370px,36%,430px\);/);
+const railWidth = workspace => Math.max(370, Math.min(workspace * .36, 430));
+assert.equal(railWidth(810),370,"The rail must retain its safe minimum at the drawer threshold");
+assert.ok(railWidth(1150) >= 410 && railWidth(1150) <= 420,
+  "With expanded left nav, give both right-hand cards approximately 415px");
+assert.equal(railWidth(1450),430,"With collapsed nav, stop rail growth at 430px");
+for(const workspace of [950,1100,1150,1450]) {
+  const remaining = workspace - railWidth(workspace) - 18 - 16 - 44;
+  assert.ok(remaining >= 500, "Course List retains reasonable width above the drawer threshold");
+}
+const deskWidth = railWidth(breakpoint);
 const gap = 18;
 const rightPadding = 16;
 for (const pagePadding of [26, 44]) {
@@ -56,4 +65,4 @@ assert.ok(!component.includes('window.matchMedia("(max-width: 1280px)")'));
 assert.ok(desk.includes(".pd-full-columns { display:grid;"));
 assert.ok(desk.includes(".pd-think-course-list > .pd-idea.is-open"));
 
-console.log("Planning Desk full-width subjects and 50/50 split breakpoint: OK");
+console.log("Planning Desk responsive 370–430px rail and drawer breakpoint: OK");
