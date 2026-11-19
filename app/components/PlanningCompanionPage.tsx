@@ -56,6 +56,8 @@ export default function PlanningCompanionPage() {
       <Link href="/courses" onClick={() => {
         desk.setCourseMode("browse");
         desk.setTab("plan");
+        if (companion.section === "welcome") companion.minimize();
+        else companion.openGuide();
       }}><NotebookPen size={15} aria-hidden="true"/> Go to Course List</Link>
     </div>
   </div>;
