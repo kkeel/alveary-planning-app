@@ -50,6 +50,9 @@ async function sharedMemberstackToken(): Promise<string | null> {
 }
 
 export default function AuthHandoffProofPage() {
+  // Keep the automatic dashboard entry visually separate from the developer
+  // diagnostic page. Null avoids briefly displaying developer copy on load.
+  const [automaticMode, setAutomaticMode] = useState<boolean | null>(null);
   const [phase, setPhase] = useState<Phase>("ready");
   const [message, setMessage] = useState(
     "Development-only test: this checks whether a website login can create a real, refreshable Supabase Auth session."
@@ -57,6 +60,8 @@ export default function AuthHandoffProofPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const auto = new URLSearchParams(window.location.search).get("auto") === "1";
+    setAutomaticMode(auto);
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const code = fragment.get("code");
     const state = fragment.get("state");
@@ -245,6 +250,38 @@ export default function AuthHandoffProofPage() {
       setError("Could not start the test in this browser.");
     }
   }, [phase]);
+
+  // The automatic path may make two brief first-party navigation hops
+  // (planner -> Alveary dashboard -> planner). Show a quiet, member-facing
+  // transition, not technical authentication instructions.
+  if (automaticMode !== false) {
+    return (
+      <main style={{
+        maxWidth: 560, margin: "min(19vh, 10rem) auto",
+        padding: "1.5rem", textAlign: "center"
+      }}>
+        <div aria-hidden="true" style={{
+          marginBottom: "1.25rem", fontSize: "0.8rem",
+          letterSpacing: "0.12em", textTransform: "uppercase"
+        }}>Alveary</div>
+        <h1 style={{ fontSize: "clamp(1.7rem, 4vw, 2.3rem)" }}>
+          Opening your Planning App…
+        </h1>
+        <p role="status" aria-live="polite" style={{ marginTop: "1rem" }}>
+          {error ? "We couldn't finish connecting your account." :
+            phase === "redirecting" ? "Verifying your Alveary sign-in…" :
+            "Connecting securely to your family's planning workspace."}
+        </p>
+        {error && <div role="alert">
+          <p>{error}</p>
+          <p><a href={TEST_DASHBOARD}>Return to the Alveary testing dashboard</a></p>
+          <button type="button" onClick={() => window.location.replace("/?connect=1")}>
+            Try connecting again
+          </button>
+        </div>}
+      </main>
+    );
+  }
 
   return (
     <main style={{ maxWidth: 720, margin: "2.5rem auto", padding: "1.25rem" }}>

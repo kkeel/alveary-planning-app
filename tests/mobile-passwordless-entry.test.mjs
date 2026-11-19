@@ -49,6 +49,15 @@ assert.ok(!page.includes('window.location.assign(dashboard.toString());') ||
 assert.ok(page.includes('phase === "website-needed"'),
   "Retain a manual recovery route if automatic linking fails");
 assert.ok(page.includes("Connect through my Alveary dashboard"));
+assert.ok(page.includes("const [automaticMode, setAutomaticMode] = useState<boolean | null>(null)"));
+assert.ok(page.includes('setAutomaticMode(auto);'));
+assert.ok(page.includes('if (automaticMode !== false) {'));
+assert.ok(page.includes("Opening your Planning App…"),
+  "Member entry should never briefly show the technical development test screen");
+assert.ok(page.includes('href={TEST_DASHBOARD}'),
+  "Automatic connection errors must give a safe route back to Alveary");
+assert.ok(page.includes('window.location.replace("/?connect=1")'),
+  "Connection retry must start from a fresh first-party entry");
 
 // Even with a signed member token, the backend must authorize the exact
 // active demo plan and issue an opaque, short-lived, replay-proof code.
