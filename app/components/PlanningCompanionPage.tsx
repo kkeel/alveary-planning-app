@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
@@ -41,9 +41,7 @@ export default function PlanningCompanionPage() {
             <ArrowLeft size={14} aria-hidden="true"/> Companion home
           </button>
           <div className="pc-workspace-guide-heading">
-            <BookOpen size={18} aria-hidden="true"/>
-            <div><h2>Choosing your priorities</h2>
-              <p>There are many wonderful things to learn. You don't have to fit them all into one year.</p></div>
+            <h2>Choosing your priorities</h2>
           </div>
           <CompanionPriorities onBrowse={browseWithGuidance}/>
         </>}
