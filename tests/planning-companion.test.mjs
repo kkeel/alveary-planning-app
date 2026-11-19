@@ -130,7 +130,8 @@ test("Companion page matches the ordinary page layout without redundant navigati
   assert.doesNotMatch(styles,/\.pc-workspace-next/);
   assert.match(guide,/export function CourseListIcon/);
   assert.match(guide,/<polygon points="5\.5 20 18 20 19\.5 18\.5 19\.5 3\.5 18 2 5\.5 2 5\.5 20"\/>/);
-  const continueButton = guide.slice(guide.indexOf('<button type="button" onClick={onContinue}>'));
+  const continueStart = guide.indexOf('<button type="button" onClick={onContinue}>');
+  const continueButton = guide.slice(continueStart,guide.indexOf("</button>",continueStart)+9);
   assert.ok(continueButton.startsWith('<button type="button" onClick={onContinue}>'));
   assert.match(continueButton,/^<button type="button" onClick=\{onContinue\}>\s*<CourseListIcon\/>/);
   assert.match(continueButton,/Continue my planning/);
@@ -169,16 +170,56 @@ test("Companion keeps the Course Planning Guide's concrete examples and verified
     "high school credit requirements",
     "cooking or car maintenance",
     "co-op classes or ACT preparation",
-    "Alveary scheduling tools",
-    "keep a list of what interests you and why",
+    "Alveary planning tools",
+    "Save possibilities in Think Tank",
   ]) assert.ok(guide.includes(phrase), "Missing Course Planning Guide content: " + phrase);
   for(const url of [
     "https://www.alveary.org/whats-new/a-relational-education",
     "https://www.alveary.org/whats-new/balancing-the-feast",
     "https://www.alveary.org/whats-new/tips-for-combining-students",
-    "https://planning.alveary.org/",
   ]) assert.ok(guide.includes(url), "Missing verified Alveary resource link: " + url);
   assert.match(guide,/<details className="pc-resources" open=\{!compact\}>/,
-    "Resource links should remain accessible without crowding the small mini desk");
+    "Resource links should be accessible inside the separate Plan Your Year tip");
   assert.match(guide,/rel="noopener noreferrer"/);
+});
+
+test("Only the chosen priority and its action appear on priority pages", () => {
+  const pStart = guide.indexOf("export function CompanionPriorities(");
+  const pEnd = guide.indexOf("export function CompanionPlanYear(",pStart);
+  const priorityContent = guide.slice(pStart,pEnd);
+  assert.ok(pStart > 0 && pEnd > pStart);
+  assert.match(priorityContent, /pc-priority-guidance/);
+  assert.match(priorityContent, /pc-reflection/);
+  assert.match(priorityContent, /Browse courses with this guidance/);
+  assert.doesNotMatch(priorityContent,/pc-plan-next|pc-resources|pc-plan-year|keep a list/);
+  assert.ok(provider.includes('"plan/year"'), "The saved Companion section registry must allow Plan Your Year");
+  assert.match(page,/companion\.section === "plan\/year"/);
+  assert.match(panel,/companion\.section === "plan\/year"/);
+  assert.match(guide,/className="pc-tip-library"/);
+  assert.match(guide,/onPlanYear:\s*\(\) => void/);
+  assert.match(page,/onPlanYear=\{\(\) => companion\.chooseSection\("plan\/year"\)\}/);
+  assert.match(panel,/onPlanYear=\{\(\) => companion\.openGuide\("plan\/year"\)\}/);
+});
+
+test("Plan Your Year integrates My Plan, Think Tank and Scheduling with saved navigation", () => {
+  const planStart = guide.indexOf("export function CompanionPlanYear(");
+  const welcomeStart = guide.indexOf("export function CompanionWelcome(",planStart);
+  const tip = guide.slice(planStart,welcomeStart);
+  assert.ok(planStart > 0 && welcomeStart > planStart);
+  assert.match(tip, /Save possibilities in Think Tank/);
+  assert.match(tip, /Move it into My Plan/);
+  assert.match(tip, /Review My Plan/);
+  assert.match(tip, /Open Schedule Builder/);
+  assert.match(tip, /onClick=\{onOpenPlan\}/);
+  assert.match(tip, /onClick=\{onOpenSchedule\}/);
+  assert.match(tip, /<details className="pc-resources" open=\{!compact\}>/);
+  assert.doesNotMatch(guide,/make a list|keep a list|make a note|separate list/i,
+    "The Companion should not send members outside the app for notes or future ideas");
+  assert.match(page,/router\.push\("\/scheduling"\)/);
+  assert.match(page,/desk\.setTab\("plan"\)/);
+  assert.match(panel,/router\.push\("\/scheduling"\)/);
+  assert.match(panel,/desk\.setTab\("plan"\)/);
+  assert.ok(provider.includes('"plan/year"'), "The saved Companion section registry must allow Plan Your Year");
+  assert.match(css,/\.pc-plan-year-steps\s*\{/);
+  assert.match(css,/\.pc-tip-library\s*\{/);
 });
