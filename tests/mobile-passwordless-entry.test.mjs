@@ -35,8 +35,19 @@ assert.ok(!page.includes('encodeURIComponent(memberJwt)'));
 assert.ok(page.includes('plannerSupabaseClient.auth.setSession('));
 assert.ok(page.includes('plannerSupabaseClient.auth.getUser()'));
 assert.ok(page.includes('window.location.replace("/")'));
+assert.ok(page.includes('const dashboard = new URL(TEST_DASHBOARD);'),
+  "Safari fallback must target the explicitly approved Webflow test dashboard");
+assert.ok(page.includes('dashboard.searchParams.set("alveary_handoff_state", state);'));
+assert.ok(page.includes('dashboard.searchParams.set("alveary_handoff_challenge", pkce);'));
+assert.ok(page.includes('window.location.replace(dashboard.toString());'),
+  "Safari fallback must automatically launch the verified dashboard callback");
+assert.ok(page.includes('window.sessionStorage.setItem(STORAGE_KEY'),
+  "PKCE verifier stays on planning origin; never in callback URL");
+assert.ok(!page.includes('window.location.assign(dashboard.toString());') ||
+  page.includes('window.location.replace(dashboard.toString());'),
+  "Normal dashboard entry must have an automatic same-tab fallback");
 assert.ok(page.includes('phase === "website-needed"'),
-  "No shared cookie: guide the user rather than causing a password prompt");
+  "Retain a manual recovery route if automatic linking fails");
 assert.ok(page.includes("Connect through my Alveary dashboard"));
 
 // Even with a signed member token, the backend must authorize the exact
