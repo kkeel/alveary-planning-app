@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, ChevronRight, Compass, Lightbulb, Minimize2, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, BookOpen, ChevronRight, Compass, Minimize2, Sparkles, X } from "lucide-react";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
-import { CompanionPriorities, CompanionWelcome } from "./PlanningCompanionGuide";
+import { CompanionPlanYear, CompanionPriorities, CompanionWelcome } from "./PlanningCompanionGuide";
 import "./planning-companion.css";
 
 /** Sits above the portable Planning Desk, never over course rows. */
 export default function PlanningCompanionPanel() {
   const companion = usePlanningCompanion();
   const desk = usePlanningDesk();
+  const router = useRouter();
   if (!companion.ready) return null;
 
   if (companion.visibility === "closed") {
@@ -38,6 +40,11 @@ export default function PlanningCompanionPanel() {
     </button>;
   }
 
+  function goToScheduling() {
+    companion.minimize();
+    router.push("/scheduling");
+  }
+
   function goToMyPlan() {
     companion.minimize();
     desk.setCourseMode("browse");
@@ -56,6 +63,10 @@ export default function PlanningCompanionPanel() {
       </div>
     </header>
     <div className="pc-panel-body">
+      {!companion.tipOpen && companion.section !== "welcome" && <button type="button"
+        className="pc-back pc-panel-back" onClick={() => companion.chooseSection("welcome")}>
+        <ArrowLeft size={13} aria-hidden="true"/> Companion home
+      </button>}
       {companion.tipOpen ? <div className="pc-current-tip">
         <span className="pc-eyebrow"><Sparkles size={14} aria-hidden="true"/> A gentle planning tip</span>
         <h3>Start with what you know</h3>
@@ -64,8 +75,11 @@ export default function PlanningCompanionPanel() {
       </div> : companion.section === "welcome"
         ? <CompanionWelcome compact
             onHelp={() => companion.openGuide("priorities/core")}
-            onContinue={goToMyPlan}/>
-        : <CompanionPriorities compact/>}
+            onContinue={goToMyPlan}
+            onPlanYear={() => companion.openGuide("plan/year")}/>
+        : companion.section === "plan/year"
+          ? <CompanionPlanYear compact onOpenPlan={goToMyPlan} onOpenSchedule={goToScheduling}/>
+          : <CompanionPriorities compact/>}
     </div>
     <footer className="pc-panel-footer">
       <Link href="/companion"><BookOpen size={14} aria-hidden="true"/>
