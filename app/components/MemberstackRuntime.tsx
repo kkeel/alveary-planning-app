@@ -2,15 +2,15 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { isPublicCatalogPath } from "./public-catalog-routes";
 
-// Load the Memberstack browser SDK only in the authenticated planner/handoff
-// experience. A fresh visit to /public/courses or /public/books makes no
-// Memberstack network request and runs no membership probe.
+// The shared Memberstack cookie SDK is needed for the explicit passwordless
+// handoff route, but NOT for ordinary website visitors browsing Course/Book
+// Lists. A public catalog visit never starts the SDK or any OIDC handoff.
 export default function MemberstackRuntime() {
   const pathname = usePathname();
   useEffect(() => {
-    if (isPublicCatalogPath(pathname)) return;
+    const isHandoff = pathname.replace(/\/$/, "") === "/auth-handoff";
+    if (!isHandoff) return;
     const memberstackWindow = window as Window & {
       memberstackConfig?: { useCookies: boolean; setCookieOnRootDomain: boolean };
     };
