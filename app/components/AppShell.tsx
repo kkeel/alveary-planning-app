@@ -12,7 +12,6 @@ import PlanningCompanionPanel from "./PlanningCompanionPanel";
 import { PlanningCompanionProvider, usePlanningCompanion } from "./PlanningCompanionContext";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
 import { DemoPlanProvider } from "./DemoPlanContext";
-import { isPublicCatalogPath } from "./public-catalog-routes";
 import {
   ArrowLeft, ChevronRight, Compass, Menu,
   PanelLeftClose, PanelLeftOpen, Search, X,
@@ -69,11 +68,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const router = useRouter();
   const currentPath = pathname.replace(/\/$/, "") || "/";
   // The old /planning URL is a compatibility alias for the new home page.
-  const publicOnly = isPublicCatalogPath(currentPath);
-  // The public URL is a separate browsing experience, not an authenticated
-  // member route. Match its normal catalog name and navigation icon.
-  const activePath = publicOnly ? currentPath.slice("/public".length)
-    : currentPath === "/planning" ? "/" : currentPath;
+  const activePath = currentPath === "/planning" ? "/" : currentPath;
   const current = [...navigation, ...planningItems, companionItem].find((item) => item.href === activePath);
   const currentName = current?.label ?? "Planning";
   const [collapsed, setCollapsed] = useState(true); // Start with the slim icon rail; members can expand it any time.
@@ -84,23 +79,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const { ready: companionReady, chooseSection } = usePlanningCompanion();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
-  // Wait for saved view preferences and verified sign-in before rendering the
-  // member workspace. Do not reset a previously selected Planning view.
-  const checking = !publicOnly && (status === "checking" || !deskReady || !companionReady);
+  // Catalog pages must be viewable immediately without asking visitors to
+  // establish membership. Existing member sessions still verify in the
+  // background before we reveal any private planning controls.
+  const publicCatalog = activePath === "/courses" || activePath === "/books";
+  const checking = !publicCatalog &&
+    (status === "checking" || !deskReady || !companionReady);
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
   const showCompanionRail = showDesk && activePath === "/courses";
-  const returnUrl = publicOnly ? "https://www.alveary.org/" : alvearyReturnUrl;
-  const returnLabel = publicOnly ? "Alveary website" : alvearyReturnLabel;
 
-  const visibleNavigation = publicOnly
-    ? navigation.filter(item => item.href === "/courses" || item.href === "/books")
-    : navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href));
-  const publicRouteHref = (href: string) =>
-    publicOnly && (href === "/courses" || href === "/books") ? "/public" + href : href;
-  const allRoutes = (publicOnly ? visibleNavigation : [...navigation, ...planningItems, companionItem]
-    .filter(item => signedIn || !memberOnlyPaths.has(item.href)))
-    .map(item => ({ ...item, href: publicRouteHref(item.href) }));
+  const allRoutes = [...navigation, ...planningItems, companionItem]
+    .filter(item => signedIn || !memberOnlyPaths.has(item.href));
   const matches = search.trim()
     ? allRoutes.filter((item) => item.label.toLowerCase().includes(search.trim().toLowerCase()))
     : [];
@@ -109,7 +99,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
     const active = activePath === item.href;
     return (
       <Link
-        href={publicRouteHref(item.href)}
+        href={item.href}
         key={item.href}
         className={`side-link ${active ? "is-active" : ""}`}
         aria-current={active ? "page" : undefined}
@@ -130,9 +120,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
     setSearchActive(false);
   }
 
-  // Do not render public navigation, list pages, or private links while
-  // restoring the SSO session AND verifying the current-year plan.
-  // This single calm screen replaces the public-to-member flash.
+  // Gating belongs to private planning pages, never to public catalogs.
+  // Course and Book Lists remain visible during a background member check.
   if (checking) {
     return <div className="alveary-connecting" role="status" aria-live="polite">
       <div className="alveary-connecting-content">
@@ -179,7 +168,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </div>}
 
         <nav className="side-nav" aria-label="Planning pages">
-          {visibleNavigation.map(renderItem)}
+          {navigation.filter(item => signedIn || !memberOnlyPaths.has(item.href)).map(renderItem)}
           {signedIn && <>
             <div className="side-divider" />
             <p className="side-group-heading">Your planning workspace</p>
@@ -188,9 +177,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="sidebar-bottom">
-          <a className="sidebar-return" href={returnUrl}>
+          <a className="sidebar-return" href={alvearyReturnUrl}>
             <ArrowLeft size={17} aria-hidden="true" />
-            <span>Return to {returnLabel}</span>
+            <span>Return to {alvearyReturnLabel}</span>
           </a>
           <div className="sidebar-preview">
             <span className="preview-dot" aria-hidden="true" />
@@ -211,15 +200,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
             >
               {mobileOpen ? <X size={19} /> : <Menu size={19} />}
             </button>
-            <a href={returnUrl} className="breadcrumb-alveary" title={"Return to " + returnLabel}>Alveary</a>
+            <a href={alvearyReturnUrl} className="breadcrumb-alveary" title="Return to member dashboard">Alveary</a>
             <ChevronRight size={13} aria-hidden="true" />
-            <Link href={publicOnly ? "/public/courses" : "/"}>{publicOnly ? "Explore" : "Planning"}</Link>
+            <Link href="/">Planning</Link>
             <ChevronRight size={13} aria-hidden="true" />
             <strong>{currentName}</strong>
           </div>
 
           <div className="shell-top-actions">
-            {!publicOnly && <AppSaveStatus />}
+            <AppSaveStatus />
             <form
               className="page-search"
               role="search"
@@ -262,16 +251,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
             </form>
             <a
               className="topbar-return topbar-return-icon"
-              href={returnUrl}
-              title={"Return to " + returnLabel}
-              aria-label={"Return to " + returnLabel}
+              href={alvearyReturnUrl}
+              title="Return to Alveary member dashboard"
+              aria-label="Return to Alveary member dashboard"
             >
               <img src={iconUrl("dashboard")} width={21} height={21} alt="" aria-hidden="true" />
             </a>
           </div>
         </header>
 
-        {!publicOnly && <AuthStatusBar />}
+        {!publicCatalog && <AuthStatusBar />}
 
         <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "") +
           (showCompanionRail ? " has-companion-rail" : "")}>
@@ -287,8 +276,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div> : showDesk && <PlanningDesk />}
         </div>
         <footer className="shell-footer">
-          {publicOnly ? "Alveary curriculum · Public browsing · No sign-in required"
-            : "Alveary Planning · Development preview · Not the live member planner"}
+          Alveary Planning · Development preview · Not the live member planner
         </footer>
       </div>
     </div>
@@ -313,9 +301,5 @@ function SessionPlanningShell({ children }: { children: ReactNode }) {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const publicOnly = isPublicCatalogPath(pathname);
-  return <PlannerAuthProvider publicOnly={publicOnly}>
-    <SessionPlanningShell>{children}</SessionPlanningShell>
-  </PlannerAuthProvider>;
+  return <PlannerAuthProvider><SessionPlanningShell>{children}</SessionPlanningShell></PlannerAuthProvider>;
 }
