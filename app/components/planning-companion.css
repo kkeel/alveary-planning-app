@@ -1,65 +1,72 @@
+/* Alveary brand foundation: use the same --paper, --surface, --ink,
+ * --sage, --sage-light, --olive and --line tokens as the rest of the app.
+ * Avoid a second Companion-only green palette. */
 /* The optional Planning Companion complements, never replaces, the
  * Course List or its mini desk. It shares Alveary's warm paper and sage. */
-.pc-workspace { max-width:860px; margin:0 auto 20px; color:#334435; }
+.pc-workspace { max-width:860px; margin:0 auto 20px; color:var(--ink); }
 .pc-workspace-heading { margin-bottom:23px; }
-.pc-workspace-heading > span { display:flex; align-items:center; gap:10px; color:#628069;
+.pc-heading-top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.pc-heading-top > span { display:flex; align-items:center; gap:10px; color:var(--sage);
   font-size:12px; letter-spacing:.08em; font-weight:700; }
+.pc-overview-back { display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  color:var(--sage); font-size:12px; font-weight:600; }
+.pc-overview-back:hover { text-decoration:underline; text-underline-offset:3px; }
 .pc-workspace-heading h1 { font-family:var(--font-plantin),Georgia,serif;
-  font-weight:200; font-size:clamp(32px,3.4vw,48px); margin:15px 0 10px; }
-.pc-workspace-heading > p { max-width:65ch; color:#586d5b; font-size:15px; line-height:1.65; }
-.pc-workspace-card { border:1px solid #d5dfd1; border-radius:7px; background:#fffefa;
-  padding:clamp(18px,3vw,35px); box-shadow:0 3px 16px #3347330b; }
+  color:var(--ink); font-weight:200; font-size:clamp(32px,3.4vw,48px); margin:15px 0 10px; }
+.pc-workspace-heading > p { max-width:65ch; color:var(--sage); font-size:15px; line-height:1.65; }
+.pc-workspace-card { border:1px solid var(--line); border-radius:7px; background:var(--surface);
+  padding:clamp(18px,3vw,35px); box-shadow:0 3px 16px color-mix(in srgb, var(--ink) 4%, transparent); }
 .pc-workspace-card .pc-welcome h3 { font-size:27px; }
 .pc-workspace-next { display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:15px; margin-top:22px; color:#637763; font-size:12px; }
+  flex-wrap:wrap; gap:15px; margin-top:22px; color:var(--muted); font-size:12px; }
 .pc-workspace-next > div { display:flex; align-items:center; gap:10px; max-width:55ch; }
-.pc-workspace-next a { display:inline-flex; align-items:center; gap:7px; color:#42654a;
+.pc-workspace-next a { display:inline-flex; align-items:center; gap:7px; color:var(--sage);
   font-weight:650; text-decoration:underline; text-underline-offset:3px; }
-.pc-back { display:inline-flex; align-items:center; gap:7px; color:#68836d; background:transparent;
+.pc-back { display:inline-flex; align-items:center; gap:7px; color:var(--sage); background:transparent;
   border:0; padding:0 0 15px; font-size:12px; cursor:pointer; }
-.pc-back:hover { color:#365840; text-decoration:underline; }
+.pc-back:hover { color:var(--sage); text-decoration:underline; }
 .pc-workspace-guide-heading { display:flex; align-items:flex-start; gap:10px; margin-bottom:18px;
-  color:#486a4f; }
-.pc-workspace-guide-heading h2 { color:#2e4333; font-size:26px; margin:0 0 5px; }
-.pc-workspace-guide-heading p { color:#667b69; font-size:13px; line-height:1.6; margin:0; }
+  color:var(--sage); }
+.pc-workspace-guide-heading h2 { color:var(--ink); font-size:26px; margin:0 0 5px; }
+.pc-workspace-guide-heading p { color:var(--muted); font-size:13px; line-height:1.6; margin:0; }
 
 /* Shared guide content; no mandatory steps or score-keeping. */
-.pc-welcome h3 { color:#2d4232; font-size:22px; font-weight:400; line-height:1.3; margin:0 0 9px; }
-.pc-welcome > p { color:#526a57; font-size:14px; line-height:1.65; margin:0 0 17px; }
+.pc-welcome h3 { color:var(--ink); font-size:22px; font-weight:400; line-height:1.3; margin:0 0 9px; }
+.pc-welcome > p { color:var(--sage); font-size:14px; line-height:1.65; margin:0 0 17px; }
 .pc-welcome-choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .pc-welcome-choices button { display:flex; align-items:center; gap:11px; min-width:0;
-  border:1px solid #dbe5d8; border-radius:5px; background:#fbfcf9;
-  padding:14px 12px; text-align:left; color:#53735a; cursor:pointer; }
-.pc-welcome-choices button:hover { background:#f0f5ee; border-color:#adbea9; }
+  border:1px solid var(--line); border-radius:5px; background:var(--surface);
+  padding:14px 12px; text-align:left; color:var(--sage); cursor:pointer; }
+.pc-welcome-choices button:hover { background:var(--sage-light); border-color:var(--olive); }
 .pc-welcome-choices button > span { flex:1; min-width:0; }
 .pc-welcome-choices strong,.pc-welcome-choices small { display:block; }
-.pc-welcome-choices strong { font-size:13px; color:#364b3b; font-weight:650; }
-.pc-welcome-choices small { margin-top:5px; color:#708371; font-size:11px; line-height:1.4; }
+.pc-welcome-choices strong { font-size:13px; color:var(--ink); font-weight:650; }
+.pc-welcome-choices small { margin-top:5px; color:var(--muted); font-size:11px; line-height:1.4; }
 .pc-priorities { display:flex; flex-direction:column; gap:14px; }
 .pc-priority-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px;
-  border:1px solid #dae4d6; border-radius:5px; background:#f0f3eb; padding:3px; }
-.pc-priority-tabs button { min-width:0; border:0; background:transparent; color:#68816a;
+  border:1px solid var(--line); border-radius:5px; background:var(--sage-light); padding:3px; }
+.pc-priority-tabs button { min-width:0; border:0; background:transparent; color:var(--sage);
   padding:10px 6px; border-radius:4px; font-size:12px; font-weight:650; cursor:pointer; }
-.pc-priority-tabs button.is-current { background:#fff; color:#385940; box-shadow:0 1px 4px #22332215; }
-.pc-priority-tabs button:hover:not(.is-current) { background:#e6eee3; }
-.pc-priority-guidance { border:1px solid #e2e9de; border-radius:5px; padding:20px;
-  background:#fafbf8; }
+.pc-priority-tabs button.is-current { background:var(--white); color:var(--sage); box-shadow:0 1px 4px color-mix(in srgb, var(--ink) 8%, transparent); }
+.pc-priority-tabs button:hover:not(.is-current) { background:var(--sage-light); }
+.pc-priority-guidance { border:1px solid var(--line); border-radius:5px; padding:20px;
+  background:color-mix(in srgb,var(--sage-light) 42%,var(--surface)); }
 .pc-eyebrow { font-size:11px; letter-spacing:.025em; text-transform:uppercase;
-  font-weight:750; color:#728d75; margin:0 0 6px; }
-.pc-priority-guidance h3 { margin:0 0 12px; font-size:24px; color:#354b39; }
-.pc-priority-guidance > p:not(.pc-eyebrow) { font-size:14px; line-height:1.68; color:#415348; margin:0 0 17px; }
-.pc-reflection { border-top:1px solid #dde7d9; padding-top:14px; display:flex;
-  gap:10px; color:#638569; }
+  font-weight:750; color:var(--sage); margin:0 0 6px; }
+.pc-priority-guidance h3 { margin:0 0 12px; font-size:24px; color:var(--ink); }
+.pc-priority-guidance > p:not(.pc-eyebrow) { font-size:14px; line-height:1.68; color:var(--ink); margin:0 0 17px; }
+.pc-reflection { border-top:1px solid var(--line); padding-top:14px; display:flex;
+  gap:10px; color:var(--sage); }
 .pc-reflection div { display:flex; flex-direction:column; gap:5px; }
-.pc-reflection strong { color:#44614a; font-size:13px; font-weight:650; line-height:1.5; }
-.pc-reflection span { color:#718272; font-size:12px; line-height:1.55; }
-.pc-reassurance { display:flex; align-items:flex-start; gap:7px; color:#6c826e;
+.pc-reflection strong { color:var(--sage); font-size:13px; font-weight:650; line-height:1.5; }
+.pc-reflection span { color:var(--muted); font-size:12px; line-height:1.55; }
+.pc-reassurance { display:flex; align-items:flex-start; gap:7px; color:var(--sage);
   font-size:12px; line-height:1.55; margin:0; }
 .pc-reassurance svg { flex:none; margin-top:2px; }
 .pc-primary-action { display:inline-flex; align-items:center; gap:9px; align-self:flex-start;
-  padding:10px 14px; border:1px solid #54745a; border-radius:4px; background:#5e7b61;
-  color:#fff; font-size:13px; font-weight:650; cursor:pointer; }
-.pc-primary-action:hover { background:#466a50; }
+  padding:10px 14px; border:1px solid var(--sage); border-radius:4px; background:var(--sage);
+  color:var(--white); font-size:13px; font-weight:650; cursor:pointer; }
+.pc-primary-action:hover { background:color-mix(in srgb,var(--sage) 86%,var(--ink)); }
 
 /* Desktop sidebar directly above the mini Planning Desk. */
 .shell-planning-rail { display:flex; flex-direction:column; gap:14px; min-width:0;
@@ -69,22 +76,22 @@
   min-height:0; max-height:none; flex:1 1 auto; }
 .shell-planning-rail > .pd-wrapper > .pd-desk { max-height:100%; }
 .pc-panel { display:flex; flex-direction:column; min-width:0; flex:0 0 auto;
-  max-height:min(46vh,405px); background:#fffefa; border:1px solid #d4dfd0;
-  border-radius:5px; box-shadow:0 3px 13px #2631280d; color:#3b523f; overflow:hidden; }
+  max-height:min(46vh,405px); background:var(--surface); border:1px solid var(--line);
+  border-radius:5px; box-shadow:0 3px 13px color-mix(in srgb, var(--ink) 5%, transparent); color:var(--ink); overflow:hidden; }
 .pc-panel-header { display:flex; align-items:center; justify-content:space-between;
-  gap:8px; padding:12px 12px 10px 14px; border-bottom:1px solid #e6ede3; background:#f7faf5; }
+  gap:8px; padding:12px 12px 10px 14px; border-bottom:1px solid var(--line); background:var(--surface); }
 .pc-panel-header > span { display:inline-flex; align-items:center; gap:8px;
-  font-family:var(--font-plantin),Georgia,serif; font-size:19px; color:#38563e; }
-.pc-panel-header > span svg { color:#66896a; }
+  font-family:var(--font-plantin),Georgia,serif; font-size:19px; color:var(--ink); }
+.pc-panel-header > span svg { color:var(--sage); }
 .pc-panel-actions { display:flex; gap:2px; }
-.pc-panel-actions button { border:0; border-radius:4px; background:transparent; color:#728976;
+.pc-panel-actions button { border:0; border-radius:4px; background:transparent; color:var(--sage);
   display:flex; align-items:center; justify-content:center; width:27px; height:27px; cursor:pointer; }
-.pc-panel-actions button:hover { background:#eaf1e7; color:#385b40; }
+.pc-panel-actions button:hover { background:var(--sage-light); color:var(--sage); }
 .pc-panel-body { padding:15px; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
-.pc-panel-footer { border-top:1px solid #e7ece3; padding:9px 13px;
+.pc-panel-footer { border-top:1px solid var(--line); padding:9px 13px;
   display:flex; align-items:center; justify-content:space-between; gap:6px;
-  color:#9ba99b; font-size:10px; }
-.pc-panel-footer a { display:inline-flex; align-items:center; gap:6px; color:#5d7b61;
+  color:var(--muted); font-size:10px; }
+.pc-panel-footer a { display:inline-flex; align-items:center; gap:6px; color:var(--sage);
   text-decoration:underline; text-underline-offset:3px; font-weight:650; font-size:11px; }
 .pc-panel-footer span { text-align:right; }
 .pc-panel .pc-welcome h3 { font-size:18px; }
@@ -103,22 +110,23 @@
 .pc-panel .pc-reflection span { font-size:10px; }
 .pc-panel .pc-reassurance { font-size:10px; }
 .pc-current-tip h3 { font-size:20px; margin:9px 0; }
-.pc-current-tip p { font-size:12px; line-height:1.65; color:#516955; margin:0 0 12px; }
-.pc-current-tip button { border:1px solid #c8dac7; background:#f4f8f1; color:#426b49;
+.pc-current-tip p { font-size:12px; line-height:1.65; color:var(--sage); margin:0 0 12px; }
+.pc-current-tip button { border:1px solid var(--line); background:var(--sage-light); color:var(--sage);
   border-radius:4px; padding:7px 9px; font-size:11px; cursor:pointer; }
 .pc-minimized,.pc-closed button { min-width:0; display:flex; align-items:center; gap:9px;
-  width:100%; border:1px solid #d2dfcd; border-radius:5px; background:#f7faf5;
-  color:#507256; padding:11px 12px; font-size:12px; font-weight:650;
+  width:100%; border:1px solid var(--line); border-radius:5px; background:var(--surface);
+  color:var(--sage); padding:11px 12px; font-size:12px; font-weight:650;
   text-align:left; cursor:pointer; }
 .pc-minimized .pc-mini-long { flex:1; }
 .pc-mini-short { display:none; }
-.pc-minimized:hover,.pc-closed button:hover { background:#edf4e9; }
-.pc-minimized.has-tip { border-color:#b29f72; background:#f8f3e7; color:#745d37; }
-.pc-minimized.has-tip:hover { background:#f2ead7; }
+.pc-minimized:hover,.pc-closed button:hover { background:var(--sage-light); }
+.pc-minimized.has-tip { border-color:var(--olive);
+  background:color-mix(in srgb,var(--olive) 28%,var(--surface)); color:var(--ink); }
+.pc-minimized.has-tip:hover { background:color-mix(in srgb,var(--olive) 38%,var(--surface)); }
 .pc-tip-indicator { display:inline-flex; align-items:center; gap:4px; font-size:10px;
   font-weight:700; white-space:nowrap; }
-.pc-closed button { border:0; background:transparent; padding:6px 10px; color:#6d876f; }
-.pc-closed button:hover { background:#f0f5ed; }
+.pc-closed button { border:0; background:transparent; padding:6px 10px; color:var(--sage); }
+.pc-closed button:hover { background:var(--sage-light); }
 
 /* Reuse existing mini desk drawer pattern instead of competing sticky panels. */
 @container planning-workspace (max-width:810px) {
@@ -128,14 +136,14 @@
   .shell-planning-rail .pc-minimized,.shell-planning-rail .pc-closed {
     position:fixed; bottom:calc(20px + env(safe-area-inset-bottom, 0px));
     right:86px; z-index:72; width:auto; max-width:calc(100vw - 168px);
-    padding:12px 10px; box-shadow:0 3px 16px #26312820; }
+    padding:12px 10px; box-shadow:0 3px 16px color-mix(in srgb, var(--ink) 13%, transparent); }
   .shell-planning-rail .pc-minimized .pc-mini-long { display:none; }
   .shell-planning-rail .pc-minimized .pc-mini-short { display:inline; flex:1; white-space:nowrap; }
   .shell-planning-rail .pc-panel.is-open {
     position:fixed; z-index:100; top:82px; right:12px;
     bottom:calc(85px + env(safe-area-inset-bottom, 0px));
     width:min(380px,calc(100vw - 24px)); max-height:none;
-    box-shadow:0 10px 35px #20352035; }
+    box-shadow:0 10px 35px color-mix(in srgb, var(--ink) 22%, transparent); }
   .shell-planning-rail .pc-panel.is-open .pc-panel-body { flex:1 1 auto; max-height:none; }
   .shell-planning-rail:has(.pc-panel.is-open) .pd-mobile-launcher { display:none; }
   .shell-planning-rail:has(.pd-wrapper.is-mobile-open) .pc-minimized,
@@ -153,18 +161,18 @@
 }
 
 /* A gentle initial choice on the existing Planning Overview page. */
-.pc-overview-intro { margin:20px 0 27px; padding:20px 22px; background:#fafcf8;
-  border:1px solid #d9e4d4; border-radius:6px; }
-.pc-overview-heading { display:flex; align-items:flex-start; gap:12px; color:#678b6c; }
-.pc-overview-heading h2 { margin:0 0 8px; color:#304932; font-size:25px; font-weight:400; }
-.pc-overview-heading p { margin:0; font-size:13px; color:#637965; line-height:1.6; }
+.pc-overview-intro { margin:20px 0 27px; padding:20px 22px; background:color-mix(in srgb,var(--sage-light) 35%,var(--surface));
+  border:1px solid var(--line); border-radius:6px; }
+.pc-overview-heading { display:flex; align-items:flex-start; gap:12px; color:var(--sage); }
+.pc-overview-heading h2 { margin:0 0 8px; color:var(--ink); font-size:25px; font-weight:400; }
+.pc-overview-heading p { margin:0; font-size:13px; color:var(--sage); line-height:1.6; }
 .pc-overview-actions { display:flex; gap:10px; margin:16px 0 0 37px; flex-wrap:wrap; }
-.pc-overview-actions a { display:inline-flex; align-items:center; gap:8px; border:1px solid #b8cbb4;
+.pc-overview-actions a { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--olive);
   padding:10px 14px; border-radius:4px; text-decoration:none; font-size:12px; font-weight:650;
-  color:#456b4b; background:#fffefa; }
-.pc-overview-actions a:first-child { color:white; background:#5b7d61; border-color:#5b7d61; }
-.pc-overview-actions a:hover { background:#ecf4e9; }
-.pc-overview-actions a:first-child:hover { background:#496b50; }
+  color:var(--sage); background:var(--surface); }
+.pc-overview-actions a:first-child { color:white; background:var(--sage); border-color:var(--sage); }
+.pc-overview-actions a:hover { background:var(--sage-light); }
+.pc-overview-actions a:first-child:hover { background:color-mix(in srgb,var(--sage) 86%,var(--ink)); }
 @media(max-width:600px) {
   .pc-overview-intro { padding:15px; }
   .pc-overview-heading h2 { font-size:22px; }
