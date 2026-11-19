@@ -101,7 +101,10 @@ test("Companion colors come from established Alveary tokens rather than a parall
   assert.match(mainCss,/--sage: #596e5e;/);
   assert.match(mainCss,/--olive: #adb58f;/);
   assert.match(mainCss,/\.sidebar-prep\.is-active \{/);
-  for(const token of ["--paper","--surface","--ink","--sage","--sage-light","--olive","--line"]) {
+  // The shared page shell supplies the warm paper background; the
+  // Companion must not add its own page-sized background or margins.
+  assert.match(mainCss,/\.shell-workspace \{[^\n]*background: var\(--paper\)/);
+  for(const token of ["--surface","--ink","--sage","--sage-light","--olive","--line"]) {
     assert.ok(css.includes("var("+token+")"),"Companion should use existing "+token+" token");
   }
   assert.doesNotMatch(css,/#[a-f\d]{3,8}\b/i,
