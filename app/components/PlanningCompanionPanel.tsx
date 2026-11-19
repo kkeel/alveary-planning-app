@@ -30,7 +30,8 @@ export default function PlanningCompanionPanel() {
         : "Open Planning Companion"}
       onClick={companion.openCompanion}>
       <Compass size={18} aria-hidden="true"/>
-      <span>Planning Companion</span>
+      <span className="pc-mini-long">Planning Companion</span>
+      <span className="pc-mini-short" aria-hidden="true">Help</span>
       {companion.tipPending
         ? <span className="pc-tip-indicator"><Sparkles size={13} aria-hidden="true"/> Tip available</span>
         : <ChevronRight size={15} aria-hidden="true"/>}
