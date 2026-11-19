@@ -124,12 +124,19 @@
 
 /* Desktop sidebar directly above the mini Planning Desk. */
 .shell-planning-rail { display:flex; flex-direction:column; gap:14px; min-width:0;
-  align-self:start; position:sticky; top:90px; margin-top:45px;
+  width:100%; align-self:start; position:sticky; top:90px; margin-top:45px;
   max-height:calc(100vh - 103px); }
+/* The standalone desk defaults to align-self:start, which shrink-wraps it.
+   Reset that here so both cards occupy precisely the same grid track. */
 .shell-planning-rail > .pd-wrapper { position:static; top:auto; margin-top:0;
+  width:100%; box-sizing:border-box; align-self:stretch;
   min-height:0; max-height:none; flex:1 1 auto; }
 .shell-planning-rail > .pd-wrapper > .pd-desk { max-height:100%; }
+.shell-planning-rail > .pc-panel,
+.shell-planning-rail > .pc-minimized,
+.shell-planning-rail > .pc-closed { width:100%; box-sizing:border-box; align-self:stretch; }
 .pc-panel { display:flex; flex-direction:column; min-width:0; flex:0 0 auto;
+  container:mini-companion / inline-size;
   max-height:min(46vh,405px); background:var(--surface); border:1px solid var(--line);
   border-radius:5px; box-shadow:0 3px 13px color-mix(in srgb, var(--ink) 5%, transparent); color:var(--ink); overflow:hidden; }
 .pc-panel-header { display:flex; align-items:center; justify-content:space-between;
@@ -160,7 +167,15 @@
 .pc-panel .pc-considerations { font-size:12px; margin-left:17px; margin-bottom:12px; }
 .pc-panel .pc-resources summary { font-size:11px; }
 .pc-panel .pc-resources li { font-size:10px; }
-.pc-panel .pc-panel .pc-priority-tabs button { flex-direction:column; gap:3px; font-size:11px; padding:6px 3px; }
+.pc-panel .pc-priority-tabs button { gap:6px; font-size:11px; padding:7px 4px; }
+.pc-panel .pc-priority-tabs button .pc-priority-label { white-space:nowrap; }
+/* Never wrap 'High Interest' onto two lines. When a mini Companion is
+   too narrow for three complete labels, use only the existing category
+   artwork. The button's aria-label/title still supplies its full name. */
+@container mini-companion (max-width:455px) {
+  .pc-priority-tabs button .pc-priority-label { display:none; }
+  .pc-priority-tabs button { min-height:38px; }
+}
 .pc-panel .pc-priority-guidance { padding:12px; }
 .pc-panel .pc-priority-guidance h3 { font-size:19px; margin-bottom:0; }
 .pc-panel .pc-priority-guidance > p:not(.pc-eyebrow) { font-size:12px; line-height:1.6; margin-bottom:11px; }
