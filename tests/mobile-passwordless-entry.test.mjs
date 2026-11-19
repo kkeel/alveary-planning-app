@@ -97,6 +97,9 @@ assert.ok(fn.indexOf("memberstack_consume_handoff") <
   "Account creation must follow atomic one-use handoff proof");
 assert.ok(fn.includes("memberstack_tester_provisioning_claims"),
   "Concurrent first visits must not create multiple Auth users");
+assert.ok(fn.includes('.from("member_identity_links")') &&
+  fn.includes('legacy_identity_requires_review'),
+  "Existing OIDC members must not silently receive duplicate Auth identities");
 assert.ok(fn.includes('if (claimError.code === "23505")'),
   "Competing claimant must be refused, not provision a duplicate");
 assert.ok(fn.includes('if (!testerProvisioningEnabled()) return null'),
