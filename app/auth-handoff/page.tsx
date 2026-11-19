@@ -62,6 +62,84 @@ export default function AuthHandoffProofPage() {
   useEffect(() => {
     const auto = new URLSearchParams(window.location.search).get("auto") === "1";
     setAutomaticMode(auto);
+    const frameMode = new URLSearchParams(window.location.search).get("frame") === "1";
+    // A short-lived, same-site child frame retains PKCE verifier and Auth
+    // session in the planner origin. Webflow is the exact parent origin.
+    if (frameMode && !window.location.hash) {
+      let active = true;
+      let settled = false;
+      let ticker: ReturnType<typeof setInterval> | null = null;
+      const parentOrigin = "https://alveary.org";
+      if (window.parent === window) {
+        setPhase("error");
+        setError("Start the secure connection from the Alveary dashboard.");
+        return;
+      }
+      const verifier = secret();
+      const state = secret();
+      const onMessage = (event: MessageEvent) => {
+        if (!active || settled || event.source !== window.parent ||
+            event.origin !== parentOrigin) return;
+        const payload: unknown = event.data;
+        if (!payload || typeof payload !== "object") return;
+        const data = payload as { type?: unknown; state?: unknown; code?: unknown };
+        if (data.type !== "alveary:planner:code" || data.state !== state ||
+            typeof data.code !== "string" ||
+            !/^[A-Za-z0-9_-]{43}$/.test(data.code)) return;
+        settled = true;
+        if (ticker) clearInterval(ticker);
+        window.removeEventListener("message", onMessage);
+        window.location.replace(
+          "/auth-handoff/?auto=1&frame=1#code=" + encodeURIComponent(data.code) +
+          "&state=" + encodeURIComponent(state)
+        );
+      };
+      window.addEventListener("message", onMessage);
+      setPhase("connecting");
+      setMessage("Gathering your planner…");
+      void (async () => {
+        try {
+          if (plannerSupabaseClient) {
+            const current = await plannerSupabaseClient.auth.getUser();
+            if (!active) return;
+            if (!current.error && current.data.user && !current.data.user.is_anonymous) {
+              settled = true;
+              window.parent.postMessage({ type: "alveary:planner:complete" }, parentOrigin);
+              return;
+            }
+          }
+          const pkce = await challenge(verifier);
+          if (!active) return;
+          window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+            state, verifier, issued: Date.now(),
+          }));
+          const ready = () => {
+            if (!active || settled) return;
+            window.parent.postMessage({
+              type: "alveary:planner:ready", state, challenge: pkce,
+            }, parentOrigin);
+          };
+          ready();
+          ticker = setInterval(ready, 500);
+          window.setTimeout(() => {
+            if (!active || settled) return;
+            settled = true;
+            if (ticker) clearInterval(ticker);
+            window.removeEventListener("message", onMessage);
+            window.sessionStorage.removeItem(STORAGE_KEY);
+            window.parent.postMessage({ type: "alveary:planner:failed" }, parentOrigin);
+          }, 30000);
+        } catch {
+          if (!active) return;
+          window.parent.postMessage({ type: "alveary:planner:failed" }, parentOrigin);
+        }
+      })();
+      return () => {
+        active = false;
+        if (ticker) clearInterval(ticker);
+        window.removeEventListener("message", onMessage);
+      };
+    }
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const code = fragment.get("code");
     const state = fragment.get("state");
@@ -218,7 +296,13 @@ export default function AuthHandoffProofPage() {
         if (!active) return;
         setPhase("complete");
         setMessage("Alveary confirmed your login and opened a persistent Planning App session. Your current-year membership will be checked separately.");
-        if (new URLSearchParams(window.location.search).get("auto") === "1") {
+        if (new URLSearchParams(window.location.search).get("frame") === "1") {
+          // The dashboard navigates in the SAME tab only after Supabase has
+          // persisted the real planner session on the planner's own origin.
+          window.parent.postMessage({
+            type: "alveary:planner:complete",
+          }, "https://alveary.org");
+        } else if (new URLSearchParams(window.location.search).get("auto") === "1") {
           window.location.replace("/");
         }
       } catch {
