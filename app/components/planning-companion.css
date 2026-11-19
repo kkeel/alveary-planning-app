@@ -3,25 +3,14 @@
  * Avoid a second Companion-only green palette. */
 /* The optional Planning Companion complements, never replaces, the
  * Course List or its mini desk. It shares Alveary's warm paper and sage. */
-.pc-workspace { max-width:860px; margin:0 auto 20px; color:var(--ink); background:var(--paper); }
-.pc-workspace-heading { margin-bottom:23px; }
-.pc-heading-top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
-.pc-heading-top > span { display:flex; align-items:center; gap:10px; color:var(--sage);
-  font-size:12px; letter-spacing:.08em; font-weight:700; }
-.pc-overview-back { display:inline-flex; align-items:center; gap:6px; text-decoration:none;
-  color:var(--sage); font-size:12px; font-weight:600; }
-.pc-overview-back:hover { text-decoration:underline; text-underline-offset:3px; }
-.pc-workspace-heading h1 { font-family:var(--font-plantin),Georgia,serif;
-  color:var(--ink); font-weight:200; font-size:clamp(32px,3.4vw,48px); margin:15px 0 10px; }
-.pc-workspace-heading > p { max-width:65ch; color:var(--sage); font-size:15px; line-height:1.65; }
+/* The page uses the same .shell-main margins and global h1/lead styles
+ * as Planning Overview, Students and the other planning pages. */
+.pc-workspace { width:100%; min-width:0; color:var(--ink); }
+.pc-workspace-heading { margin-bottom:22px; }
+.pc-workspace-heading .lead { margin-bottom:0; }
 .pc-workspace-card { border:1px solid var(--line); border-radius:7px; background:var(--surface);
   padding:clamp(18px,3vw,35px); box-shadow:0 3px 16px color-mix(in srgb, var(--ink) 4%, transparent); }
 .pc-workspace-card .pc-welcome h3 { font-size:27px; }
-.pc-workspace-next { display:flex; justify-content:space-between; align-items:center;
-  flex-wrap:wrap; gap:15px; margin-top:22px; color:var(--muted); font-size:12px; }
-.pc-workspace-next > div { display:flex; align-items:center; gap:10px; max-width:55ch; }
-.pc-workspace-next a { display:inline-flex; align-items:center; gap:7px; color:var(--sage);
-  font-weight:650; text-decoration:underline; text-underline-offset:3px; }
 .pc-back { display:inline-flex; align-items:center; gap:7px; color:var(--sage); background:transparent;
   border:0; padding:0 0 15px; font-size:12px; cursor:pointer; }
 .pc-back:hover { color:var(--sage); text-decoration:underline; }
@@ -151,7 +140,6 @@
 }
 @media(max-width:600px) {
   .pc-welcome-choices { grid-template-columns:1fr; }
-  .pc-workspace-heading h1 { font-size:34px; }
   .pc-workspace-card { padding:15px; }
   .pc-priority-guidance { padding:14px; }
 }
