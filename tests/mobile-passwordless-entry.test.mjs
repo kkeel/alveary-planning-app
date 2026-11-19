@@ -7,6 +7,19 @@ const page = read("app/auth-handoff/page.tsx");
 const layout = read("app/layout.tsx");
 const fn = read("supabase/functions/memberstack-handoff-proof/index.ts");
 const docs = read("docs/webflow-dashboard-passwordless-handoff.md");
+const launchRules = read("supabase/migrations/20261119161000_register_2027_member_plans_disabled.sql");
+const architecture = read("docs/memberstack-planner-auth-architecture.md");
+// Three official 2027-28 plans must be registered fail-closed, with school
+// access separate from family access. The pilot Testing Plan stays unchanged.
+assert.ok(launchRules.includes("pln_alveary-membership-2027-2028-1a3g0ppr"));
+assert.ok(launchRules.includes("pln_alveary-membership-2027-2028--hh6l0f3n"));
+assert.ok(launchRules.includes("pln_alveary-school-license-2027-2028--kt6m0fpm"));
+assert.match(launchRules, /school', 'planning', false/);
+assert.match(launchRules, /family', 'planning', false/);
+assert.ok(!launchRules.includes("update public.memberstack_plan_access_rules"));
+assert.ok(!launchRules.includes("pln_testing-plan-vybk04zq"));
+assert.ok(architecture.includes("Memberstack ID plus app ID"));
+assert.ok(architecture.includes("without returning to the protected dashboard"));
 
 // Dashboard link must no longer launch Memberstack-hosted OAuth immediately.
 // The existing explicit signIn action remains as a manual fallback.
