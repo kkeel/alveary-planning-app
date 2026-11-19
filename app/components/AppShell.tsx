@@ -8,6 +8,8 @@ import AuthStatusBar from "./AuthStatusBar";
 import AppSaveStatus from "./AppSaveStatus";
 import { PlannerAuthProvider, usePlannerAuth } from "./PlannerAuthProvider";
 import PlanningDesk from "./PlanningDesk";
+import PlanningCompanionPanel from "./PlanningCompanionPanel";
+import { PlanningCompanionProvider, usePlanningCompanion } from "./PlanningCompanionContext";
 import { PlanningDeskProvider, usePlanningDesk } from "./PlanningDeskContext";
 import { DemoPlanProvider } from "./DemoPlanContext";
 import {
@@ -23,6 +25,7 @@ type NavItem = {
 
 const navigation: NavItem[] = [
   { href: "/", label: "Planning overview", icon: "planning" },
+  { href: "/companion", label: "Planning Companion", icon: "planning" },
   { href: "/students", label: "Students", icon: "students" },
   { href: "/courses", label: "Courses", icon: "courses" },
   { href: "/scheduling", label: "Schedule", icon: "schedule" },
@@ -32,7 +35,7 @@ const navigation: NavItem[] = [
   { href: "/exams", label: "Exams", icon: "exams" },
 ];
 
-const memberOnlyPaths = new Set(["/students", "/scheduling", "/lesson-plans", "/exams", "/year-at-a-glance"]);
+const memberOnlyPaths = new Set(["/companion", "/students", "/scheduling", "/lesson-plans", "/exams", "/year-at-a-glance"]);
 
 const planningItems: NavItem[] = [
   { href: "/year-at-a-glance", label: "Year at a glance", icon: "year-at-a-glance" },
@@ -71,13 +74,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
   const { courseMode, ready: deskReady } = usePlanningDesk();
+  const { ready: companionReady } = usePlanningCompanion();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
   // Wait for saved view preferences and verified sign-in before rendering the
   // member workspace. Do not reset a previously selected Planning view.
-  const checking = status === "checking" || !deskReady;
+  const checking = status === "checking" || !deskReady || !companionReady;
   const showDesk = signedIn && (activePath === "/books" ||
     (activePath === "/courses" && courseMode === "browse"));
+  const showCompanionRail = showDesk && activePath === "/courses";
 
   const allRoutes = [...navigation, ...planningItems]
     .filter(item => signedIn || !memberOnlyPaths.has(item.href));
@@ -250,14 +255,18 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
         <AuthStatusBar />
 
-        <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "")}>
+        <div className={"shell-page-layout" + (showDesk ? " has-planning-desk" : "") +
+          (showCompanionRail ? " has-companion-rail" : "")}>
           <main className="shell-main" id="main-content">
             {memberOnlyPaths.has(activePath) && !signedIn ? <div className="notice" role="status">
               {checking ? "Checking your Alveary sign-in…" :
                 "This planning page is for signed-in Alveary members. Sign in to see the development preview. Public Courses, Books and Supplies remain available."}
             </div> : children}
           </main>
-          {showDesk && <PlanningDesk />}
+          {showCompanionRail ? <div className="shell-planning-rail">
+            <PlanningCompanionPanel />
+            <PlanningDesk />
+          </div> : showDesk && <PlanningDesk />}
         </div>
         <footer className="shell-footer">
           Alveary Planning · Development preview · Not the live member planner
@@ -277,7 +286,9 @@ function SessionPlanningShell({ children }: { children: ReactNode }) {
   // different account identities on the same device.
   return <DemoPlanProvider key={userId ?? "public"}>
     <PlanningDeskProvider key={userId ?? "public"} storageScope={userId ?? "public"}>
-      <AppShellInner>{children}</AppShellInner>
+      <PlanningCompanionProvider key={userId ?? "public"} storageScope={userId ?? "public"}>
+        <AppShellInner>{children}</AppShellInner>
+      </PlanningCompanionProvider>
     </PlanningDeskProvider>
   </DemoPlanProvider>;
 }
