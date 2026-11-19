@@ -63,8 +63,9 @@ assert.ok(runtime.includes('setCookieOnRootDomain: true'));
 assert.ok(runtime.includes('static.memberstack.com/scripts/v2/memberstack.js'));
 assert.ok(runtime.includes('script.setAttribute("data-memberstack-use-cookies", "")'),
   "Planner Memberstack script must explicitly attempt the shared root cookie");
-assert.ok(runtime.includes('if (isPublicCatalogPath(pathname)) return;'),
-  "Do not load Memberstack's SDK on a website-facing public catalog page");
+assert.ok(runtime.includes('const isHandoff = pathname.replace(') &&
+  runtime.includes('if (!isHandoff) return;'),
+  "Do not load Memberstack's SDK on shared Course or Book catalog pages");
 
 // No new secret is put in a URL. The server verifies the member JWT and the
 // client retains a PKCE verifier in sessionStorage before one-use redemption.
