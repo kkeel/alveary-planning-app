@@ -7,6 +7,28 @@ const page = read("app/auth-handoff/page.tsx");
 const layout = read("app/layout.tsx");
 const fn = read("supabase/functions/memberstack-handoff-proof/index.ts");
 const docs = read("docs/webflow-dashboard-passwordless-handoff.md");
+
+const sameTab = read("docs/webflow-dashboard-same-tab-handoff.md");
+// Same-tab prototype must not carry a reusable bearer, PKCE verifier, or
+// Supabase token across the origin boundary. Verify source/origin checks.
+assert.ok(page.includes('get("frame") === "1"'));
+assert.ok(page.includes('event.source !== window.parent'));
+assert.ok(page.includes('event.origin !== parentOrigin'));
+assert.ok(page.includes('type: "alveary:planner:ready"'));
+assert.ok(page.includes('type !== "alveary:planner:code"'));
+assert.ok(page.includes('const pkce = await challenge(verifier)'));
+assert.ok(page.includes('window.sessionStorage.setItem(STORAGE_KEY'));
+assert.ok(page.includes('type: "alveary:planner:complete"'));
+assert.ok(sameTab.includes('document.createElement("iframe")'));
+assert.ok(sameTab.includes('"/auth-handoff/?auto=1&frame=1"'));
+assert.ok(sameTab.includes('event.origin !== PLANNER_ORIGIN'));
+assert.ok(sameTab.includes('event.source !== pending.frame.contentWindow'));
+assert.ok(sameTab.includes('action: "issue", state: payload.state, challenge: payload.challenge'));
+assert.ok(sameTab.includes('location.assign(PLANNER_ORIGIN + "/")'));
+assert.ok(!sameTab.includes('window.open('));
+assert.ok(!sameTab.includes('encodeURIComponent(jwt)'));
+assert.ok(!sameTab.includes('location.replace('));
+
 const launchRules = read("supabase/migrations/20261119161000_register_2027_member_plans_disabled.sql");
 const architecture = read("docs/memberstack-planner-auth-architecture.md");
 // Three official 2027-28 plans must be registered fail-closed, with school
