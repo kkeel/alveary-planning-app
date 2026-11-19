@@ -38,6 +38,19 @@ a { color: inherit; }
 .sidebar-prep { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 14px; border: 1px solid #899279; border-radius: 4px; color: #b6bea1; text-decoration: none; font-size: 14px; }
 .sidebar-prep span { flex: 1; }
 .sidebar-prep:hover, .sidebar-prep:focus-visible { background: #313a32; }
+/* The Compass shortcut is the one Planning Companion navigation entry.
+ * Highlight it with the same Alveary sage/olive language as the main nav. */
+.sidebar-prep.is-active {
+  background:color-mix(in srgb,var(--sage) 40%,var(--sidebar));
+  border-color:var(--olive);
+  color:var(--sage-light);
+}
+.sidebar-prep.is-active:hover,
+.sidebar-prep.is-active:focus-visible {
+  background:color-mix(in srgb,var(--sage) 52%,var(--sidebar));
+}
+.sidebar-prep:focus-visible { outline:2px solid var(--olive); outline-offset:3px; }
+
 .side-nav { display: flex; flex-direction: column; padding: 16px 0 18px; gap: 1px; flex: 1; }
 .side-link { display: flex; align-items: center; gap: 12px; color: #e3e7e0; text-decoration: none; padding: 14px 22px; min-height: 47px; font-size: 15px; border-left: 3px solid transparent; }
 .side-link:hover, .side-link:focus-visible { background: #344036; }
