@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowLeft, BookOpen, Compass, ListChecks, NotebookPen } from "lucide-react";
+import { ArrowLeft, BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
@@ -30,12 +29,8 @@ export default function PlanningCompanionPage() {
 
   return <div className="pc-workspace">
     <div className="pc-workspace-heading">
-      <div className="pc-heading-top">
-        <span><Compass size={21} aria-hidden="true"/> ALVEARY PLANNING</span>
-        <Link href="/" className="pc-overview-back"><ArrowLeft size={14} aria-hidden="true"/> Planning Overview</Link>
-      </div>
       <h1>Your Planning Companion</h1>
-      <p>A little guidance whenever you want it. Explore ideas here, or head straight into your planning tools.</p>
+      <p className="lead">A little guidance whenever you want it. Explore ideas here, or head straight into your planning tools.</p>
     </div>
     <div className="pc-workspace-card">
       {companion.section === "welcome" ? <CompanionWelcome
@@ -52,16 +47,6 @@ export default function PlanningCompanionPage() {
           </div>
           <CompanionPriorities onBrowse={browseWithGuidance}/>
         </>}
-    </div>
-    <div className="pc-workspace-next">
-      <div><ListChecks size={17} aria-hidden="true"/>
-        <span><strong>Already know what you want?</strong> The guide is optional. You can always return here later.</span></div>
-      <Link href="/courses" onClick={() => {
-        desk.setCourseMode("browse");
-        desk.setTab("plan");
-        if (companion.section === "welcome") companion.minimize();
-        else companion.openGuide();
-      }}><NotebookPen size={15} aria-hidden="true"/> Go to Course List</Link>
     </div>
   </div>;
 }

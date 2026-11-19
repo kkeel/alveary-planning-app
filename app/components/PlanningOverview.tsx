@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Compass, HeartHandshake, NotebookPen } from "lucide-react";
+import { ArrowRight, Compass, HeartHandshake } from "lucide-react";
+import { CourseListIcon } from "./PlanningCompanionGuide";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { usePlannerAuth } from "./PlannerAuthProvider";
@@ -32,7 +33,7 @@ export default function PlanningOverview() {
           desk.setQuiet(false);
           companion.close();
         }}>
-          <NotebookPen size={17} aria-hidden="true"/> Continue my planning <ArrowRight size={15} aria-hidden="true"/>
+          <CourseListIcon size={17}/> Continue my planning <ArrowRight size={15} aria-hidden="true"/>
         </Link>
       </div>
     </section>}
