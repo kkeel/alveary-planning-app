@@ -14,8 +14,7 @@
 .pc-back { display:inline-flex; align-items:center; gap:7px; color:var(--sage); background:transparent;
   border:0; padding:0 0 15px; font-size:12px; cursor:pointer; }
 .pc-back:hover { color:var(--sage); text-decoration:underline; }
-.pc-workspace-guide-heading { display:flex; align-items:flex-start; gap:10px; margin-bottom:18px;
-  color:var(--sage); }
+.pc-workspace-guide-heading { margin-bottom:15px; color:var(--sage); }
 .pc-workspace-guide-heading h2 { color:var(--ink); font-size:26px; margin:0 0 5px; }
 .pc-workspace-guide-heading p { color:var(--muted); font-size:13px; line-height:1.6; margin:0; }
 
@@ -34,24 +33,52 @@
 .pc-priorities { display:flex; flex-direction:column; gap:14px; }
 .pc-priority-tabs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px;
   border:1px solid var(--line); border-radius:5px; background:var(--sage-light); padding:3px; }
-.pc-priority-tabs button { min-width:0; border:0; background:transparent; color:var(--sage);
-  padding:10px 6px; border-radius:4px; font-size:12px; font-weight:650; cursor:pointer; }
+.pc-priority-tabs button { display:flex; align-items:center; justify-content:center; gap:8px;
+  min-width:0; border:0; background:transparent; color:var(--sage);
+  padding:9px 6px; border-radius:4px; font-size:12px; font-weight:650; cursor:pointer; }
+.pc-priority-tabs button img { flex:none; display:block; object-fit:contain; }
 .pc-priority-tabs button.is-current { background:var(--white); color:var(--sage); box-shadow:0 1px 4px color-mix(in srgb, var(--ink) 8%, transparent); }
 .pc-priority-tabs button:hover:not(.is-current) { background:var(--sage-light); }
 .pc-priority-guidance { border:1px solid var(--line); border-radius:5px; padding:20px;
-  background:color-mix(in srgb,var(--sage-light) 42%,var(--surface)); }
+  background:#fbfbf9; }
+.pc-priority-heading { display:flex; align-items:center; gap:14px; margin:0 0 13px; }
+.pc-priority-heading > img { flex:none; display:block; object-fit:contain; }
+.pc-priority-heading > div { min-width:0; }
+.pc-priority-heading h3 { margin-bottom:0; }
 .pc-eyebrow { font-size:11px; letter-spacing:.025em; text-transform:uppercase;
   font-weight:750; color:var(--sage); margin:0 0 6px; }
-.pc-priority-guidance h3 { margin:0 0 12px; font-size:24px; color:var(--ink); }
+.pc-priority-guidance h3 { margin:0; font-size:24px; color:var(--ink); }
 .pc-priority-guidance > p:not(.pc-eyebrow) { font-size:14px; line-height:1.68; color:var(--ink); margin:0 0 17px; }
-.pc-reflection { border-top:1px solid var(--line); padding-top:14px; display:flex;
-  gap:10px; color:var(--sage); }
+.pc-reflection { border:1px solid var(--line); border-radius:5px; padding:13px 14px;
+  display:flex; align-items:flex-start; gap:10px; color:var(--sage);
+  background:color-mix(in srgb,var(--sage-light) 42%,var(--surface)); }
+.pc-reflection > svg { flex:none; margin-top:1px; }
 .pc-reflection div { display:flex; flex-direction:column; gap:5px; }
 .pc-reflection strong { color:var(--sage); font-size:13px; font-weight:650; line-height:1.5; }
 .pc-reflection span { color:var(--muted); font-size:12px; line-height:1.55; }
 .pc-reassurance { display:flex; align-items:flex-start; gap:7px; color:var(--sage);
   font-size:12px; line-height:1.55; margin:0; }
 .pc-reassurance svg { flex:none; margin-top:2px; }
+/* Light reading surface; the reflective question keeps its softer sage wash.
+ * The same original Alveary priority art is used by the Course List controls. */
+.pc-feast-intro { margin:0; color:var(--sage); font-size:14px; line-height:1.65; }
+.pc-considerations { margin:0 0 17px 19px; padding:0; color:var(--ink); font-size:14px; line-height:1.65; }
+.pc-considerations li + li { margin-top:5px; }
+.pc-plan-next { padding:0 2px; color:var(--sage); font-size:13px; line-height:1.55; }
+.pc-plan-next strong { display:block; color:var(--ink); font-weight:650; margin-bottom:5px; }
+.pc-plan-next p { margin:0; }
+.pc-resources { border-top:1px solid var(--line); padding:11px 2px 0; color:var(--sage); }
+.pc-resources summary { display:flex; align-items:center; justify-content:space-between; gap:8px;
+  font-size:13px; font-weight:650; cursor:pointer; list-style:none; }
+.pc-resources summary::-webkit-details-marker { display:none; }
+.pc-resources[open] summary svg { transform:rotate(180deg); }
+.pc-resources ul { padding:0; margin:11px 0 6px; list-style:none; display:grid; gap:11px; }
+.pc-resources li { display:flex; flex-wrap:wrap; gap:4px 8px; font-size:12px; line-height:1.45; }
+.pc-resources li a,.pc-original-guide { color:var(--sage); font-weight:650;
+  text-decoration:underline; text-underline-offset:3px; }
+.pc-resources li a:hover,.pc-original-guide:hover { color:var(--ink); }
+.pc-resources li span { color:var(--muted); }
+.pc-original-guide { display:inline-block; font-size:12px; margin-top:7px; }
 .pc-primary-action { display:inline-flex; align-items:center; gap:9px; align-self:flex-start;
   padding:10px 14px; border:1px solid var(--sage); border-radius:4px; background:var(--sage);
   color:var(--white); font-size:13px; font-weight:650; cursor:pointer; }
@@ -90,11 +117,18 @@
 .pc-panel .pc-welcome-choices button > svg:first-child { width:16px; }
 .pc-panel .pc-welcome-choices small { font-size:10px; }
 .pc-panel .pc-priorities { gap:11px; }
-.pc-panel .pc-priority-tabs button { font-size:11px; padding:7px 3px; }
+.pc-panel .pc-feast-intro { font-size:11px; line-height:1.55; }
+.pc-panel .pc-priority-heading { gap:9px; margin-bottom:9px; }
+.pc-panel .pc-considerations { font-size:12px; margin-left:17px; margin-bottom:12px; }
+.pc-panel .pc-plan-next { font-size:11px; }
+.pc-panel .pc-resources summary { font-size:11px; }
+.pc-panel .pc-resources li { font-size:10px; }
+.pc-panel .pc-original-guide { font-size:10px; }
+.pc-panel .pc-priority-tabs button { flex-direction:column; gap:3px; font-size:11px; padding:6px 3px; }
 .pc-panel .pc-priority-guidance { padding:12px; }
-.pc-panel .pc-priority-guidance h3 { font-size:19px; margin-bottom:9px; }
+.pc-panel .pc-priority-guidance h3 { font-size:19px; margin-bottom:0; }
 .pc-panel .pc-priority-guidance > p:not(.pc-eyebrow) { font-size:12px; line-height:1.6; margin-bottom:11px; }
-.pc-panel .pc-reflection { padding-top:9px; }
+.pc-panel .pc-reflection { padding:10px; }
 .pc-panel .pc-reflection strong { font-size:11px; }
 .pc-panel .pc-reflection span { font-size:10px; }
 .pc-panel .pc-reassurance { font-size:10px; }
