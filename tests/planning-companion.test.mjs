@@ -66,3 +66,44 @@ test("Companion lives above mini desk and respects the narrow drawer pattern", (
   assert.match(css, /\.shell-planning-rail:has\(\.pc-panel\.is-open\) \.pd-mobile-launcher \{ display:none; \}/);
   assert.match(desk, /companion\.visibility === "open" && drawerOpen/);
 });
+
+test("Companion is the singular Compass shortcut, not a duplicate navigation item", () => {
+  const navStart = shell.indexOf("const navigation: NavItem[] = [");
+  const navEnd = shell.indexOf("];",navStart);
+  const nav = shell.slice(navStart,navEnd);
+  assert.doesNotMatch(nav,/href: "\/companion"/,
+    "Companion must not appear as an ordinary navigation item as well");
+  assert.match(shell,/const companionItem: NavItem = \{ href: "\/companion", label: "Planning Companion"/);
+  assert.match(shell,/<Link className=\{"sidebar-prep" \+ \(activePath === "\/companion"/);
+  assert.match(shell,/href="\/companion" aria-current=\{activePath === "\/companion"/);
+  assert.match(shell,/<Compass size=\{17\} strokeWidth=\{1\.6\}/);
+  assert.match(shell,/<span>Planning Companion<\/span>/);
+  assert.match(shell,/chooseSection\("welcome"\); setMobileOpen\(false\)/);
+  assert.doesNotMatch(shell,/Prepare your school year/);
+  assert.match(shell,/\[\.\.\.navigation, \.\.\.planningItems, companionItem\]/,
+    "Companion remains discoverable in search and breadcrumbs");
+});
+
+test("Overview Help me think it through opens priorities immediately and both welcome/navigation returns remain accessible", () => {
+  const page = read("app/components/PlanningCompanionPage.tsx");
+  assert.match(home, /href="\/companion" onClick=\{\(\) => companion\.chooseSection\("priorities\/core"\)\}/);
+  assert.doesNotMatch(home,/href="\/companion" onClick=\{\(\) => companion\.chooseSection\("welcome"\)\}/);
+  assert.match(page, /companion\.section === "welcome" \? <CompanionWelcome/);
+  assert.match(page, /companion\.chooseSection\("welcome"\)/);
+  assert.match(page, /className="pc-overview-back"/);
+  assert.match(page, /href="\/" className="pc-overview-back"/);
+  assert.match(page, /<h1>Your Planning Companion<\/h1>/);
+});
+
+test("Companion colors come from established Alveary tokens rather than a parallel palette", () => {
+  const mainCss = read("app/globals.css");
+  assert.match(mainCss,/--paper: #faf7ed;/);
+  assert.match(mainCss,/--sage: #596e5e;/);
+  assert.match(mainCss,/--olive: #adb58f;/);
+  assert.match(mainCss,/\.sidebar-prep\.is-active \{/);
+  for(const token of ["--paper","--surface","--ink","--sage","--sage-light","--olive","--line"]) {
+    assert.ok(css.includes("var("+token+")"),"Companion should use existing "+token+" token");
+  }
+  assert.doesNotMatch(css,/#[a-f\d]{3,8}\b/i,
+    "Companion should not introduce a competing set of hard-coded green colors");
+});
