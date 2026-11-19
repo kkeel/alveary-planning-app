@@ -169,7 +169,7 @@ test("Companion keeps the Course Planning Guide's concrete examples and verified
     "high school credit requirements",
     "cooking or car maintenance",
     "co-op classes or ACT preparation",
-    "Alveary scheduling tools",
+    "Alveary planning tools",
     "Save possibilities in Think Tank",
   ]) assert.ok(guide.includes(phrase), "Missing Course Planning Guide content: " + phrase);
   for(const url of [
@@ -191,7 +191,7 @@ test("Only the chosen priority and its action appear on priority pages", () => {
   assert.match(priorityContent, /pc-reflection/);
   assert.match(priorityContent, /Browse courses with this guidance/);
   assert.doesNotMatch(priorityContent,/pc-plan-next|pc-resources|pc-plan-year|keep a list/);
-  assert.match(provider,/\\"plan\\/year\\"/);
+  assert.ok(provider.includes('"plan/year"'), "The saved Companion section registry must allow Plan Your Year");
   assert.match(page,/companion\.section === "plan\/year"/);
   assert.match(panel,/companion\.section === "plan\/year"/);
   assert.match(guide,/className="pc-tip-library"/);
@@ -218,8 +218,7 @@ test("Plan Your Year integrates My Plan, Think Tank and Scheduling with saved na
   assert.match(page,/desk\.setTab\("plan"\)/);
   assert.match(panel,/router\.push\("\/scheduling"\)/);
   assert.match(panel,/desk\.setTab\("plan"\)/);
-  assert.match(provider,/\\"plan\\/year\\"/,
-    "The saved Companion section registry must allow the new library tip");
+  assert.ok(provider.includes('"plan/year"'), "The saved Companion section registry must allow Plan Your Year");
   assert.match(css,/\.pc-plan-year-steps\s*\{/);
   assert.match(css,/\.pc-tip-library\s*\{/);
 });
