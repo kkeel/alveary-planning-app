@@ -102,11 +102,11 @@
 .bk-book-role { max-width:64px; text-align:center; font-size:10px; line-height:1.3;
   font-weight:500; color:var(--bk-muted); overflow-wrap:anywhere; }
 .bk-book-row:hover .bk-book-line { background:transparent; }
-.bk-cover { display:flex; align-items:center; justify-content:center; width:46px; height:64px;
+.bk-cover { display:flex; align-items:center; justify-content:center; width:52px; height:72px;
   flex-shrink:0; background:#e8e9e2; border:1px solid #d2d6d2;
   color:var(--bk-sage); border-radius:2px; overflow:hidden; }
 .bk-cover img { display:block; width:100%; height:100%; object-fit:cover;
-  background:transparent; transform:scale(1.04); }
+  background:transparent; }
 .bk-book-main { min-width:0; }
 .bk-book-heading { display:flex; align-items:flex-start; justify-content:space-between;
   min-width:0; gap:6px; }
