@@ -471,7 +471,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
     </div>
   </section>;
 
-  return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "")}>
+  return <div className={"pd-wrapper" + (onBooks ? " is-books" : "") + (drawerOpen ? " is-mobile-open" : "")}>
     <button type="button" className="pd-mobile-launcher"
       aria-label={onBooks ? "Open Book Planning Desk" : "Open Planning Desk. " + ideas.length + " Think Tank ideas"}
       title="Open Planning Desk" aria-expanded={drawerOpen}
@@ -538,10 +538,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
       <div className="pd-body">
         {notices}
-        {onBooks && <Link className="pd-return" href="/courses"
-          onClick={() => {desk.setCourseMode("browse"); closeMobileDrawer();}}>
-          <ArrowLeft size={14}/> Back to Course List
-        </Link>}
         {onBooks ? <BookPlanningContent/> :
           desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
           focusRevision={focusPlanned?.revision} onBrowseCourses={closeMobileDrawer}
