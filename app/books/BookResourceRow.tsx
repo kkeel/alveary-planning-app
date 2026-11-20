@@ -12,7 +12,11 @@ type CourseLabel = { title:string; subject:string };
 function ResourceCover({ book, mini }: { book:ResourceBook; mini:boolean }) {
   const [failed,setFailed] = useState(false);
   const legacyId = (covers.legacyResourceIds as Record<string,string>)[book.id];
-  const src = legacyId ? covers.imageBase + encodeURIComponent(legacyId) + ".webp" : null;
+  // Airtable-sourced covers copied into this app's own GitHub Pages assets
+  // supersede the previous year's immutable GitHub thumbnail when available.
+  const local = (covers.newCoverIds as string[]).includes(book.id);
+  const src = local ? "/book-covers/" + encodeURIComponent(book.id) + ".webp"
+    : legacyId ? covers.imageBase + encodeURIComponent(legacyId) + ".webp" : null;
   return <span className={"bk-cover" + (mini ? " is-mini" : "")} aria-hidden="true">
     {src && !failed ? <img src={src} alt="" loading="lazy"
       decoding="async" onError={()=>setFailed(true)} /> :
