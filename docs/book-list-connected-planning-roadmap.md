@@ -184,6 +184,54 @@ After testing that foundation with a few real combined, single-topic and shared-
 | 2026-11-19 | Member-entered custom book details, external ISBN lookup, supplier price auto-import | **Deferred unless separately designed** |
 | 2026-11-19 | Whether to preserve browser back stack or temporary context stack when hopping between Book and Course focus | **Open — test navigation prototype** |
 
+## Book Explorer organization decision (2026-11-20)
+
+The previous unique-resource subject list was useful as a catalog but obscured
+the **actual course or topic where a resource is assigned**. For returning
+Alveary members, the default Book List needs to be curriculum-first.
+
+- **Default: By Course.** Show Subject → Course → Topic → Resource. For a
+  **Single-Topic Course**, omit the redundant Topic layer; its resources appear
+  directly beneath the course. Combined courses display resources under the
+  authored child topics; any genuinely parent-assigned resource appears at the
+  course level.
+- **Alternative: By Book.** Alphabetical unique-title list with the same
+  resources and existing book-detail controls. This is a change of
+  **organization**, not a distinct collection and not a replacement for
+  Compact / Expanded / Detailed.
+- In **By Course**, the *same book can appear in multiple course/topic
+  contexts*. This is intentional and mirrors the existing Alveary Book List.
+  In **My Books / Budget** and By Book, each canonical resource remains
+  consolidated, and an acquisition is not multiplied by the number of
+  curriculum appearances.
+- **Term, grade, country, subject and search must be evaluated on the actual
+  context/assignment before rendering.** Term 1 usage for one topic never
+  makes a resource appear in an unrelated Term 1 topic. Search accepts course
+  and topic titles as well as book titles/authors/ISBNs.
+- **My School Books** derives course contexts from My Plan, with only included
+  topics that are effectively assigned to at least one student within that
+  exact parent course. Think Tank ideas remain excluded.
+- **A visible scope explanation** says whether the member is viewing
+  resources from My Plan or exploring the broader 2027–28 catalog. New
+  member preferences default to My School Books when no prior choice exists;
+  existing saved choices are honored. The independent portable mini desk
+  remains My Books / Budget.
+- For **All Books** with no active search/focus, Subject and Course headings
+  are available to scan while course contents start collapsed; selecting a
+  course reveals topic headings and book rows. My Plan, focused course/topic,
+  and searches open matching courses by default. Topic groups are collapsible
+  independently. Disclosure remains keyboard-accessible via native
+  \`details\`/\`summary\` elements.
+- Use the new compact cover-led resource rows; avoid restoring large cards,
+  repeating subject/course titles on every book row, or adding deep
+  indentation. This stage does not add purchase decisions, library writes, or
+  budget costs.
+
+**Implementation:** PR #136, \`app/books/book-course-groups.mjs\` and
+\`app/books/BookCourseHierarchy.tsx\`; tested against 2027–28 assignments
+plus synthetic shared-topic and cross-term cases. Visual/mouse/mobile
+behavior still requires manual browser review after deployment.
+
 ## 11. Progress log
 
 | Date | PR | Outcome | Follow-up |
@@ -193,3 +241,4 @@ After testing that foundation with a few real combined, single-topic and shared-
 | 2026-11-20 | #133 (this PR) | **Book resource staging**: 345 canonical resources, 447 exact edition assignments, 483 assignment items and 549 validated HTTPS links imported into private RLS-protected development Supabase; publication contract and QA smoke test recorded. | Validate public/member-safe projections, cover images and excluded links; next PR should replace the Book Explorer placeholder with reviewed resource data |
 | 2026-11-20 | [#134](https://github.com/kkeel/alveary-planning-app/pull/134) | **Public-safe Book Explorer draft**: all 345 book/resource titles, including the 43 member-only resources, with zero external links for those restricted records; course-focused resource list and derived member My School Books. | Review browser layout, incomplete 2027 catalog coverage and secure entitled-member link release |
 | 2026-11-20 | #135 (this PR) | **Visual polish**: permanent GitHub cover mapping for 317 exact title/ISBN matches, optional Airtable cover sync into new GitHub Pages assets, self-contained List/Planning styles (fixes refresh regression), corrected mini-desk padding, simplified browse controls and familiar cover-led book rows with rationale and purchase options. | Review desktop/mobile in a deployed preview; set `AIRTABLE_PAT` read-only Actions secret and run cover sync for the remaining 28 and refresh all new-version files |
+| 2026-11-20 | #136 (this PR) | **Course-based organization**: Subject → Course → Topic books by default; By Book alphabetical consolidation; per-assignment term/search filters, current My Plan scope explanation and saved organization preference. | Review nested mobile layout, shared-topic repeated rows, member plan vs All Books, and existing mini book desk independently |
