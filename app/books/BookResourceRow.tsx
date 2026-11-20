@@ -82,6 +82,11 @@ export default function BookResourceRow({
         </div>
         {showSummary && !showDetails && book.rationale &&
           <p className="bk-book-rationale-preview">{book.rationale}</p>}
+        {showSummary && !showDetails && publicNote &&
+          <div className="bk-book-planning-note is-summary">
+            <strong>Planning note</strong>
+            <p>{publicNote}</p>
+          </div>}
         {showSummary && <div className="bk-book-meta">
           <span>Scope: {bookTermSummary(book)}</span>
           {role && !mini && <span>{role}</span>}
