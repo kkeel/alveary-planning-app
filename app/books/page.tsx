@@ -3,11 +3,11 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlignJustify, ArrowLeft, BookOpen, BookOpenText, List, ListTree, NotebookPen, Search } from "lucide-react";
+import { AlignJustify, ArrowLeft, BookOpen, BookOpenText, CheckCircle2, List, ListTree, NotebookPen, Search } from "lucide-react";
 import courses from "../courses/catalog-preview.json";
 import resources from "./catalog-resources-preview.json";
-import { allBooks, booksForFocus, booksForMyPlan, bookNeededInTerm } from "./book-relationships.mjs";
-import { matchesCountry } from "../courses/country-filter.mjs";
+import { buildBookCourseGroups, booksFromCourseGroups } from "./book-course-groups.mjs";
+import BookCourseHierarchy from "./BookCourseHierarchy";
 import BookResourceRow from "./BookResourceRow";
 import PlanningDesk from "../components/PlanningDesk";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
@@ -27,7 +27,6 @@ for (const link of courses.topicLinks) {
 }
 const courseSubjects = [...new Set(courses.courses.map(c => c.subject))]
   .sort((a,b) => a.localeCompare(b));
-const draftBooks = allBooks(resources);
 
 function BookListContent() {
   const desk = usePlanningDesk();
@@ -61,40 +60,23 @@ function BookListContent() {
     ? childTopics.find(t=>t.id===requestedTopicId) : undefined;
   const focusError=Boolean((requestedId&&!requested)||(requestedTopicId&&!validTopic));
   const focus=focusError ? undefined : validTopic??parent??topicOnly;
-  const focusBooks = requested && !focusError
-    ? booksForFocus(resources,courses,requested.id,validTopic?.id??null) : [];
-  const schoolBooks = useMemo(() =>
-    booksForMyPlan(resources,courses,plan.courses,plan.students),
-    [plan.courses,plan.students]);
-  const baseBooks = requestedId ? focusBooks :
-    signedIn && desk.bookScope==="school" ? schoolBooks : draftBooks;
-  const filtered = baseBooks.filter(book => {
-    if(query.trim()) {
-      const search=(book.title+" "+(book.author??"")+" "+(book.isbn??"")).toLowerCase();
-      if(!search.includes(query.trim().toLowerCase()))return false;
-    }
-    if(!bookNeededInTerm(book,term))return false;
-    if(requestedId)return true; // Focus explicitly overrides unrelated grade/subject filters.
-    return book.uses.some(use => {
-      const source=coursesByEdition.get(use.editionId);
-      if(!source)return false;
-      if(subject && source.subject!==subject)return false;
-      if(desk.grades.length && !source.grades.some(g=>desk.grades.includes(g)))return false;
-      if(!matchesCountry(source.country,desk.country))return false;
-      return true;
-    });
-  });
+  const signedInScope = signedIn && desk.bookScope==="school" ? "school" : "all";
+  const plannedCount=plan.courses.filter(choice=>choice.stage==="planned").length;
 
-  const groups=new Map<string,typeof filtered>();
-  for(const book of filtered) {
-    const sources=book.uses.map(use=>coursesByEdition.get(use.editionId)).filter(c=>Boolean(c));
-    const primary=subject && !requestedId ? subject :
-      sources.sort((a,b)=>(a?.subjectSort??99)-(b?.subjectSort??99))[0]?.subject??"Other resources";
-    const list=groups.get(primary)??[];
-    list.push(book);groups.set(primary,list);
-  }
-  const orderedGroups=[...groups.entries()].sort((a,b)=>
-    courseSubjects.indexOf(a[0])-courseSubjects.indexOf(b[0]));
+  // A single presentation source serves both views. Crucially the course
+  // hierarchy filters the EXACT edition-level assignment before displaying it.
+  // By Book then deduplicates only the rendered, already-filtered contexts.
+  const grouped=useMemo(()=>buildBookCourseGroups(resources,courses,{
+    scope:requestedId?"all":signedInScope,
+    savedCourses:plan.courses,
+    students:plan.students,
+    subject,grades:desk.grades,country:desk.country,query,term,
+    focusCourseId:focusError?"unknown-course-focus":requestedId,
+    focusTopicId:validTopic?.id??null,
+  }),[signedInScope,plan.courses,plan.students,subject,desk.grades,
+    desk.country,query,term,requestedId,validTopic?.id,focusError]);
+  const alphabeticalBooks=useMemo(()=>booksFromCourseGroups(grouped),[grouped]);
+  const byCourse=desk.bookOrganize==="course";
 
   const density=desk.bookDetails;
   const changeDensity=(next:typeof density)=>desk.setBookDetails(next);
@@ -159,7 +141,7 @@ function BookListContent() {
             <Search size={15} aria-hidden="true"/>
             <span className="sr-only">Search books</span>
             <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
-              placeholder="Search books or authors"/>
+              placeholder="Search books, courses, or topics"/>
           </label>
         </div>
         <div className="bk-catalog-secondary">
@@ -183,6 +165,20 @@ function BookListContent() {
               {desk.country!=="all" ? " · "+(desk.country==="us"?"U.S.":"Canada") : ""} ×
             </button>}
           </div>
+          <div className="bk-view-choices">
+            <div className="bk-organize" role="group" aria-label="Organize Book List">
+              <span className="bk-view-label">Organize</span>
+              <div className="bk-organize-switch">
+                <button type="button" className={byCourse?"is-current":""}
+                  aria-pressed={byCourse} onClick={()=>desk.setBookOrganize("course")}>
+                  By Course
+                </button>
+                <button type="button" className={!byCourse?"is-current":""}
+                  aria-pressed={!byCourse} onClick={()=>desk.setBookOrganize("book")}>
+                  By Book
+                </button>
+              </div>
+            </div>
           <div className="bk-display-switch" role="group" aria-label="Book List display density">
             <button type="button" className={density==="compact"?"is-current":""}
               aria-pressed={density==="compact"} onClick={()=>changeDensity("compact")}>
@@ -197,28 +193,60 @@ function BookListContent() {
               <BookOpenText size={14}/> Detailed
             </button>
           </div>
+          </div>
         </div>
       </div>
 
-      <p className="bk-results-note">{filtered.length} {filtered.length===1?"book or resource":"books and resources"}
-        {requestedId?" in this course/topic focus":
-          signedIn&&desk.bookScope==="school"?" from My Plan":" in the 2027–28 draft"}.
-        {signedIn&&desk.bookScope==="school"&&!requestedId?
-          " These are curriculum suggestions, not confirmed purchases." : ""}
-      </p>
-      {orderedGroups.length ? <div className="bk-book-sections">
-        {orderedGroups.map(([group,bookRows])=><section key={group} className="bk-book-subject">
-          <h2>{group}</h2>
-          <div className="bk-book-rows">
-            {bookRows.map(book=><BookResourceRow key={book.id} book={book}
-              density={density} courseByEdition={coursesByEdition}/>)}
-          </div>
-        </section>)}
-      </div> : <div className="bk-notice">
-        <h2>No books match this view</h2>
-        <p>Try changing the search, term, or subject. You can also clear a selected course focus.</p>
-        {requestedId && <button type="button" onClick={()=>router.push("/books")}>Show all books</button>}
+      {!requestedId && <div className="bk-scope-context" role="status">
+        <div className="bk-scope-context-label">
+          {signedInScope==="school" ? <CheckCircle2 size={16} aria-hidden="true"/> :
+            <BookOpen size={16} aria-hidden="true"/>}
+          <strong>{signedInScope==="school" ? "Showing books from My Plan" :
+            "Browsing the Alveary book catalog"}</strong>
+        </div>
+        <p>{signedInScope==="school" ?
+          plannedCount
+            ? "Resources assigned to your "+plannedCount+" planned "+(plannedCount===1?"course":"courses")+
+              " and their included topics. Books used in multiple courses can appear more than once."
+            : "You haven't added any courses to My Plan yet. Browse courses or explore all books." :
+          "These books come from the 2027–28 draft curriculum, including courses outside your plan."}</p>
+        {signedIn && <button type="button" onClick={()=>desk.setBookScope(
+          signedInScope==="school"?"all":"school")}>
+          {signedInScope==="school"?"Browse all books":"See My School Books"}
+        </button>}
       </div>}
+
+      <p className="bk-results-note">
+        {grouped.distinctResources} distinct {grouped.distinctResources===1?"book/resource":"books/resources"}
+        {byCourse ? " across "+grouped.appearances+
+          " course/topic "+(grouped.appearances===1?"placement":"placements") : ""}
+        {requestedId ? " for this focused course/topic" :
+          signedInScope==="school" ? " from My Plan" : " in the 2027–28 draft"}.
+        {signedInScope==="school"&&!requestedId ?
+          " Recommendations are not confirmed purchases." : ""}
+      </p>
+      {grouped.sections.length ? byCourse ?
+        <BookCourseHierarchy
+          key={[signedInScope,requestedId,validTopic?.id,query,term,subject,
+            desk.grades.join(","),desk.country].join("|")}
+          grouped={grouped} density={density} courseByEdition={coursesByEdition}
+          openCourses={signedInScope==="school"||Boolean(requestedId)||
+            Boolean(query.trim())||Boolean(subject)}/>
+        : <div className="bk-alphabetical-list" aria-label="Books in alphabetical order">
+          {alphabeticalBooks.map(book=><BookResourceRow key={book.id} book={book}
+            density={density} courseByEdition={coursesByEdition}/>)}
+        </div>
+        : <div className="bk-notice">
+          <h2>{signedInScope==="school"&&plannedCount===0&&!requestedId ?
+            "Start with your courses" : "No books match this view"}</h2>
+          <p>{signedInScope==="school"&&plannedCount===0&&!requestedId ?
+            "When you add courses to My Plan, their assigned resources will appear here automatically." :
+            "Try a different course, term or search. You can also clear your course focus."}</p>
+          {signedInScope==="school"&&!requestedId && <button type="button"
+            onClick={()=>desk.setBookScope("all")}>Browse all books</button>}
+          {requestedId && <button type="button" onClick={()=>router.push("/books")}>
+            Clear course focus</button>}
+        </div>}
       <p className="bk-preview-footnote">
         Draft 2027–28 resource preview. Member-only resources remain listed, but their
         external links are omitted in public browsing. Personal ownership and budget tracking
