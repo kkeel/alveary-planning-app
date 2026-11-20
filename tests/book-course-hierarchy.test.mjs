@@ -80,6 +80,10 @@ assert.deepEqual(beta.topics.map(t=>t.topic.id),["t1"],
 assert.deepEqual(booksFromCourseGroups(full).find(b=>b.id==="bookA")
   .uses.map(u=>u.assignmentId).sort(),["a1","a2"],
   "By Book deduplicates the resource, not the underlying assignments");
+assert.deepEqual(booksFromCourseGroups(full).find(b=>b.id==="bookA").coursePaths,
+  ["Combined Alpha › Shared Topic","Combined Alpha › Second Topic","Combined Beta › Shared Topic"],
+  "Alphabetical book detail must show every original course/topic breadcrumb");
+
 const t1=buildBookCourseGroups(fakeResources,fakeCourses,{term:"1"});
 assert.equal(t1.appearances,3);
 const alpha1=t1.sections.find(s=>s.subject==="Science")
