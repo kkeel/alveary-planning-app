@@ -150,7 +150,7 @@ function BookListContent() {
           {signedIn&&!requestedId && <div className="bk-scope-switch" role="group" aria-label="Which books to show">
             <button type="button" aria-pressed={desk.bookScope==="all"}
               className={desk.bookScope==="all"?"is-current":""}
-              onClick={()=>desk.setBookScope("all")}>All Alveary Books</button>
+              onClick={()=>desk.setBookScope("all")}>All Books</button>
             <button type="button" aria-pressed={desk.bookScope==="school"}
               className={desk.bookScope==="school"?"is-current":""}
               onClick={()=>desk.setBookScope("school")}>My School Books</button>
