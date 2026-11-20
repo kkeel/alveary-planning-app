@@ -1,0 +1,38 @@
+name: Sync 2027-28 Book Covers from Airtable
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-book-covers
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+      - name: Copy current Airtable images into stable GitHub Pages thumbnails
+        env:
+          AIRTABLE_PAT: ${{ secrets.AIRTABLE_PAT }}
+          AIRTABLE_BASE_ID: appzITUxxmM6cO5m1
+        run: node tools/sync-book-covers-from-airtable.mjs
+      - name: Commit refreshed cover images
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add app/books/book-cover-map.json public/book-covers
+          if ! git diff --cached --quiet; then
+            git commit -m "assets: refresh 2027-28 book cover thumbnails"
+            git push
+          fi
