@@ -7,7 +7,7 @@ import {
   PanelRightClose, PanelRightOpen, X, Plus, UsersRound, Trash2, Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { useDemoPlan } from "./DemoPlanContext";
@@ -48,7 +48,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const companion = usePlanningCompanion();
   const cloud = useDemoPlan();
   const pathname = usePathname();
-  const router = useRouter();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   // A locally opened course in Compact. Expanded/Detailed show all topics.
   const [openThinkCourseId, setOpenThinkCourseId] = useState<string | null>(null);
