@@ -41,7 +41,8 @@ for (const link of catalog.topicLinks) {
   const parent = byEdition.get(link.parentEditionId);
   const child = byEdition.get(link.childEditionId);
   assert.ok(parent && child, "Every link resolves in this draft snapshot");
-  assert.equal(child.type, "Topic");
+  assert.ok(child.type === "Topic" || child.type === "Single-Topic Course",
+    "A combined course may explicitly link a single-topic edition");
   assert.ok(byId.has(parent.id) && byId.has(child.id));
   const parents = connections.get(child.id) ?? new Set();
   parents.add(parent.id);
