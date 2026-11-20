@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BookOpen, ExternalLink, LockKeyhole } from "lucide-react";
 import type { ResourceBook } from "./book-relationships.mjs";
-import { bookTermSummary } from "./book-relationships.mjs";
+import { bookTermSummary, noteExplainsMemberAccess } from "./book-relationships.mjs";
 import covers from "./book-cover-map.json";
 import publishedNotes from "./public-resource-notes-preview.json";
 
@@ -43,8 +43,7 @@ export default function BookResourceRow({
   const publicNote = (publishedNotes.notesByResourceId as Record<string,string>)[book.id];
   // When the approved published note already explains member access,
   // don't repeat the generic public-link notice beneath it.
-  const noteExplainsMemberAccess = /(?:\bmembers?[-\s]+only\b|\bonly\s+available\s+to\s+(?:alveary\s+)?members?\b|\bonly\s+for\s+(?:alveary\s+)?members?\b)/i
-    .test(publicNote ?? "");
+  const hasMemberAccessNote = noteExplainsMemberAccess(publicNote);
   const defaultDetails = density === "detailed";
   const showDetails = opened ?? defaultDetails;
   const showSummary = density !== "compact" && !mini || showDetails;
@@ -124,7 +123,7 @@ export default function BookResourceRow({
           target="_blank" rel="noopener noreferrer">
           <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
       </div>}
-      {book.memberOnly && !noteExplainsMemberAccess && <p className="bk-book-member-note">
+      {book.memberOnly && !hasMemberAccessNote && <p className="bk-book-member-note">
         Resource links are not available in public browsing.
       </p>}
       {!book.memberOnly && !visibleLinks.length && <p className="bk-book-member-note">
