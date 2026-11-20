@@ -17,3 +17,5 @@ export declare function editionIdsForMyPlan(courseCatalog:any,savedCourses:any[]
 export declare function booksForMyPlan(bookCatalog:any,courseCatalog:any,savedCourses:any[],students:any[]):ResourceBook[];
 export declare function bookNeededInTerm(book:ResourceBook,term:string):boolean;
 export declare function bookTermSummary(book:ResourceBook):string;
+
+export declare function noteExplainsMemberAccess(note:string | null | undefined):boolean;
