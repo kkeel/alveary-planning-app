@@ -69,7 +69,7 @@ const defaults: PlanningDeskState = {
   // The planning workspaces keep their calmer Expanded topic-first defaults.
   listDetails: "detailed", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse", bookMode: "browse", bookTab: "books", bookTerm: "all", bookDetails: "topics", bookScope: "school", bookOrganize: "course",
+  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse", bookMode: "browse", bookTab: "books", bookTerm: "all", bookDetails: "detailed", bookScope: "school", bookOrganize: "course",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
 };
 // Keep user-view preferences valid even if old or manually edited local storage is malformed.

@@ -5,6 +5,7 @@ import { BookOpen, ChevronDown, ChevronRight, ExternalLink, LockKeyhole } from "
 import type { ResourceBook } from "./book-relationships.mjs";
 import { bookTermSummary } from "./book-relationships.mjs";
 import covers from "./book-cover-map.json";
+import publishedNotes from "./public-resource-notes-preview.json";
 
 type Density = "compact" | "topics" | "detailed";
 type CourseLabel = { title:string; subject:string };
@@ -37,6 +38,9 @@ export default function BookResourceRow({
 }) {
   const [opened,setOpened] = useState<boolean | null>(null);
   useEffect(() => setOpened(null),[density]);
+  // Only source notes whose wording matches the previously published Alveary
+  // catalog are included here; draft/internal writer notes stay private.
+  const publicNote = (publishedNotes.notesByResourceId as Record<string,string>)[book.id];
   const defaultDetails = density === "detailed";
   const showDetails = opened ?? defaultDetails;
   const showSummary = density !== "compact" && !mini || showDetails;
@@ -78,6 +82,11 @@ export default function BookResourceRow({
         </div>
         {showSummary && !showDetails && book.rationale &&
           <p className="bk-book-rationale-preview">{book.rationale}</p>}
+        {showSummary && !showDetails && publicNote &&
+          <div className="bk-book-planning-note is-summary">
+            <strong>Planning note</strong>
+            <p>{publicNote}</p>
+          </div>}
         {showSummary && <div className="bk-book-meta">
           <span>Scope: {bookTermSummary(book)}</span>
           {role && !mini && <span>{role}</span>}
@@ -99,7 +108,11 @@ export default function BookResourceRow({
         <strong>Why we recommend it</strong>
         <p>{book.rationale}</p>
       </div>}
-      {book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
+      {publicNote && <div className="bk-book-planning-note">
+        <strong>Planning note</strong>
+        <p>{publicNote}</p>
+      </div>}
+      {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
       {!mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
         <strong>Used with</strong>
         <span>{locations.join(" · ")}</span>
