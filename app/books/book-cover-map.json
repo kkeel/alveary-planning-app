@@ -1,5 +1,5 @@
 {
-  "source": "Existing public GitHub Pages book-cover thumbnails, reconciled on title and ISBN against current draft resources",
+  "source": "Stable covers already hosted in the existing Alveary GitHub Pages repository; record IDs reconciled by matching title and ISBN. Newly mirrored covers take precedence.",
   "mappedBookCount": 317,
   "totalBookCount": 345,
   "imageBase": "https://planning.alveary.org/img/resources/",
@@ -321,5 +321,6 @@
     "reca4hbVzPESVNHov": "recseBbPlE10b3Zka",
     "recgsYgJ4QxyciEEy": "recZ5uK4o6WQPJeg3",
     "recuuLIHYZPMqgHB2": "recM99PeNDdcQd2s6"
-  }
+  },
+  "newCoverIds": []
 }
