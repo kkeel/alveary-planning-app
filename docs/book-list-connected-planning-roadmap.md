@@ -101,7 +101,7 @@ Checkboxes mean **implemented + verified**, not merely designed. Phases are incr
 
 - [x] Record agreed member experience, vocabulary, data boundaries and phased plan in this document (November 19, 2026; review PR pending).
 - [ ] Review the plan and record any terminology/layout changes in **Decision log** below.
-- [ ] Confirm the current app's secured plan endpoints, catalog resource publishing coverage, and public/member fields; note technical blockers without assuming the old 2026–27 Book List is a backend for the new app.
+- [x] Confirm the current app's secured plan endpoints and identify resource publishing/public-member field gaps; private 2027–28 resource staging is now present, but no approved public/member resource projection yet (November 20, 2026).
 - [ ] Identify shared UI components: portable/full desk, reusable book rows, book filter state, and link focus.
 
 ### Phase 1 — Usable Book Explorer and portable desk foundation
@@ -190,3 +190,4 @@ After testing that foundation with a few real combined, single-topic and shared-
 | --- | --- | --- | --- |
 | 2026-11-19 | Documentation PR (this file) | Captured member vision, foundation and checked implementation sequence | Review, then begin Phase 1 coding PR |
 | 2026-11-20 | [#132](https://github.com/kkeel/alveary-planning-app/pull/132) | **Phase 1 foundation**: independent Books List/Planning mode, stable My Books/Budget mini desk in shared shell, full Book Planning placeholder, validated parent-aware View Books focus; automated PR build passed. Actual resource data and book rows are *not* connected. | Manual browser review after merge, then resource/assignment publishing contract and true Book Explorer rows |
+| 2026-11-20 | #133 (this PR) | **Book resource staging**: 345 canonical resources, 447 exact edition assignments, 483 assignment items and 549 validated HTTPS links imported into private RLS-protected development Supabase; publication contract and QA smoke test recorded. | Validate public/member-safe projections, cover images and excluded links; next PR should replace the Book Explorer placeholder with reviewed resource data |
