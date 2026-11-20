@@ -179,7 +179,7 @@ function BookListContent() {
             {!requestedId && hasCourseFilters && <button type="button" className="bk-grade-chip"
               title="Clear Course List grade and country filters"
               onClick={()=>{desk.setGrades([]);desk.setCountry("all");}}>
-              {desk.grades.length ? "Grades: "+desk.grades.join(", ") : "All grades"}
+              {desk.grades.length===1 ? "Grade "+desk.grades[0] : desk.grades.length>1 ? desk.grades.length+" grades" : "All grades"}
               {desk.country!=="all" ? " · "+(desk.country==="us"?"U.S.":"Canada") : ""} ×
             </button>}
           </div>
