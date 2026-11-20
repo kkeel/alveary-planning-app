@@ -7,6 +7,7 @@ import { AlignJustify, ArrowLeft, BookOpen, BookOpenText, List, ListTree, Notebo
 import courses from "../courses/catalog-preview.json";
 import resources from "./catalog-resources-preview.json";
 import { allBooks, booksForFocus, booksForMyPlan, bookNeededInTerm } from "./book-relationships.mjs";
+import { matchesCountry } from "../courses/country-filter.mjs";
 import BookResourceRow from "./BookResourceRow";
 import PlanningDesk from "../components/PlanningDesk";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
@@ -26,11 +27,6 @@ for (const link of courses.topicLinks) {
 }
 const courseSubjects = [...new Set(courses.courses.map(c => c.subject))]
   .sort((a,b) => a.localeCompare(b));
-const countryMatches = (value:string|null,chosen:string) =>
-  chosen==="all" || value==null || value==="Both" ||
-  (chosen==="us" ? value.toLowerCase().includes("us") ||
-    value.toLowerCase().includes("united states") :
-    value.toLowerCase().includes("canada"));
 const draftBooks = allBooks(resources);
 
 function BookListContent() {
@@ -84,7 +80,7 @@ function BookListContent() {
       if(!source)return false;
       if(subject && source.subject!==subject)return false;
       if(desk.grades.length && !source.grades.some(g=>desk.grades.includes(g)))return false;
-      if(!countryMatches(source.country,desk.country))return false;
+      if(!matchesCountry(source.country,desk.country))return false;
       return true;
     });
   });
