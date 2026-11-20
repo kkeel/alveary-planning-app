@@ -40,10 +40,13 @@ export default function BookResourceRow({
   const defaultDetails = density === "detailed";
   const showDetails = opened ?? defaultDetails;
   const showSummary = density !== "compact" && !mini || showDetails;
-  const locations = [...new Map(book.uses.map(use => {
-    const course = courseByEdition.get(use.editionId);
-    return [use.editionId, course ? course.title : "Course resource"];
-  })).values()];
+  // The alphabetical By Book view carries full parent › topic breadcrumbs.
+  // Mini My Books and older views can still fall back to edition titles.
+  const locations = book.coursePaths?.length ? book.coursePaths :
+    [...new Map(book.uses.map(use => {
+      const course = courseByEdition.get(use.editionId);
+      return [use.editionId, course ? course.title : "Course resource"];
+    })).values()];
   const chooseOne = book.uses.some(use => use.chooseOne);
   const optional = book.uses.some(use => use.optional);
   // Defense in depth: restricted resources must not expose external URLs,
