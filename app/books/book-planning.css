@@ -95,14 +95,18 @@
   padding:8px 0 9px; border-bottom:1px solid var(--bk-line); margin:0 0 5px; }
 .bk-book-rows { display:flex; flex-direction:column; }
 .bk-book-row { min-width:0; border-bottom:1px solid var(--bk-line); color:var(--bk-ink); }
-.bk-book-line { display:grid; grid-template-columns:52px minmax(0,1fr);
+.bk-book-line { display:grid; grid-template-columns:64px minmax(0,1fr);
   gap:13px; align-items:start; padding:12px 5px 12px 2px; }
+.bk-book-cover-column { display:flex; flex-direction:column; align-items:center;
+  gap:4px; width:64px; min-width:0; }
+.bk-book-role { max-width:64px; text-align:center; font-size:10px; line-height:1.3;
+  font-weight:500; color:var(--bk-muted); overflow-wrap:anywhere; }
 .bk-book-row:hover .bk-book-line { background:transparent; }
 .bk-cover { display:flex; align-items:center; justify-content:center; width:52px; height:72px;
-  flex-shrink:0; background:#f6f2e1; border:1px solid #e0e1d2;
-  color:#7b8b7f; border-radius:2px; overflow:hidden; }
-.bk-cover img { display:block; width:100%; height:100%; object-fit:contain;
-  background:#fbfbf9; }
+  flex-shrink:0; background:#e8e9e2; border:1px solid #d2d6d2;
+  color:var(--bk-sage); border-radius:2px; overflow:hidden; }
+.bk-cover img { display:block; width:100%; height:100%; object-fit:cover;
+  background:transparent; }
 .bk-book-main { min-width:0; }
 .bk-book-heading { display:flex; align-items:flex-start; justify-content:space-between;
   min-width:0; gap:6px; }
@@ -112,6 +116,17 @@
 .bk-book-heading-text strong { font-size:13px; font-weight:650; line-height:1.45; overflow-wrap:anywhere; }
 .bk-book-heading-text>span { font-size:11px; line-height:1.4; color:var(--bk-muted); }
 .bk-book-expand:hover strong { color:var(--bk-sage); text-decoration:underline; text-underline-offset:2px; }
+.bk-book-flags { display:flex; align-items:center; flex-wrap:wrap; gap:5px;
+  margin:6px 0 0; }
+.bk-book-flag { display:inline-flex; align-items:center; border-radius:12px;
+  border:1px solid #cecfbd; background:#f6f2e1; color:#3b413b;
+  padding:2px 7px; font-size:10px; font-weight:650; line-height:1.5; }
+.bk-book-flag.is-choice { background:#dee1d2; border-color:#adb58f; }
+.bk-book-links-scope { display:flex; flex-wrap:wrap; align-items:center;
+  justify-content:space-between; gap:8px 14px; margin:9px 0 1px; }
+.bk-book-links-scope .bk-book-links { margin:0; }
+.bk-book-scope { color:var(--bk-muted); font-size:11px; line-height:1.55;
+  margin-left:auto; text-align:right; max-width:100%; }
 .bk-book-member-icon { display:inline-flex; color:var(--bk-sage);
   border:1px solid #dee1d2; border-radius:3px; padding:4px; margin-top:1px; flex-shrink:0; }
 /* An intentionally chosen Expanded view still shows the ENTIRE rationale.
@@ -132,7 +147,7 @@
   background:#e8e9e2; color:var(--bk-sage); font-size:11px;
   text-decoration:none; line-height:1.25; }
 .bk-book-links a:hover { background:#dee1d2; border-color:var(--bk-olive); color:var(--bk-ink); }
-.bk-book-description { margin:0 10px 13px 67px; padding:5px 0 5px;
+.bk-book-description { margin:0 10px 13px 77px; padding:5px 0 5px;
   border:0; background:transparent; color:var(--bk-ink); }
 .bk-book-rationale { max-width:78ch; padding:10px 14px 11px;
   border-radius:3px; background:var(--bk-surface); }
@@ -174,6 +189,10 @@
 .bp-book-subject .bk-book-row:last-child { border-bottom:0; }
 .bp-mini-content .bk-book-line { grid-template-columns:28px minmax(0,1fr);
   gap:9px; padding:7px 0; }
+.bp-mini-content .bk-book-cover-column { width:28px; }
+.bp-mini-content .bk-book-flags { margin-top:4px; gap:4px; }
+.bp-mini-content .bk-book-flag { font-size:9px; padding:1px 5px; }
+.bp-mini-content .bk-book-scope { text-align:left; margin-left:0; }
 .bp-mini-content .bk-cover { width:28px; height:39px; }
 .bp-mini-content .bk-book-heading-text strong { font-size:11.5px; font-weight:500; line-height:1.45; }
 .bp-mini-content .bk-book-heading { gap:3px; }
@@ -246,9 +265,12 @@
   .bk-catalog-secondary { align-items:stretch; }
   .bk-display-switch { width:100%; }
   .bk-display-switch button { flex:1; padding-inline:5px; }
-  .bk-book-line { grid-template-columns:43px minmax(0,1fr); gap:9px; }
+  .bk-book-line { grid-template-columns:56px minmax(0,1fr); gap:9px; }
+  .bk-book-cover-column { width:56px; }
+  .bk-book-role { max-width:56px; font-size:9px; }
+  .bk-book-scope { margin-left:0; text-align:left; }
   .bk-cover { width:43px; height:61px; }
-  .bk-book-description { margin-left:48px; }
+  .bk-book-description { margin-left:65px; }
   .bk-book-rationale-preview,.bk-book-planning-note.is-summary { margin-left:0; }
   .bk-book-links,.bk-book-meta { margin-left:0; }
   .bp-full-header,.bk-toolbar { align-items:flex-start; }
@@ -327,6 +349,11 @@
   font-size:12px; line-height:1.4; color:var(--bk-sage); font-weight:650; }
 .bk-topic-books { margin-left:8px; min-width:0; }
 .bk-course-hierarchy .bk-book-row { border-color:#e5e8e5; }
+/* The last resource divider and the next course/topic boundary should not double up. */
+.bk-course-direct:last-child > .bk-book-row:last-child,
+.bk-topic-group:last-child .bk-topic-books > .bk-book-row:last-child {
+  border-bottom:0;
+}
 .bk-course-hierarchy .bk-book-line { padding-block:9px; }
 .bk-course-hierarchy .bk-book-description { background:transparent; }
 .bk-alphabetical-list { max-width:1190px; display:flex; flex-direction:column; }

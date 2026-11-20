@@ -84,7 +84,7 @@ assert.ok(!all.some(book=>book.uses.length===0));
 
 const bookRow=read("app/books/BookResourceRow.tsx");
 assert.match(bookRow,/book\.memberOnly \? \[\] : book\.links/);
-assert.match(bookRow,/Resource links are not available in public browsing/);
+assert.match(bookRow,/Resource available to Alveary members only/);
 const page=read("app/books/page.tsx");
 assert.match(page,/buildBookCourseGroups\(resources,courses/);
 assert.match(page,/booksFromCourseGroups\(grouped\)/);
