@@ -62,13 +62,26 @@ Every table has **release-scoped composite keys/foreign keys**, row-level securi
 - Supabase security advisor lists `rls_enabled_no_policy` at informational severity; for these private staging tables, that is **deliberate deny-by-default**, not a missing publication grant.
 - No catalog release route was approved or altered. No workspace, student, course selection, budget, or 2026–27 production data was modified.
 
+## Clarified public visibility rule (2026-11-20)
+
+**Member-only is a *link-access restriction*, not a resource visibility filter.** A resource with Airtable `Is Member ONLY` remains visible in **public Explore Books**, including its title and safe descriptive metadata, but **none of its external resource/purchase URLs** may be emitted in the publicly downloaded data. Do not just hide the link buttons in React; URLs must be absent from the public payload itself.
+
+- For a resource marked `Is Member ONLY`: show title, author/creator, ISBN and published-style rationale, subject/course context and applicable terms. Export an **empty `links` array**, irrespective of whether Link 1 or Link 2 was individually flagged.
+- For an otherwise public resource: export only HTTPS links whose **individual** `Link N Member ONLY` flag is false and whose resource `Delay Live Link` is not set. Exclude malformed URLs rather than guessing a correction.
+- For a genuinely authorized member in the future: access to protected URLs must go through separately reviewed **server-verified membership and release entitlement checks**. A signed-in browser account alone does not unlock them.
+- Keep source internal availability, review workflow notes, staff-only comments, temporary attachment URLs, and other draft-only fields out of the public projection.
+- The **2027–28 draft preview** is not the approved public release route. Continue to label it as draft; don't use this export as a substitute for formal per-surface publication approval.
+
+A generated public-safe development snapshot now contains **345 resources, including all 43 member-only resources, with zero links on those 43 records**. The original 549 HTTPS source links are reduced to **511** allowed unrestricted public links (38 individually marked member-only links were withheld). The full staging tables remain private under RLS and revoked browser grants.
+
 ## Publisher work to complete before the real Book Explorer
 
 - [x] Confirm exact Airtable source IDs and edition join across all current development editions.
 - [x] Create the versioned private schema and stage linked resource records.
 - [x] Check staging counts, advisor output, row-level security and revoked browser grants.
 - [ ] Add a repeatable **read-only Airtable extraction/validation** and an idempotent, service-only snapshot publisher; publish only a complete validated release, not partial updates.
-- [ ] Define a reviewed **public-safe resource projection** and a **member-authorized projection**, with separate URL permissions and year/surface release routes. Never expose draft staging just because a user is signed in.
+- [x] Create a **public-safe development projection** containing every title (including member-only ones) but no protected URLs. This is a draft-preview artifact, **not a release-route approval**.
+- [ ] Build separately authorized **member-only link retrieval** and reviewed public/member projections for approved publication routes. Never expose draft staging just because a user is signed in.
 - [ ] Review eight invalid/non-HTTPS link fields with curriculum editors; handle absent `Resource Type` and legitimate external/digital formats.
 - [ ] Add stable book cover-image handling; never rely on expiring Airtable attachment URLs in shipped JSON.
 - [ ] Confirm handling for `Add Alt. Format` and `Alt. Format For:` records and any resources not assigned to this release. An `All Alveary Books` public catalog scope may include approved extra resources beyond the 345 currently assigned to selected editions.
