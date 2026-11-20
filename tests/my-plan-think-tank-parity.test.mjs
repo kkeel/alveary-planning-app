@@ -81,7 +81,8 @@ assert.ok(editor.includes("<StudentPriorityControl"));
 assert.ok(plan.includes('className="planning-icon-control pd-row-tool pd-mini-info-action"'),
   "Keep the small i button as an explicit information affordance");
 assert.ok(plan.includes('href={"/books?course="+encodeURIComponent(course.courseId)}'));
-assert.ok(topics.includes('href={"/books?course="+encodeURIComponent(topic.id)}'));
+assert.ok(topics.includes('encodeURIComponent(parent.id)+"&topic="+encodeURIComponent(topic.id)'),
+  "Topic Book links must preserve source course context for shared topics");
 
 // More ... hosts Books, Edit Students, and Return to Think Tank.
 // It must not appear as an extra footer in expanded details.

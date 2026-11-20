@@ -21,6 +21,8 @@ type PlanningDeskState = {
   // Distinguishes a member's deliberate tab choice from the old Think Tank fallback.
   tabExplicit: boolean;
   courseMode: "browse" | "plan";
+  bookMode: "browse" | "plan";
+  bookTab: "books" | "budget";
   grades: number[];
   country: CountryFilter;
   subjectFilter: string;
@@ -30,6 +32,8 @@ type PlanningDeskState = {
 type PlanningDeskContextValue = PlanningDeskState & {
   ready: boolean;
   setCourseMode: (mode: "browse" | "plan") => void;
+  setBookMode: (mode: "browse" | "plan") => void;
+  setBookTab: (tab: "books" | "budget") => void;
   setListDetails: (mode: CourseDetailMode) => void;
   setThinkDetails: (mode: DetailMode) => void;
   setPlanDetails: (mode: DetailMode) => void;
@@ -57,7 +61,7 @@ const defaults: PlanningDeskState = {
   // The planning workspaces keep their calmer Expanded topic-first defaults.
   listDetails: "detailed", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse",
+  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse", bookMode: "browse", bookTab: "books",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
 };
 // Keep user-view preferences valid even if old or manually edited local storage is malformed.
@@ -124,6 +128,8 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           // A prior explicit Planning selection wins. Existing Think Tank ideas
           // alone should not force a first-time member into full-page Planning.
           courseMode: saved.courseMode === "plan" ? "plan" : "browse",
+          bookMode: saved.bookMode === "plan" ? "plan" : "browse",
+          bookTab: saved.bookTab === "budget" ? "budget" : "books",
           grades: normalizeGrades(saved.grades),
           country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
           subjectFilter: normalizeFilterText(saved.subjectFilter, 100),
@@ -166,6 +172,8 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
   const api = useMemo<PlanningDeskContextValue>(() => ({
     ...value, ready,
     setCourseMode,
+    setBookMode: mode => setValue(v => v.bookMode === mode ? v : {...v,bookMode:mode}),
+    setBookTab: tab => setValue(v => v.bookTab === tab ? v : {...v,bookTab:tab}),
     setListDetails: mode => setValue(v => v.listDetails === mode ? v : {...v,listDetails:mode}),
     setThinkDetails: mode => setValue(v => v.thinkDetails === mode ? v : {...v,thinkDetails:mode}),
     setPlanDetails: mode => setValue(v => v.planDetails === mode ? v : {...v,planDetails:mode}),

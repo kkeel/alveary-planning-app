@@ -1,0 +1,70 @@
+/* Books borrows the quiet Course List typography and shared Planning Desk shell.
+   Keep catalog browsing independent from the personal mini-desk. */
+.bk-page { max-width:1480px; padding-bottom:42px; }
+.bk-heading { margin:0 0 28px; }
+.bk-heading h1 { font-family:var(--font-plantin),Georgia,serif; font-size:clamp(36px,3vw,47px); font-weight:200; line-height:1.18; color:#262b26; margin:0 0 12px; }
+.bk-heading p { font-size:14px; line-height:1.55; margin:0; max-width:66ch; }
+.bk-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:9px 20px; border-bottom:1px solid #dde2d5; padding:0 0 16px; margin-bottom:18px; }
+.bk-toolbar .cx-mode-switch { margin-right:auto; }
+.bk-back-link { display:inline-flex; align-items:center; gap:6px; padding:7px 0; font-size:12px; text-decoration:underline; text-underline-offset:3px; color:#536d58; }
+.bk-focused { border:1px solid #dce4d6; background:#f4f7f0; padding:14px 16px; margin-bottom:18px; }
+.bk-focused-header { display:flex; align-items:center; flex-wrap:wrap; gap:8px; justify-content:space-between; }
+.bk-focused h2 { font-size:15px; font-weight:600; margin:0; color:#324936; }
+.bk-focused p { font-size:12px; line-height:1.55; color:#5b6d5f; margin:8px 0 0; }
+.bk-focused button, .bk-focused a { background:transparent; border:0; color:#4d6652; text-decoration:underline; text-underline-offset:3px; font-size:12px; }
+.bk-context-list { margin:12px 0 0; padding-left:20px; color:#405545; font-size:12px; line-height:1.8; }
+.bk-notice { background:#fffefa; border:1px solid #e0e5d9; padding:18px 20px; max-width:730px; }
+.bk-notice h2 { font-family:var(--font-plantin),Georgia,serif; font-size:25px; font-weight:400; margin:0 0 10px; }
+.bk-notice p { font-size:13px; line-height:1.6; margin:0 0 10px; color:#536456; }
+.bk-notice a { font-size:12px; color:#536d58; }
+.bk-context-browser { max-width:900px; }
+.bk-context-browser h2 { font-size:16px; margin:18px 0 8px; }
+.bk-course-index { display:flex; flex-direction:column; gap:5px; max-height:420px; overflow:auto; padding:0 4px 8px 0; }
+.bk-course-index a { display:flex; align-items:center; justify-content:space-between; text-decoration:none; padding:9px 12px; border:1px solid #e3e8df; background:#fffefa; color:#405442; font-size:12px; gap:12px; }
+.bk-course-index a:hover,.bk-course-index a:focus-visible { background:#f1f6ed; border-color:#9eae9b; }
+.bk-subject-name { color:#6b7c70; display:block; font-size:11px; }
+.bk-course-search { display:flex; align-items:center; gap:7px; background:#fff; border:1px solid #d8ddd1; max-width:440px; padding:7px 10px; margin:10px 0; }
+.bk-course-search input { border:0; background:transparent; width:100%; min-width:0; font-size:12px; outline:none; }
+.bk-course-search:focus-within { border-color:#829a83; }
+.bp-section { padding:3px 1px 8px; color:#334939; }
+.bp-section-heading { display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:9px; margin:4px 0 9px; }
+.bp-section-heading h3 { font-size:14px; font-weight:600; color:#354a39; margin:0; }
+.bp-subtle { font-size:11px; color:#819083; }
+.bp-notice,.bp-help { font-size:12px; line-height:1.6; color:#657768; margin:5px 0 13px; }
+.bp-course-groups { border-top:1px solid #e3e8df; }
+.bp-course-entry { padding:10px 1px; border-bottom:1px solid #e3e8df; }
+.bp-course-entry a { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#455c49; font-size:12px; text-decoration:none; padding:4px 0; }
+.bp-course-entry a:hover span { text-decoration:underline; }
+.bp-course-entry p { color:#7a897b; font-size:11px; line-height:1.5; margin:3px 0 0; }
+.bp-empty { padding:14px 0; font-size:12px; line-height:1.55; color:#697d6d; }
+.bp-empty p { margin:0 0 9px; }
+.bp-empty a { text-decoration:underline; text-underline-offset:3px; color:#546e58; }
+.bp-library-summary { display:flex; align-items:flex-start; gap:9px; border-top:1px solid #e3e8df; margin-top:14px; padding-top:13px; color:#596e5e; font-size:12px; }
+.bp-library-summary svg { flex-shrink:0; }
+.bp-library-summary strong { font-weight:600; }
+.bp-library-summary p { font-size:11px; line-height:1.6; color:#798778; margin:5px 0; }
+.bp-budget-item { display:flex; gap:10px; justify-content:space-between; align-items:baseline; border-top:1px solid #e4e8df; padding:13px 0; font-size:12px; }
+.bp-budget-item span:last-child { font-size:11px; color:#819083; text-align:right; }
+.bp-full { max-width:1480px; width:100%; }
+.bp-full-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; padding:8px 0 18px; }
+.bp-full-header h2 { font-family:var(--font-plantin),Georgia,serif; font-size:28px; font-weight:400; color:#304234; margin:0 0 5px; }
+.bp-full-header p { font-size:12px; color:#697d6d; margin:0; }
+.bp-focus-tabs { display:flex; gap:4px; background:#edf2e9; padding:4px; }
+.bp-focus-tabs button { display:flex; gap:7px; align-items:center; border:0; background:transparent; color:#627667; padding:10px 14px; font-size:12px; }
+.bp-focus-tabs button.is-active { background:white; color:#344c36; box-shadow:0 1px 3px #28372913; font-weight:600; }
+.bp-related-controls { margin:0 0 14px; }
+.bp-related-controls button { display:flex; align-items:center; gap:7px; border:1px solid #d7e0d2; background:#fffefa; color:#526b57; font-size:12px; padding:8px 12px; }
+.bp-related-controls button:hover { background:#eff5eb; }
+.bp-full-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; align-items:start; }
+.bp-full-layout.has-related { grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr); }
+.bp-primary,.bp-related { border:1px solid #e0e6d9; background:#fffefa; min-width:0; padding:20px 22px; }
+.bp-related-header { display:flex; align-items:center; gap:7px; color:#627767; font-size:13px; font-weight:600; padding-bottom:12px; border-bottom:1px solid #e3e8df; }
+.bp-mini-content { padding:0 2px; }
+@media(max-width:750px) {
+  .bp-full-layout.has-related { grid-template-columns:minmax(0,1fr); }
+  .bp-primary,.bp-related { padding:15px; }
+  .bk-toolbar { align-items:stretch; }
+  .bp-focus-tabs { flex:1; }
+  .bp-focus-tabs button { flex:1; justify-content:center; }
+}
+@media print { .bk-toolbar,.bp-related-controls,.bk-course-search { display:none!important; } }

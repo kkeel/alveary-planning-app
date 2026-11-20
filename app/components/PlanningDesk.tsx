@@ -4,14 +4,15 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft, BookOpen, ChevronDown, ChevronRight, Info,
   SquareCheckBig, Lightbulb, NotebookPen, Maximize2, MoreHorizontal,
-  PanelRightClose, PanelRightOpen, X, Plus, UsersRound, Trash2,
+  PanelRightClose, PanelRightOpen, X, Plus, UsersRound, Trash2, Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { usePlanningDesk } from "./PlanningDeskContext";
 import { usePlanningCompanion } from "./PlanningCompanionContext";
 import { useDemoPlan } from "./DemoPlanContext";
 import MyPlanPanel from "./MyPlanPanel";
+import BookPlanningContent from "../books/BookPlanningContent";
 import type { CSSProperties } from "react";
 import { subjectColor } from "../courses/legacy-subject-colors.mjs";
 import { selectionTopicCount } from "./planning-topic-sections.mjs";
@@ -47,7 +48,6 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   const companion = usePlanningCompanion();
   const cloud = useDemoPlan();
   const pathname = usePathname();
-  const router = useRouter();
   const onBooks = pathname.replace(/\/$/, "") === "/books";
   // A locally opened course in Compact. Expanded/Detailed show all topics.
   const [openThinkCourseId, setOpenThinkCourseId] = useState<string | null>(null);
@@ -200,14 +200,20 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
   }
   function closeMobileDrawer() { setDrawerOpen(false); setOpenMenu(null); }
   function openFullPlanningDesk() {
-    // Same destination as the List | Planning toggle. The Books portable
-    // desk can open it too, by navigating back to Courses after selecting it.
-    desk.setCourseMode("plan");
+    // Expand the desk that belongs to the current page, preserving its tab.
+    if (onBooks) desk.setBookMode("plan");
+    else desk.setCourseMode("plan");
     closeMobileDrawer();
-    if (onBooks) router.push("/courses");
   }
 
-  const summaries = <div className="pd-quiet-summary">
+  const summaries = onBooks ? <div className="pd-quiet-summary">
+    <button type="button" onClick={() => {desk.setBookTab("books"); desk.setQuiet(false); setDrawerOpen(true);}}>
+      <BookOpen size={14} aria-hidden="true"/> My Books
+    </button>
+    <button type="button" onClick={() => {desk.setBookTab("budget"); desk.setQuiet(false); setDrawerOpen(true);}}>
+      <Wallet size={14} aria-hidden="true"/> Budget
+    </button>
+  </div> : <div className="pd-quiet-summary">
     <button type="button" onClick={() => selectTab("think")}>
       <Lightbulb size={14} aria-hidden="true"/> Think Tank · {ideas.length} {ideas.length === 1 ? "idea" : "ideas"}
     </button>
@@ -431,6 +437,7 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           </div>}
   </>;
 
+  if (variant === "full" && onBooks) return <BookPlanningContent variant="full" />;
   if (variant === "full") return <section className="pd-full-page" aria-label="Your Planning Desk">
     <div className="pd-full-columns">
       <section className="pd-full-column" aria-label="Think Tank">
@@ -466,11 +473,11 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
 
   return <div className={"pd-wrapper" + (drawerOpen ? " is-mobile-open" : "")}>
     <button type="button" className="pd-mobile-launcher"
-      aria-label={"Open Planning Desk. " + ideas.length + " Think Tank ideas"}
+      aria-label={onBooks ? "Open Book Planning Desk" : "Open Planning Desk. " + ideas.length + " Think Tank ideas"}
       title="Open Planning Desk" aria-expanded={drawerOpen}
       onClick={() => { desk.setQuiet(false); setDrawerOpen(true); }}>
       <NotebookPen size={25} aria-hidden="true"/>
-      {ideas.length > 0 && <span className="pd-mobile-count" aria-hidden="true">{ideas.length > 99 ? "99+" : ideas.length}</span>}
+      {!onBooks && ideas.length > 0 && <span className="pd-mobile-count" aria-hidden="true">{ideas.length > 99 ? "99+" : ideas.length}</span>}
     </button>
     {drawerOpen && <button type="button" className="pd-mobile-scrim"
       aria-label="Close Planning Desk" onClick={closeMobileDrawer} />}
@@ -497,7 +504,19 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
       </header>
 
       <div className="pd-desk-controls">
-        <div className="pd-tabs" role="tablist" aria-label="Planning Desk sections">
+        <div className="pd-tabs" role="tablist" aria-label={onBooks ? "Book Planning Desk sections" : "Planning Desk sections"}>
+          {onBooks ? <>
+            <button role="tab" type="button" aria-selected={desk.bookTab === "books"}
+              className={desk.bookTab === "books" ? "is-active" : ""}
+              onClick={() => {desk.setBookTab("books"); setDrawerOpen(true);}}>
+              <BookOpen size={14} aria-hidden="true"/> My Books
+            </button>
+            <button role="tab" type="button" aria-selected={desk.bookTab === "budget"}
+              className={desk.bookTab === "budget" ? "is-active" : ""}
+              onClick={() => {desk.setBookTab("budget"); setDrawerOpen(true);}}>
+              <Wallet size={14} aria-hidden="true"/> Budget
+            </button>
+          </> : <>
           <button role="tab" type="button" aria-selected={desk.tab === "think"}
             className={desk.tab === "think" ? "is-active" : ""} onClick={() => selectTab("think")}>
             <Lightbulb size={14} aria-hidden="true"/> Think Tank <span>{ideas.length}</span>
@@ -506,13 +525,14 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
             className={desk.tab === "plan" ? "is-active" : ""} onClick={() => selectTab("plan")}>
             <SquareCheckBig size={14} aria-hidden="true"/> My Plan <span>{plannedIds.size}</span>
           </button>
+          </>}
         </div>
         <div className="pd-header-density">
-          {desk.tab === "think"
+          {!onBooks && (desk.tab === "think"
             ? <DetailViewSwitch label="Think Tank" value={desk.thinkDetails}
                 onChange={changeThinkDensity}/>
             : <DetailViewSwitch label="My Plan" value={desk.planDetails}
-                onChange={next => desk.setPlanDetails(next)}/>}
+                onChange={next => desk.setPlanDetails(next)}/>)}
         </div>
       </div>
 
@@ -522,7 +542,8 @@ export default function PlanningDesk({ variant = "portable" }: { variant?: "port
           onClick={() => {desk.setCourseMode("browse"); closeMobileDrawer();}}>
           <ArrowLeft size={14}/> Back to Course List
         </Link>}
-        {desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
+        {onBooks ? <BookPlanningContent/> :
+          desk.tab === "think" ? thinkTankContent : <MyPlanPanel focusCourseId={focusPlanned?.courseId}
           focusRevision={focusPlanned?.revision} onBrowseCourses={closeMobileDrawer}
           densityControlInHeader />}
       </div>
