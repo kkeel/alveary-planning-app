@@ -115,9 +115,12 @@
 .bk-book-expand:hover strong { color:var(--bk-sage); text-decoration:underline; text-underline-offset:2px; }
 .bk-book-member-icon { display:inline-flex; color:var(--bk-sage);
   border:1px solid #dee1d2; border-radius:3px; padding:4px; margin-top:1px; flex-shrink:0; }
-.bk-book-rationale-preview { margin:7px 0 5px 21px;
-  font-size:12px; line-height:1.6; color:#505650;
-  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+/* An intentionally chosen Expanded view still shows the ENTIRE rationale.
+   Detailed additionally opens notes and book-specific context; Compact is the
+   only density that suppresses rationale text by default. */
+.bk-book-rationale-preview { margin:7px 0 7px 21px;
+  font-size:12px; line-height:1.65; color:#505650; white-space:pre-line;
+  display:block; overflow:visible; }
 .bk-book-rationale-preview::before { content:"Rationale: "; font-weight:600; color:#505650; }
 .bk-book-meta { display:flex; align-items:center; flex-wrap:wrap;
   gap:3px 12px; margin:7px 0 0 21px; font-size:11px; line-height:1.55;
