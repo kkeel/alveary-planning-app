@@ -7,6 +7,7 @@ export type ResourceBook = {
   id: string; title: string; author: string | null; isbn: string | null;
   type: string | null; rationale: string | null; memberOnly: boolean;
   links: {label: string; url: string}[]; uses: ResourceUse[];
+  coursePaths?: string[];
 };
 export declare function booksForEditions(bookCatalog: any, editionIds: string[]): ResourceBook[];
 export declare function allBooks(bookCatalog: any): ResourceBook[];
