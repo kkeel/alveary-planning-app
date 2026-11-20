@@ -139,6 +139,7 @@
   border-radius:3px; background:var(--bk-surface); }
 .bk-book-planning-note { max-width:78ch; padding:11px 14px; margin:10px 0;
   border-radius:3px; background:#f6f2e1; }
+.bk-book-planning-note.is-summary { margin-left:21px; }
 .bk-book-planning-note strong { display:block; color:var(--bk-sage);
   font-size:11px; font-weight:650; margin-bottom:4px; }
 .bk-book-planning-note p { white-space:pre-line; color:var(--bk-ink);
@@ -250,7 +251,7 @@
   .bk-book-line { grid-template-columns:43px minmax(0,1fr); gap:9px; }
   .bk-cover { width:43px; height:61px; }
   .bk-book-description { margin-left:48px; }
-  .bk-book-rationale-preview { margin-left:0; }
+  .bk-book-rationale-preview,.bk-book-planning-note.is-summary { margin-left:0; }
   .bk-book-links,.bk-book-meta { margin-left:0; }
   .bp-full-header,.bk-toolbar { align-items:flex-start; }
 }
