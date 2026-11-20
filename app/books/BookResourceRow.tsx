@@ -63,7 +63,7 @@ export default function BookResourceRow({
               <ChevronRight size={15} aria-hidden="true"/>}
             <span className="bk-book-heading-text">
               <strong>{book.title}</strong>
-              {!mini && book.author && <span>by {book.author}</span>}
+              {!mini && (book.author || book.isbn) && <span>{book.author ? "by "+book.author : ""}{book.author && book.isbn ? " · " : ""}{book.isbn ? "ISBN/ASIN: "+book.isbn : ""}</span>}
             </span>
           </button>
           {book.memberOnly && <span className="bk-book-member-icon"
@@ -75,7 +75,7 @@ export default function BookResourceRow({
         {showSummary && !showDetails && book.rationale &&
           <p className="bk-book-rationale-preview">{book.rationale}</p>}
         {showSummary && <div className="bk-book-meta">
-          <span>{bookTermSummary(book)}</span>
+          <span>Scope: {bookTermSummary(book)}</span>
           {role && !mini && <span>{role}</span>}
           {optional && <span>Optional</span>}
           {chooseOne && <span>Choose one</span>}
