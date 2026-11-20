@@ -46,7 +46,8 @@ const combined=courses.courses.find(c=>c.type==="Combined Course" &&
     catalog.assignments.some(a=>a.editionId===l.childEditionId)));
 assert.ok(combined,"Need a combined course with parent- and topic-level assignments");
 const childLinks=courses.topicLinks.filter(l=>l.parentEditionId===combined.editionId);
-const topic=byEdition.get(childLinks[0].childEditionId);
+const topicLink=childLinks.find(l=>catalog.assignments.some(a=>a.editionId===l.childEditionId));
+const topic=byEdition.get(topicLink.childEditionId);
 assert.ok(topic);
 const parentFocus=booksForFocus(catalog,courses,combined.id);
 const topicFocus=booksForFocus(catalog,courses,combined.id,topic.id);
