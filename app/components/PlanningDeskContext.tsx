@@ -25,6 +25,7 @@ type PlanningDeskState = {
   bookTab: "books" | "budget";
   bookTerm: "all" | "1" | "2" | "3";
   bookScope: "all" | "school";
+  bookOrganize: "course" | "book";
   bookDetails: DetailMode;
   grades: number[];
   country: CountryFilter;
@@ -39,6 +40,7 @@ type PlanningDeskContextValue = PlanningDeskState & {
   setBookTab: (tab: "books" | "budget") => void;
   setBookTerm: (term: "all" | "1" | "2" | "3") => void;
   setBookScope: (scope: "all" | "school") => void;
+  setBookOrganize: (organize: "course" | "book") => void;
   setBookDetails: (detail: DetailMode) => void;
   setListDetails: (mode: CourseDetailMode) => void;
   setThinkDetails: (mode: DetailMode) => void;
@@ -67,7 +69,7 @@ const defaults: PlanningDeskState = {
   // The planning workspaces keep their calmer Expanded topic-first defaults.
   listDetails: "detailed", thinkDetails: "topics", planDetails: "topics",
   thinkTankIds: [], excludedTopicIdsByCourse: {}, subjectOrder: [], orderedIdsBySubject: {},
-  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse", bookMode: "browse", bookTab: "books", bookTerm: "all", bookDetails: "topics", bookScope: "all",
+  collapsedSubjects: [], quiet: false, tab: "plan", tabExplicit: false, courseMode: "browse", bookMode: "browse", bookTab: "books", bookTerm: "all", bookDetails: "topics", bookScope: "school", bookOrganize: "course",
   grades: [], country: "all", subjectFilter: "", courseSearch: "", notes: "",
 };
 // Keep user-view preferences valid even if old or manually edited local storage is malformed.
@@ -138,7 +140,8 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
           bookTab: saved.bookTab === "budget" ? "budget" : "books",
           bookTerm: saved.bookTerm === "1" || saved.bookTerm === "2" || saved.bookTerm === "3" ? saved.bookTerm : "all",
           bookDetails: saved.bookDetails === "compact" ? "compact" : saved.bookDetails === "detailed" ? "detailed" : "topics",
-          bookScope: saved.bookScope === "school" ? "school" : "all",
+          bookScope: saved.bookScope === "all" ? "all" : "school",
+          bookOrganize: saved.bookOrganize === "book" ? "book" : "course",
           grades: normalizeGrades(saved.grades),
           country: saved.country === "us" || saved.country === "canada" ? saved.country : "all",
           subjectFilter: normalizeFilterText(saved.subjectFilter, 100),
@@ -185,6 +188,7 @@ export function PlanningDeskProvider({ children, storageScope }: { children: Rea
     setBookTab: tab => setValue(v => v.bookTab === tab ? v : {...v,bookTab:tab}),
     setBookTerm: term => setValue(v => v.bookTerm === term ? v : {...v,bookTerm:term}),
     setBookScope: scope => setValue(v => v.bookScope === scope ? v : {...v,bookScope:scope}),
+    setBookOrganize: organize => setValue(v => v.bookOrganize === organize ? v : {...v,bookOrganize:organize}),
     setBookDetails: detail => setValue(v => v.bookDetails === detail ? v : {...v,bookDetails:detail}),
     setListDetails: mode => setValue(v => v.listDetails === mode ? v : {...v,listDetails:mode}),
     setThinkDetails: mode => setValue(v => v.thinkDetails === mode ? v : {...v,thinkDetails:mode}),
