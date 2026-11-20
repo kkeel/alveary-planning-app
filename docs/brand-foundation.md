@@ -1,6 +1,10 @@
 # Alveary brand foundation (development)
 
+**Update (November 20, 2026):** The owner has now provided an explicit, comprehensive approved palette and subject colors. **[Approved Alveary design system](alveary-design-system.md)** is authoritative for **new** color decisions, information visibility and course-highlight preservation. The token table below records the early *development reference values* and is **not** a replacement for the approved list. Changes to existing Course List styles require separate visual review.
+
 Source of truth: existing live planning repository `kkeel/course-picker` and the supplied Webflow dashboard screenshot (2027–28 testing).
+
+Earlier shorthand values like `#DDE2D5` (soft dividers) and approximated sidebar shades should not be interpreted as newly approved swatches. The current code has some older near-matches; keep them stable pending a deliberate CSS token audit instead of recoloring an established state as a side effect.
 
 ## Design tokens
 

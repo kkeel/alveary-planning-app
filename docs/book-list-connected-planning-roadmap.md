@@ -7,6 +7,8 @@
 
 Related foundations: [Course planning workspaces](course-planning-workspaces-phase1.md), [responsive shared desk](planning-desk-balanced-responsive-split.md), [member workspace/year contract](member-workspace-year-plan-contract.md), [curriculum schema](curriculum-schema-v1.md), and [publishing contract](curriculum-publishing-contract.md).
 
+**Shared visual/content rules:** [Approved Alveary design system](alveary-design-system.md). Course descriptions and book rationales are decision-critical; do not bury them by default or disturb the Course List's subject highlight hierarchy merely to harmonize page backgrounds.
+
 ## 1. Experience we want to protect
 
 Alveary members should be able to browse the whole book catalog without feeling that they must buy everything, automatically see the resources relevant to their chosen courses, personalize their book choices, keep a lasting record of books they own or have saved, and move naturally between **courses → books → preparation → cost**.
