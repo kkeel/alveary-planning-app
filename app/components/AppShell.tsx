@@ -75,7 +75,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [searchActive, setSearchActive] = useState(false);
-  const { courseMode, ready: deskReady } = usePlanningDesk();
+  const { courseMode, bookMode, ready: deskReady } = usePlanningDesk();
   const { ready: companionReady, chooseSection } = usePlanningCompanion();
   const { status } = usePlannerAuth();
   const signedIn = status === "signed-in";
@@ -85,7 +85,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const publicCatalog = activePath === "/courses" || activePath === "/books";
   const checking = !publicCatalog &&
     (status === "checking" || !deskReady || !companionReady);
-  const showDesk = signedIn && (activePath === "/books" ||
+  const showDesk = signedIn && ((activePath === "/books" && bookMode === "browse") ||
     (activePath === "/courses" && courseMode === "browse"));
   const showCompanionRail = showDesk && activePath === "/courses";
 
