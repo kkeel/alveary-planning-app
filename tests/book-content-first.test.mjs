@@ -37,6 +37,10 @@ assert.match(row,/<p>\{publicNote\}<\/p>/);
 assert.match(row,/book\.memberOnly \? \[\] : book\.links/);
 assert.match(css,/\.bk-book-planning-note/);
 assert.match(css,/\.bk-book-rationale p \{ line-height:1\.7; \}/);
+assert.doesNotMatch(css,/-webkit-line-clamp/,
+ "Even Expanded must show the complete rationale, not a two-line clip");
+assert.match(css,/\.bk-book-rationale-preview[^}]*white-space:pre-line/s);
+
 assert.doesNotMatch(css,/\.bk-book-rationale p[^}]*-webkit-line-clamp/s,
  "Full rationales must never use the two-line preview's truncation");
 
