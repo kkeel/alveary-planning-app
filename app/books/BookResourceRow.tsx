@@ -60,11 +60,21 @@ export default function BookResourceRow({
   // even if a link-level flag was accidentally overlooked.
   const visibleLinks = book.memberOnly ? [] : book.links.filter(link =>
     /^https:\/\//.test(link.url));
-  const role = [...new Set(book.uses.map(use => use.role).filter(Boolean))].join(" · ");
+  const roles = [...new Set(book.uses.map(use => use.role).filter(Boolean))];
+  const role = roles.join(" · ");
+  const coverRole = roles.length === 1 ? roles[0] : roles.length > 1 ? "Multiple roles" : "";
+  const optionalUses = book.uses.filter(use => use.optional);
+  const choiceUses = book.uses.filter(use => use.chooseOne);
+  const mixedOptional = optionalUses.length > 0 && optionalUses.length < book.uses.length;
+  const mixedChoice = choiceUses.length > 0 && choiceUses.length < book.uses.length;
+  const choiceCount = Math.max(0, ...choiceUses.map(use => use.choiceCount ?? 0));
 
   return <article className={"bk-book-row" + (mini ? " is-mini" : "")}>
     <div className="bk-book-line">
-      <ResourceCover book={book} mini={mini}/>
+      <div className="bk-book-cover-column">
+        <ResourceCover book={book} mini={mini}/>
+        {!mini && coverRole && <span className="bk-book-role" title={role}>{coverRole}</span>}
+      </div>
       <div className="bk-book-main">
         <div className="bk-book-heading">
           <button type="button" className="bk-book-expand" aria-expanded={showDetails}
@@ -81,6 +91,19 @@ export default function BookResourceRow({
             <span className="sr-only">Member-only resource links</span>
           </span>}
         </div>
+        {(optional || chooseOne) && <div className="bk-book-flags" aria-label="Resource selection guidance">
+          {optional && <span className="bk-book-flag is-optional"
+            title={mixedOptional ? "Optional for some course or topic uses" : "This recommendation is optional"}>
+            {mixedOptional ? "Optional for some uses" : "Optional"}
+          </span>}
+          {chooseOne && <span className="bk-book-flag is-choice"
+            title={mixedChoice
+              ? "An alternative in some course or topic uses; not every listed option is required"
+              : "Choose one alternative from this resource assignment; more than one may be used if desired"}>
+            {mixedChoice ? "Choice in some uses" :
+              choiceCount > 1 ? `Choose one of ${choiceCount}` : "Choose one"}
+          </span>}
+        </div>}
         {showSummary && !showDetails && book.rationale &&
           <p className="bk-book-rationale-preview">{book.rationale}</p>}
         {showSummary && !showDetails && publicNote &&
@@ -88,19 +111,21 @@ export default function BookResourceRow({
             <strong>Note</strong>
             <p>{publicNote}</p>
           </div>}
-        {showSummary && <div className="bk-book-meta">
-          <span>Scope: {bookTermSummary(book)}</span>
-          {role && !mini && <span>{role}</span>}
-          {optional && <span>Optional</span>}
-          {chooseOne && <span>Choose one</span>}
-          {!mini && showLocation && locations.length > 0 && <span className="bk-book-course-tag">{locations[0]}
-            {locations.length>1 ? " · shared in "+locations.length+" uses" : ""}</span>}
-        </div>}
-        {showSummary && !mini && visibleLinks.length>0 && <div className="bk-book-links">
-          {visibleLinks.map((link,i) => <a key={i} href={link.url}
-            target="_blank" rel="noopener noreferrer">
-            <ExternalLink size={12} aria-hidden="true"/>{link.label}
-          </a>)}
+        {showSummary && (mini && role || !mini && showLocation && locations.length>0) &&
+          <div className="bk-book-meta">
+            {mini && role && <span>{role}</span>}
+            {!mini && showLocation && locations.length>0 &&
+              <span className="bk-book-course-tag">{locations[0]}
+                {locations.length>1 ? " · shared in "+locations.length+" uses" : ""}</span>}
+          </div>}
+        {showSummary && <div className="bk-book-links-scope">
+          {!mini && visibleLinks.length>0 && <div className="bk-book-links">
+            {visibleLinks.map((link,i) => <a key={i} href={link.url}
+              target="_blank" rel="noopener noreferrer">
+              <ExternalLink size={12} aria-hidden="true"/>{link.label}
+            </a>)}
+          </div>}
+          <span className="bk-book-scope">Scope: {bookTermSummary(book)}</span>
         </div>}
       </div>
     </div>
@@ -124,7 +149,7 @@ export default function BookResourceRow({
           <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
       </div>}
       {book.memberOnly && !hasMemberAccessNote && <p className="bk-book-member-note">
-        Resource links are not available in public browsing.
+        Resource available to Alveary members only.
       </p>}
       {!book.memberOnly && !visibleLinks.length && <p className="bk-book-member-note">
         No public resource link listed.
