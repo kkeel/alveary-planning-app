@@ -93,8 +93,20 @@ export function bookNeededInTerm(book,term) {
   return book.uses.some(use => use["term"+term] != null);
 }
 
-/** Do not classify a recommendation as a confirmed need to purchase. */
+/** Preserve authored scope (Selections, Full Term, etc.) just as the
+ * previous Book List did. This describes lesson usage, not buying status. */
 export function bookTermSummary(book) {
-  const terms=[1,2,3].filter(term=>bookNeededInTerm(book,String(term)));
-  return terms.length ? "Term "+terms.join(", ") : "Term not specified";
+  const terms=[1,2,3].map(number=>({
+    number, scopes:[...new Set(book.uses
+      .map(use=>use["term"+number]).filter(Boolean))]
+  })).filter(t=>t.scopes.length);
+  if(!terms.length)return "Term not specified";
+  const allSame=terms.every(t=>t.scopes.length===1 &&
+    t.scopes[0]===terms[0].scopes[0]);
+  if(allSame && terms.length>1) {
+    const numbers=terms.map(t=>t.number);
+    return "Terms "+numbers.join(", ")+" ("+terms[0].scopes[0]+")";
+  }
+  return terms.map(t=>"Term "+t.number+
+    (t.scopes.length?" ("+t.scopes.join(" / ")+")":"")).join(" · ");
 }
