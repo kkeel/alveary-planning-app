@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronRight } from "lucide-react";
 import BookResourceRow from "./BookResourceRow";
 import type {GroupedBookCourses,CourseContext} from "./book-course-groups.mjs";
 
@@ -36,16 +35,19 @@ export default function BookCourseHierarchy({
     {grouped.sections.map(section=><section key={section.subject} className="bk-book-subject">
       <div className="bk-subject-heading">
         <h2>{section.subject}</h2>
-        <span>{section.courses.length} {section.courses.length===1?"course":"courses"}</span>
       </div>
       <div className="bk-course-list">
         {section.courses.map(group=><Disclosure key={group.course.id}
           className="bk-course-group" startOpen={openCourses}
           summary={<>
-            <ChevronRight size={16} className="bk-tree-chevron" aria-hidden="true"/>
             <span className="bk-course-title">{group.course.title}</span>
-            <span className="bk-course-grade">{group.course.gradeDisplay}</span>
-            <span className="bk-tree-count">{group.count} {group.count===1?"resource":"resources"}</span>
+            <span className="bk-course-meta">
+              {group.course.gradeDisplay && <>
+                <span className="bk-course-grade">{group.course.gradeDisplay}</span>
+                <span className="bk-course-meta-divider" aria-hidden="true">|</span>
+              </>}
+              <span className="bk-tree-count">{group.count} {group.count===1?"resource":"resources"}</span>
+            </span>
           </>}>
           <div className="bk-course-contents">
             {group.directBooks.length>0 && <div className="bk-course-direct">
@@ -57,7 +59,6 @@ export default function BookCourseHierarchy({
             {group.topics.map(topic=><Disclosure key={topic.topic.id}
               className="bk-topic-group" startOpen={true}
               summary={<>
-                <ChevronRight size={14} className="bk-tree-chevron" aria-hidden="true"/>
                 <span className="bk-topic-title">{topic.topic.title}</span>
                 <span className="bk-tree-count">{topic.books.length}
                   {topic.books.length===1?" resource":" resources"}</span>
