@@ -27,12 +27,13 @@ function ResourceCover({ book, mini }: { book:ResourceBook; mini:boolean }) {
 /** Cover-led book list: familiar title, author, rationale and purchase options,
  * with the same expand-on-click behavior as the Course List. */
 export default function BookResourceRow({
-  book, density, courseByEdition, mini = false,
+  book, density, courseByEdition, mini = false, showLocation = true,
 }: {
   book: ResourceBook;
   density: Density;
   courseByEdition: Map<string,CourseLabel>;
   mini?: boolean;
+  showLocation?: boolean;
 }) {
   const [opened,setOpened] = useState<boolean | null>(null);
   useEffect(() => setOpened(null),[density]);
@@ -79,7 +80,7 @@ export default function BookResourceRow({
           {role && !mini && <span>{role}</span>}
           {optional && <span>Optional</span>}
           {chooseOne && <span>Choose one</span>}
-          {!mini && locations.length > 0 && <span className="bk-book-course-tag">{locations[0]}
+          {!mini && showLocation && locations.length > 0 && <span className="bk-book-course-tag">{locations[0]}
             {locations.length>1 ? " · shared in "+locations.length+" uses" : ""}</span>}
         </div>}
         {showSummary && !mini && visibleLinks.length>0 && <div className="bk-book-links">
@@ -96,7 +97,7 @@ export default function BookResourceRow({
         <p>{book.rationale}</p>
       </div>}
       {book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
-      {!mini && book.uses.length>0 && <div className="bk-book-usages">
+      {!mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
         <strong>Used with</strong>
         <span>{locations.join(" · ")}</span>
       </div>}
