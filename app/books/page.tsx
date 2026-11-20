@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, BookOpen, ChevronRight, List, NotebookPen, Search } from "lucide-react";
@@ -35,6 +35,17 @@ function BookListContent() {
   // course/edition context survives navigation.
   const requestedId = params.get("course");
   const requestedTopicId = params.get("topic");
+  const lastFocus = useRef<string | null>(null);
+  // A View Books deep link opens List, but the member can then deliberately
+  // switch to full Planning without having that choice immediately undone.
+  useEffect(() => {
+    const focusKey = requestedId ? requestedId + ":" + (requestedTopicId ?? "") : null;
+    if (focusKey && lastFocus.current !== focusKey && signedIn) {
+      lastFocus.current = focusKey;
+      desk.setBookMode("browse");
+    }
+    if (!focusKey) lastFocus.current = null;
+  }, [requestedId, requestedTopicId, signedIn, desk]);
   const requested = requestedId ? coursesById.get(requestedId) : undefined;
   const parent = requested && requested.type !== "Topic" ? requested : undefined;
   const topicOnly = requested && requested.type === "Topic" ? requested : undefined;
@@ -48,8 +59,10 @@ function BookListContent() {
   const parentContexts = topicOnly
     ? catalog.topicLinks
       .filter(link => link.childEditionId === topicOnly.editionId)
-      .map(link => coursesByEdition.get(link.parentEditionId))
-      .filter((course): course is NonNullable<typeof course> => Boolean(course))
+      .flatMap(link => {
+        const course = coursesByEdition.get(link.parentEditionId);
+        return course ? [course] : [];
+      })
     : [];
 
   // This is a real, searchable index of existing course contexts, not a book
