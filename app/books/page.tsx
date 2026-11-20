@@ -106,10 +106,10 @@ function BookListContent() {
         signedIn?"Book List":"Explore Books"}</h1>
       <p>{mode==="plan"
         ?"Keep your school books, preparation and budget connected."
-        :"Browse books and supporting resources from the draft 2027–28 Alveary curriculum. Your own book choices stay separate from the full catalog."}</p>
+        :"Discover Alveary resources, see where they fit, and gather the books your family needs."}</p>
     </header>
     {signedIn && <div className="bk-toolbar" aria-label="Book List views">
-      <div className="cx-mode-switch" role="group" aria-label="Book views">
+      <div className="bk-mode-switch" role="group" aria-label="Book views">
         <button type="button" className={mode==="browse"?"is-current":""}
           aria-pressed={mode==="browse"} onClick={()=>desk.setBookMode("browse")}>
           <List size={14}/> List
@@ -146,7 +146,7 @@ function BookListContent() {
       </section>}
 
       <div className="bk-catalog-toolbar" aria-label="Browse book catalog">
-        <div className="bk-catalog-controls">
+        <div className="bk-catalog-primary">
           {signedIn&&!requestedId && <div className="bk-scope-switch" role="group" aria-label="Which books to show">
             <button type="button" aria-pressed={desk.bookScope==="all"}
               className={desk.bookScope==="all"?"is-current":""}
@@ -159,46 +159,50 @@ function BookListContent() {
             <Search size={15} aria-hidden="true"/>
             <span className="sr-only">Search books</span>
             <input type="search" value={query} onChange={event=>setQuery(event.target.value)}
-              placeholder="Search books, authors, ISBNs"/>
-          </label>
-          {!requestedId && <label className="bk-select-label">Subject
-            <select value={subject} onChange={e=>setSubject(e.target.value)}>
-              <option value="">All subjects</option>
-              {courseSubjects.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-          </label>}
-          <label className="bk-select-label">Term
-            <select value={term} onChange={e=>setTerm(e.target.value as typeof term)}>
-              <option value="all">All terms</option>
-              <option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option>
-            </select>
+              placeholder="Search books or authors"/>
           </label>
         </div>
-        <div className="pd-detail-switch" role="group" aria-label="Book List display density">
-          <button type="button" className={density==="compact"?"is-current":""}
-            aria-pressed={density==="compact"} onClick={()=>changeDensity("compact")}>
-            <AlignJustify size={14}/> Compact
-          </button>
-          <button type="button" className={density==="topics"?"is-current":""}
-            aria-pressed={density==="topics"} onClick={()=>changeDensity("topics")}>
-            <ListTree size={14}/> Expanded
-          </button>
-          <button type="button" className={density==="detailed"?"is-current":""}
-            aria-pressed={density==="detailed"} onClick={()=>changeDensity("detailed")}>
-            <BookOpenText size={14}/> Detailed
-          </button>
+        <div className="bk-catalog-secondary">
+          <div className="bk-filters">
+            {!requestedId && <label className="bk-select-label">Subject
+              <select value={subject} onChange={e=>setSubject(e.target.value)}>
+                <option value="">All subjects</option>
+                {courseSubjects.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>}
+            <label className="bk-select-label">Term
+              <select value={term} onChange={e=>setTerm(e.target.value as typeof term)}>
+                <option value="all">All terms</option>
+                <option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option>
+              </select>
+            </label>
+            {!requestedId && hasCourseFilters && <button type="button" className="bk-grade-chip"
+              title="Clear Course List grade and country filters"
+              onClick={()=>{desk.setGrades([]);desk.setCountry("all");}}>
+              {desk.grades.length===1 ? "Grade "+desk.grades[0] : desk.grades.length>1 ? desk.grades.length+" grades" : "All grades"}
+              {desk.country!=="all" ? " · "+(desk.country==="us"?"U.S.":"Canada") : ""} ×
+            </button>}
+          </div>
+          <div className="bk-display-switch" role="group" aria-label="Book List display density">
+            <button type="button" className={density==="compact"?"is-current":""}
+              aria-pressed={density==="compact"} onClick={()=>changeDensity("compact")}>
+              <AlignJustify size={14}/> Compact
+            </button>
+            <button type="button" className={density==="topics"?"is-current":""}
+              aria-pressed={density==="topics"} onClick={()=>changeDensity("topics")}>
+              <ListTree size={14}/> Expanded
+            </button>
+            <button type="button" className={density==="detailed"?"is-current":""}
+              aria-pressed={density==="detailed"} onClick={()=>changeDensity("detailed")}>
+              <BookOpenText size={14}/> Detailed
+            </button>
+          </div>
         </div>
       </div>
 
-      {!requestedId && hasCourseFilters && <div className="bk-filter-note">
-        Using your Course List grade/country filters.
-        <button type="button" onClick={()=>{desk.setGrades([]);desk.setCountry("all");}}>
-          Show all grades and countries
-        </button>
-      </div>}
-      <p className="bk-results-note">{filtered.length} {filtered.length===1?"resource":"distinct resources"} shown
+      <p className="bk-results-note">{filtered.length} {filtered.length===1?"book or resource":"books and resources"}
         {requestedId?" in this course/topic focus":
-          signedIn&&desk.bookScope==="school"?" from My Plan":" in the 2027–28 draft catalog"}.
+          signedIn&&desk.bookScope==="school"?" from My Plan":" in the 2027–28 draft"}.
         {signedIn&&desk.bookScope==="school"&&!requestedId?
           " These are curriculum suggestions, not confirmed purchases." : ""}
       </p>
