@@ -241,7 +241,7 @@ export default function CourseTopicReview({
         id={"pd-topic-menu-"+parent.id+"-"+topic.id}
         className="floating-icon-menu pd-topic-menu"
         label={"More options for "+topic.title}>
-        <Link href={"/books?course="+encodeURIComponent(topic.id)}
+        <Link href={"/books?course="+encodeURIComponent(parent.id)+"&topic="+encodeURIComponent(topic.id)}
           onClick={()=>setTopicMenuId(null)} title={"View books for "+topic.title}
           aria-label={"View books for "+topic.title}>
           <BookOpen size={17} aria-hidden="true"/>
