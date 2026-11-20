@@ -144,12 +144,21 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
 export function booksFromCourseGroups(grouped) {
   const resources=new Map();
   for(const section of grouped.sections)for(const course of section.courses) {
-    const rows=[...course.directBooks,...course.topics.flatMap(t=>t.books)];
-    for(const row of rows) {
-      let item=resources.get(row.id);
-      if(!item){item={...row,uses:[]};resources.set(row.id,item);}
+    const contexts=[
+      ...course.directBooks.map(book=>({book,path:course.course.title})),
+      ...course.topics.flatMap(topic=>topic.books.map(book=>({
+        book,path:course.course.title+" › "+topic.topic.title,
+      }))),
+    ];
+    for(const {book,path} of contexts) {
+      let item=resources.get(book.id);
+      if(!item) {
+        item={...book,uses:[],coursePaths:[]};
+        resources.set(book.id,item);
+      }
+      if(!item.coursePaths.includes(path))item.coursePaths.push(path);
       const ids=new Set(item.uses.map(use=>use.assignmentId));
-      for(const use of row.uses)if(!ids.has(use.assignmentId)) {
+      for(const use of book.uses)if(!ids.has(use.assignmentId)) {
         item.uses.push(use);ids.add(use.assignmentId);
       }
     }
