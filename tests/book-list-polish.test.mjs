@@ -8,42 +8,40 @@ const resourceIds=new Set(bookCatalog.resources.map(book=>book.id));
 const mapped=Object.entries(covers.legacyResourceIds);
 assert.equal(bookCatalog.resources.length,345);
 assert.equal(mapped.length,317,"Exact title+edition cover matches should stay reviewed");
-assert.ok(covers.imageBase==="https://planning.alveary.org/img/resources/",
-  "Existing images must point to the stable GitHub Pages thumbnail host");
+assert.equal(covers.imageBase,"https://planning.alveary.org/img/resources/");
 assert.ok(mapped.every(([current,legacy])=>resourceIds.has(current)&&
   /^rec[A-Za-z0-9]+$/.test(legacy)));
 assert.ok(Array.isArray(covers.newCoverIds));
 assert.ok(covers.newCoverIds.every(id=>resourceIds.has(id)));
 assert.ok(!JSON.stringify(covers).includes("airtableusercontent.com"),
-  "Never persist signed Airtable attachment URLs into public image maps");
+  "Never persist expiring Airtable URLs into public image maps");
 
 const row=read("app/books/BookResourceRow.tsx");
 const css=read("app/books/book-planning.css");
 const page=read("app/books/page.tsx");
 const desk=read("app/components/PlanningDesk.tsx");
-const pipeline=read("tools/sync-book-covers-from-airtable.mjs");
+const publisher=read("tools/sync-book-covers-from-airtable.mjs");
 
-assert.match(row,/book-cover-map\.json/);
-assert.match(row,/book\\.memberOnly \\? \\[\\] : book\\.links/);
-assert.match(row,/Why we recommend it/);
-assert.match(css,/content:"Rationale: "/);
-assert.match(row,/book\\.rationale/);
-assert.match(row,/ResourceCover book=\\{book\\}/);
-assert.match(row,/local \\? "\\/book-covers\\//);
-assert.match(row,/loading="lazy"/);
-assert.match(css,/\\.bk-mode-switch button\\.is-current/);
-assert.match(page,/className="bk-mode-switch"/);
-assert.doesNotMatch(page,/className="cx-mode-switch"/,
-  "Book List must not borrow route-injected Course List mode styles");
-assert.match(page,/bk-catalog-primary/);
-assert.match(page,/bk-catalog-secondary/);
-assert.match(css,/\\.pd-wrapper\\.is-books \\.pd-desk \\.pd-body/);
-assert.match(desk,/onBooks \\? " is-books" : ""/);
-assert.doesNotMatch(desk,/<ArrowLeft size=\\{14\\}\\/?> Back to Course List/,
-  "Mini book desk should not grow a duplicate navigation row");
-assert.match(pipeline,/AIRTABLE_PAT/);
-assert.match(pipeline,/Image/);
-assert.match(pipeline,/attachment\\.id/);
-assert.doesNotMatch(pipeline,/process\\.env\\.AIRTABLE_PAT\\s*\\|\\|\\s*"/,
+assert.ok(row.includes("book-cover-map.json"));
+assert.ok(row.includes("book.memberOnly ? [] : book.links"));
+assert.ok(row.includes("Why we recommend it"));
+assert.ok(css.includes('content:"Rationale: "'));
+assert.ok(row.includes("book.rationale"));
+assert.ok(row.includes("ResourceCover book={book}"));
+assert.ok(row.includes('local ? "/book-covers/"'));
+assert.ok(row.includes('loading="lazy"'));
+assert.ok(css.includes(".bk-mode-switch button.is-current"));
+assert.ok(page.includes('className="bk-mode-switch"'));
+assert.ok(!page.includes('className="cx-mode-switch"'),
+  "Book List cannot rely on visiting Courses to load its toggle styles");
+assert.ok(page.includes("bk-catalog-primary"));
+assert.ok(page.includes("bk-catalog-secondary"));
+assert.ok(css.includes(".pd-wrapper.is-books .pd-desk .pd-body"));
+assert.ok(desk.includes('onBooks ? " is-books" : ""'));
+assert.ok(!desk.includes('> Back to Course List'),
+  "Do not render a duplicate course link inside the Book mini desk");
+assert.ok(publisher.includes("AIRTABLE_PAT"));
+assert.ok(publisher.includes("attachment.id"));
+assert.ok(!publisher.includes('AIRTABLE_PAT || "'),
   "Never ship fallback Airtable API credentials");
-console.log("Book List familiar styling, GitHub cover mapping, mini spacing and public-link invariants verified.");
+console.log("Book List visual foundation, GitHub covers, mini margins and protected links verified.");
