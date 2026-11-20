@@ -24,7 +24,7 @@ export default function BookCourseHierarchy({
       </div>
       <div className="bk-course-list">
         {section.courses.map(group=><details key={group.course.id}
-          className="bk-course-group" open={undefined} defaultOpen={openCourses}>
+          className="bk-course-group" defaultOpen={openCourses}>
           <summary>
             <ChevronRight size={16} className="bk-tree-chevron" aria-hidden="true"/>
             <span className="bk-course-title">{group.course.title}</span>
