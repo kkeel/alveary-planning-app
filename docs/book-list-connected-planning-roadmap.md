@@ -106,10 +106,10 @@ Checkboxes mean **implemented + verified**, not merely designed. Phases are incr
 
 ### Phase 1 — Usable Book Explorer and portable desk foundation
 
-- [ ] Implement public read-only Book Explorer from 2027–28 approved/staging resource records and assignment context; search, grades/country/subject, course/topic filters, rationales, alternatives and permitted purchase links.
+- [ ] Implement the full approved read-only Book Explorer. **Draft preview in PR #134** now shows 345 source-backed titles, course/topic assignments, search, familiar detail modes and safe links. Still open: explicit release approval, approved unassigned library resources, complete alternative-format and stable cover-image handling.
 - [ ] Introduce member Book List `List | Planning` modes, with consistent Compact / Expanded / Detailed behavior and preserved preferences.
 - [ ] Keep a Book-specific portable desk showing **My Books / Budget**, independent of the main Book List scope. Reuse shared shell/drawer/quiet-mode patterns, not a second competing desk implementation.
-- [ ] Build an initial, clearly labeled My School Books derived view from actual planned course/topic assignments; distinguish optional/alternative/undecided resources and preserve source contexts.
+- [x] Build initial My School Books derived view from actual selected course/topic/student assignments, preserving optional/advisory choice context and showing recommendations as undecided rather than purchased (PR #134).
 - [ ] Honor `View Books` deep links from course/topic rows; provide focused heading, clear/reset and direct return path.
 - [ ] Test public/private gating, 810px-ish workspace responsive crossover, long names, accessibility, and no effects on existing Courses/Think Tank/My Plan.
 
@@ -191,3 +191,4 @@ After testing that foundation with a few real combined, single-topic and shared-
 | 2026-11-19 | Documentation PR (this file) | Captured member vision, foundation and checked implementation sequence | Review, then begin Phase 1 coding PR |
 | 2026-11-20 | [#132](https://github.com/kkeel/alveary-planning-app/pull/132) | **Phase 1 foundation**: independent Books List/Planning mode, stable My Books/Budget mini desk in shared shell, full Book Planning placeholder, validated parent-aware View Books focus; automated PR build passed. Actual resource data and book rows are *not* connected. | Manual browser review after merge, then resource/assignment publishing contract and true Book Explorer rows |
 | 2026-11-20 | #133 (this PR) | **Book resource staging**: 345 canonical resources, 447 exact edition assignments, 483 assignment items and 549 validated HTTPS links imported into private RLS-protected development Supabase; publication contract and QA smoke test recorded. | Validate public/member-safe projections, cover images and excluded links; next PR should replace the Book Explorer placeholder with reviewed resource data |
+| 2026-11-20 | [#134](https://github.com/kkeel/alveary-planning-app/pull/134) | **Public-safe Book Explorer draft**: all 345 book/resource titles, including the 43 member-only resources, with zero external links for those restricted records; course-focused resource list and derived member My School Books. | Review browser layout, incomplete 2027 catalog coverage and secure entitled-member link release |

@@ -68,3 +68,77 @@
   .bp-focus-tabs button { flex:1; justify-content:center; }
 }
 @media print { .bk-toolbar,.bp-related-controls,.bk-course-search { display:none!important; } }
+
+/* Real 2027–28 book Explorer: keep the Course List's quiet rows and expand-on-demand details. */
+.bk-catalog-toolbar {
+  display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;
+  gap:12px; padding:0 0 12px; margin:15px 0 10px; border-bottom:1px solid #dfe5d8;
+}
+.bk-catalog-controls { display:flex; gap:9px; flex-wrap:wrap; align-items:center; }
+.bk-scope-switch { display:inline-flex; gap:2px; background:#f1f3eb; border:1px solid #dce0d5; padding:2px; }
+.bk-scope-switch button { background:transparent; border:0; padding:8px 10px; border-radius:2px; color:#596e5e; font-size:12px; white-space:nowrap; }
+.bk-scope-switch button.is-current { background:white; color:#344b36; font-weight:600; box-shadow:0 1px 3px #202a2014; }
+.bk-scope-switch button:hover { background:#e7ede4; }
+.bk-scope-switch button.is-current:hover { background:white; }
+.bk-catalog-toolbar .bk-course-search { margin:0; min-width:200px; }
+.bk-select-label { display:flex; flex-wrap:wrap; align-items:center; gap:7px; font-size:11px; color:#687969; }
+.bk-select-label select, .bp-term-filter select { background:#fff; border:1px solid #d8ddd1; padding:8px 9px; min-height:35px; color:#455b49; font-size:12px; max-width:185px; }
+.bk-catalog-toolbar .pd-detail-switch { margin:0; flex-shrink:0; }
+.bk-results-note { color:#758676; font-size:12px; line-height:1.55; margin:11px 0 16px; }
+.bk-filter-note { display:flex; flex-wrap:wrap; gap:8px; align-items:center; background:#f4f7f0; border:1px solid #e1e7db; padding:9px 12px; font-size:12px; color:#526b56; }
+.bk-filter-note button { border:0; background:transparent; text-decoration:underline; text-underline-offset:3px; font-size:12px; color:#47654c; }
+.bk-book-sections { display:flex; flex-direction:column; gap:19px; max-width:1180px; }
+.bk-book-subject { min-width:0; }
+.bk-book-subject>h2 { font-family:var(--font-plantin),Georgia,serif; font-size:25px; font-weight:400; margin:0 0 7px; color:#3e5641; border-bottom:1px solid #d4ded2; padding:8px 0; }
+.bk-book-rows { display:flex; flex-direction:column; }
+.bk-book-row { border-bottom:1px solid #e1e7dd; min-width:0; padding:3px 0; }
+.bk-book-row:hover { background:#f7f9f4; }
+.bk-book-heading { display:flex; gap:8px; align-items:center; justify-content:space-between; min-width:0; padding:4px 7px 4px 0; }
+.bk-book-expand { display:flex; gap:8px; align-items:flex-start; flex:1; min-width:0; border:0; background:transparent; color:#3b5240; text-align:left; padding:7px 2px; line-height:1.45; }
+.bk-book-expand>svg { flex-shrink:0; margin-top:2px; color:#809b83; }
+.bk-book-heading-text { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.bk-book-heading-text strong { font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.bk-book-heading-text>span { font-size:11px; color:#748374; }
+.bk-book-restricted { white-space:nowrap; align-self:center; flex-shrink:0; font-size:10px; border:1px solid #dce5d6; color:#627d67; padding:3px 5px; }
+.bk-book-description { margin:0 12px 9px 25px; padding:8px 12px 10px; background:#f9fbf7; border-left:2px solid #d2ddce; min-width:0; }
+.bk-book-meta { display:flex; gap:6px 14px; flex-wrap:wrap; font-size:11px; color:#738575; line-height:1.55; }
+.bk-book-rationale { white-space:pre-line; font-size:12px; line-height:1.65; margin:10px 0; color:#475d4c; }
+.bk-book-isbn { color:#728374; font-size:11px; margin:8px 0; }
+.bk-book-usages { display:flex; flex-direction:column; gap:4px; font-size:11px; line-height:1.6; color:#667b69; margin:9px 0; }
+.bk-book-usages strong { color:#4c624f; font-weight:600; }
+.bk-book-links { display:flex; gap:7px; flex-wrap:wrap; margin-top:11px; }
+.bk-book-links a { display:inline-flex; gap:5px; align-items:center; font-size:11px; color:#48694c; text-decoration:underline; text-underline-offset:3px; padding:4px 0; margin-right:14px; overflow-wrap:anywhere; }
+.bk-book-links a:hover { color:#253f29; }
+.bk-book-member-note { font-size:11px; color:#859386; margin:9px 0 2px; }
+.bk-preview-footnote { color:#7b8b7c; font-size:11px; line-height:1.6; max-width:680px; margin:25px 0 5px; }
+.bk-notice button { background:#eff4eb; border:1px solid #bbcdb7; color:#49674c; padding:8px 11px; font-size:12px; cursor:pointer; }
+.bp-book-subject { padding:9px 0 4px; border-bottom:1px solid #e4e9df; }
+.bp-book-subject h4 { margin:0 0 7px; font-size:12px; color:#566f59; font-weight:600; }
+.bp-book-subject .bk-book-row { border-color:#ebefe7; }
+.bp-book-subject .bk-book-expand { font-size:12px; padding:5px 0; }
+.bp-book-subject .bk-book-heading-text strong { font-size:12px; font-weight:500; }
+.bp-book-subject .bk-book-description { margin:0 4px 8px 17px; padding:5px 7px; }
+.bp-book-subject .bk-book-restricted { font-size:9px; }
+.bp-term-filter { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:7px; color:#627867; font-size:11px; margin-bottom:11px; }
+.bp-term-filter select { min-height:32px; padding:5px 8px; max-width:120px; }
+.bp-open-list { display:inline-flex; gap:5px; align-items:center; text-decoration:underline; text-underline-offset:3px; color:#536d58; font-size:11px; margin:13px 0 2px; }
+.bp-budget-item strong { color:#3f5944; font-variant-numeric:tabular-nums; font-size:13px; }
+.bk-catalog-toolbar button:focus-visible,
+.bk-catalog-toolbar input:focus-visible,
+.bk-catalog-toolbar select:focus-visible,
+.bp-term-filter select:focus-visible,
+.bk-book-expand:focus-visible,
+.bk-book-links a:focus-visible,
+.bp-open-list:focus-visible { outline:2px solid #596e5e; outline-offset:2px; }
+@media(max-width:750px){
+  .bk-scope-switch { width:100%; }
+  .bk-scope-switch button { flex:1; }
+  .bk-catalog-controls { width:100%; }
+  .bk-catalog-toolbar .bk-course-search { flex:1; }
+  .bk-book-heading { align-items:flex-start; }
+  .bk-book-restricted { white-space:normal; text-align:right; max-width:100px; }
+}
+@media print {
+  .bk-catalog-toolbar,.bk-filter-note { display:none!important; }
+  .bk-book-row { break-inside:avoid; }
+}
