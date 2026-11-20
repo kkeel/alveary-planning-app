@@ -24,6 +24,7 @@ The `supabase/` folder has been prepared for tracked migrations and functions. T
 ## Product roadmaps
 
 - [Book List + connected Planning Desk — living roadmap](docs/book-list-connected-planning-roadmap.md): experience decisions, implementation checklist, acceptance tests, and progress log.
+- [Private Book Resource Staging Contract](docs/resource-catalog-staging-contract.md): Airtable reconciliation, secure Supabase import, field protections, release gates, and outstanding Book Explorer work.
 
 ## Release targets
 
