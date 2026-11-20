@@ -4,11 +4,11 @@
 **Applies to:** New Alveary planning application (`kkeel/alveary-planning-app`), across Courses, Books, Supplies, Planning Desk, Overview, and future member pages.  
 **Status:** **Design reference for future changes.** This document does not approve a redesign of the working Course List or automatically change existing CSS, user preferences, or records.
 
-> **Design goal:** A calm, recognizable Alveary planning workspace in which members can understand the curriculum and *why* each book was selected before making decisions. Use Alveary-approved colors and derived transparency; preserve the painstakingly tuned course/subject selection hierarchy.
+> **Design goal:** A calm, recognizable Alveary planning workspace in which members can understand the curriculum and *why* each book was selected before making decisions. Use Alveary-approved colors, including derived saturation and transparency; preserve the painstakingly tuned course/subject selection hierarchy.
 
 ## 1. Approved core Alveary palette — exact supplied values
 
-**Use these hex values as supplied.** Case differences in hex digits are immaterial. New neutral colors should be selected from this list or derived by transparency/opacity from it, not invented ad hoc.
+**Use these hex values as supplied.** Case differences in hex digits are immaterial. New neutral colors should be selected from this list or derived by different saturation levels, transparency/opacity, or controlled mixtures from it, not invented ad hoc.
 
 | Family | Approved swatches |
 | --- | --- |
@@ -34,12 +34,13 @@ These are application suggestions built from the **approved** colors, not claims
 | Restrained dividers / outlines | `#e5e8e5`, `#d2d6d2`, `#e0e1d2` |
 | Gentle interactive wash | Low-opacity approved green/tan/subject color |
 
-Avoid introducing off-brand greens, gray-greens, cream-whites or border colors merely because they look close. A shade must either be an approved hex, an existing deliberately retained legacy exception pending review, or a documented mixture/alpha of approved palette values.
+Avoid introducing unrelated off-brand greens, gray-greens, cream-whites or border colors merely because they look close. A shade must either be an approved hex, a hue-consistent variation in saturation, a documented transparency/mix derived from approved palette values, or an existing deliberately retained legacy exception pending review.
 
-### Derived transparency and accessibility
+### Derived saturation, transparency and accessibility
 
-- **Allowed:** transparency and mixtures of the approved palette and approved subject colors (`color-mix(in srgb, var(--alveary-subject) 12%, transparent)`, RGBA alpha, etc.). This lets us tune visual intensity without inventing new unrelated hues.
-- **Keep subject hue intact:** low-opacity backgrounds, medium-opacity borders/rails, and fully saturated selection markers may all derive from the **same original subject color**.
+- **Allowed:** different **saturation levels** of the same approved color, as well as transparency/opacity and mixtures of approved palette and approved subject colors (`color-mix(in srgb, var(--alveary-subject) 12%, transparent)`, RGBA alpha, etc.). Saturation changes are allowed even for an opaque surface; they are **not limited to transparent overlays**. This lets us tune visual intensity without inventing unrelated hues.
+- **Keep the approved base hue as the reference** when adjusting saturation. Any additional change to lightness should serve legibility, visual hierarchy or an existing established state—not accidentally introduce a different hue. Where helpful, define shared derived tokens rather than slightly different one-off colors.
+- **Keep subject identity and established status meaning intact:** lower-saturation or low-opacity backgrounds, medium-opacity borders/rails, and stronger selected-state markers may all derive from the **same original subject color**. The original exact subject hex remains the semantic anchor; do not silently weaken the existing saturated selection state.
 - **Check the final appearance** over both warm cream backgrounds and any light surfaces. A low-contrast subject color (especially Life Skills yellow/light subjects) should not be used as small text without adequate dark ink.
 - **Accessibility:** text contrast, discernible focus, hover, selected, disabled and error states matter more than matching a single low-contrast tint. Use an approved darker ink with a subject-tinted background when needed. Do not rely on color alone to communicate planned/selected status.
 - Use shared CSS tokens/components for repeated patterns rather than hard-coding slightly different hex values into each page. Existing palette-related CSS may still contain legacy/provisional exceptions—see §5.
@@ -117,7 +118,7 @@ Existing behavior references (read these before editing):
 ## 5. Workflow and implementation rules for future pages/PRs
 
 1. **Start with this reference** and the current palette/subject helper before writing new page styles.
-2. **Reuse exact approved swatches** or opacity variants. For any new color outside the palette, provide a specific accessibility/functional justification, label it an exception, and seek review rather than introducing it silently.
+2. **Reuse exact approved swatches** or hue-consistent saturation variants, opacity variants and documented mixes derived from them. For a color introducing a different/unapproved hue (rather than a valid saturation variant), provide a specific accessibility/functional justification, label it an exception, and seek review rather than introducing it silently.
 3. Favor **shared semantic tokens** (page, surface, ink, subdued text, divider, action, subject) in one location when a color application is stable; do not replace the approved subject mapping with approximate values.
 4. Inspect the working Course List's **highlighting and hierarchy** before adjusting global backgrounds, cards, selected-state tints or icon control styles. Changes to those areas need screenshot comparison and explicit acceptance.
 5. Check first-visit **default information visibility** for both Courses and Books. Test how a brand-new member encounters full course description and substantive book rationale **without an extra discovery step**; then verify opt-in compact, title/info expand and return-member saved preferences.
