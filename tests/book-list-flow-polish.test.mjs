@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { noteExplainsMemberAccess } from "../app/books/book-relationships.mjs";
+import { bookTermSummary, noteExplainsMemberAccess } from "../app/books/book-relationships.mjs";
 
 const read = path => readFileSync(new URL("../"+path, import.meta.url), "utf8");
 const row = read("app/books/BookResourceRow.tsx");
@@ -23,7 +23,7 @@ assert.equal(noteExplainsMemberAccess("A different page number is needed."), fal
 assert.equal(noteExplainsMemberAccess(undefined), false);
 assert.equal(noteExplainsMemberAccess(""), false);
 assert.match(row, /book\.memberOnly && !hasMemberAccessNote/);
-assert.match(row, /Resource links are not available in public browsing/);
+assert.match(row, /Resource available to Alveary members only/);
 assert.match(row, /visibleLinks = book\.memberOnly \? \[\] : book\.links/,
   "Protected resource links must remain absent");
 
@@ -54,6 +54,19 @@ assert.match(css, /\.bk-course-meta-divider \{ color:#bdc5bf/);
 assert.match(css, /\.bk-book-planning-note \{[^}]*background:transparent; \}/);
 assert.match(css, /\.bk-book-planning-note \{[^}]*border-top:1px solid var\(--bk-line\)/);
 assert.doesNotMatch(css, /\.bk-tree-chevron/);
+
+// Guidance flags are explicit, including multi-option recommendations, and
+// roles sit beneath the image rather than competing with scope metadata.
+assert.match(row, /className="bk-book-cover-column"/);
+assert.match(row, /className="bk-book-role"/);
+assert.match(row, /Choose one of/);
+assert.match(row, /Optional for some uses/);
+assert.match(row, /className="bk-book-links-scope"/);
+assert.match(css, /\.bk-cover \{[^}]*background:#e8e9e2/);
+assert.match(css, /\.bk-cover img \{[^}]*object-fit:cover/);
+assert.match(css, /\.bk-topic-group:last-child \.bk-topic-books > \.bk-book-row:last-child/);
+assert.equal(bookTermSummary({uses:[{term1:"Full Term",term2:"Partial Term",term3:"Selections"}]}),
+  "Term 1 (Full Term) · Term 2 (Partial Term) · Term 3 (Selections)");
 
 // Keep full rationale and previously approved note visibility intact.
 assert.match(row, /<p>\{book\.rationale\}<\/p>/);
