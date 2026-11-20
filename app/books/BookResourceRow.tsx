@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, ChevronDown, ChevronRight, ExternalLink, LockKeyhole } from "lucide-react";
+import { BookOpen, ExternalLink, LockKeyhole } from "lucide-react";
 import type { ResourceBook } from "./book-relationships.mjs";
-import { bookTermSummary } from "./book-relationships.mjs";
+import { bookTermSummary, noteExplainsMemberAccess } from "./book-relationships.mjs";
 import covers from "./book-cover-map.json";
 import publishedNotes from "./public-resource-notes-preview.json";
 
@@ -41,6 +41,9 @@ export default function BookResourceRow({
   // Only source notes whose wording matches the previously published Alveary
   // catalog are included here; draft/internal writer notes stay private.
   const publicNote = (publishedNotes.notesByResourceId as Record<string,string>)[book.id];
+  // When the approved published note already explains member access,
+  // don't repeat the generic public-link notice beneath it.
+  const hasMemberAccessNote = noteExplainsMemberAccess(publicNote);
   const defaultDetails = density === "detailed";
   const showDetails = opened ?? defaultDetails;
   const showSummary = density !== "compact" && !mini || showDetails;
@@ -67,8 +70,6 @@ export default function BookResourceRow({
           <button type="button" className="bk-book-expand" aria-expanded={showDetails}
             aria-label={(showDetails ? "Hide" : "Show") + " full details for " + book.title}
             onClick={() => setOpened(value => !(value ?? defaultDetails))}>
-            {showDetails ? <ChevronDown size={15} aria-hidden="true"/> :
-              <ChevronRight size={15} aria-hidden="true"/>}
             <span className="bk-book-heading-text">
               <strong>{book.title}</strong>
               {!mini && (book.author || book.isbn) && <span>{book.author ? "by "+book.author : ""}{book.author && book.isbn ? " · " : ""}{book.isbn ? "ISBN/ASIN: "+book.isbn : ""}</span>}
@@ -84,7 +85,7 @@ export default function BookResourceRow({
           <p className="bk-book-rationale-preview">{book.rationale}</p>}
         {showSummary && !showDetails && publicNote &&
           <div className="bk-book-planning-note is-summary">
-            <strong>Planning note</strong>
+            <strong>Note</strong>
             <p>{publicNote}</p>
           </div>}
         {showSummary && <div className="bk-book-meta">
@@ -109,7 +110,7 @@ export default function BookResourceRow({
         <p>{book.rationale}</p>
       </div>}
       {publicNote && <div className="bk-book-planning-note">
-        <strong>Planning note</strong>
+        <strong>Note</strong>
         <p>{publicNote}</p>
       </div>}
       {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
@@ -122,7 +123,7 @@ export default function BookResourceRow({
           target="_blank" rel="noopener noreferrer">
           <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
       </div>}
-      {book.memberOnly && <p className="bk-book-member-note">
+      {book.memberOnly && !hasMemberAccessNote && <p className="bk-book-member-note">
         Resource links are not available in public browsing.
       </p>}
       {!book.memberOnly && !visibleLinks.length && <p className="bk-book-member-note">

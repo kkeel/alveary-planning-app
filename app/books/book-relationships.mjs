@@ -110,3 +110,10 @@ export function bookTermSummary(book) {
   return terms.map(t=>"Term "+t.number+
     (t.scopes.length?" ("+t.scopes.join(" / ")+")":"")).join(" · ");
 }
+
+/** Avoid repeating a generic public-link warning when an approved,
+ * already-published note clearly explains the member-only restriction. */
+export function noteExplainsMemberAccess(note) {
+  return typeof note === "string" &&
+    /(?:\bmembers?[-\s]+only\b|\bonly\s+available\s+to\s+(?:alveary\s+)?members?\b|\bonly\s+for\s+(?:alveary\s+)?members?\b)/i.test(note);
+}
