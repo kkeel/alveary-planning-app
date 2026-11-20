@@ -189,3 +189,4 @@ After testing that foundation with a few real combined, single-topic and shared-
 | Date | PR | Outcome | Follow-up |
 | --- | --- | --- | --- |
 | 2026-11-19 | Documentation PR (this file) | Captured member vision, foundation and checked implementation sequence | Review, then begin Phase 1 coding PR |
+| 2026-11-20 | [#132](https://github.com/kkeel/alveary-planning-app/pull/132) | **Phase 1 foundation**: independent Books List/Planning mode, stable My Books/Budget mini desk in shared shell, full Book Planning placeholder, validated parent-aware View Books focus; automated PR build passed. Actual resource data and book rows are *not* connected. | Manual browser review after merge, then resource/assignment publishing contract and true Book Explorer rows |
