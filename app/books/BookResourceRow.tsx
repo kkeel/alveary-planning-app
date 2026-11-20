@@ -107,7 +107,7 @@ export default function BookResourceRow({
         <strong>Planning note</strong>
         <p>{publicNote}</p>
       </div>}
-      {book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
+      {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
       {!mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
         <strong>Used with</strong>
         <span>{locations.join(" · ")}</span>
