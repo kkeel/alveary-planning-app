@@ -21,9 +21,10 @@ export default function BookPlanningContent({ variant = "portable" }: {
   const plan = useDemoPlan();
   const [relatedOpen, setRelatedOpen] = useState(false);
   const plannedCourses = plan.courses.filter(course => course.stage === "planned")
-    .map(choice => ({ choice, course: courseById.get(choice.courseId) }))
-    .filter((entry): entry is {choice: typeof plan.courses[number]; course: NonNullable<typeof entry.course>} =>
-      Boolean(entry.course));
+    .flatMap(choice => {
+      const course = courseById.get(choice.courseId);
+      return course ? [course] : [];
+    });
 
   const bookContent = <div className="bp-section">
     <header className="bp-section-heading">
@@ -37,7 +38,7 @@ export default function BookPlanningContent({ variant = "portable" }: {
     </p>
     {!plan.ready ? <p className="bp-empty">Loading your course selections…</p> :
       plannedCourses.length ? <div className="bp-course-groups" aria-label="Courses in My Plan">
-        {plannedCourses.map(({course}) => <div className="bp-course-entry" key={course.id}>
+        {plannedCourses.map(course => <div className="bp-course-entry" key={course.id}>
           <span className="bp-subtle">{course.subject}</span>
           <Link href={"/books?course=" + encodeURIComponent(course.id)}
             onClick={() => desk.setBookMode("browse")}>
