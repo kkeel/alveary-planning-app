@@ -89,7 +89,7 @@ const page=read("app/books/page.tsx");
 assert.match(page,/allBooks\(resources\)/);
 assert.match(page,/booksForMyPlan/);
 assert.match(page,/booksForFocus/);
-assert.match(page,/All Alveary Books/);
+assert.match(page,/All Books/);
 const mini=read("app/books/BookPlanningContent.tsx");
 assert.match(mini,/booksForMyPlan/);
 assert.match(mini,/desk\.bookTerm/);
