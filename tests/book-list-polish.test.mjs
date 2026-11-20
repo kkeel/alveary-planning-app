@@ -25,7 +25,8 @@ const pipeline=read("tools/sync-book-covers-from-airtable.mjs");
 
 assert.match(row,/book-cover-map\.json/);
 assert.match(row,/book\\.memberOnly \\? \\[\\] : book\\.links/);
-assert.match(row,/Rationale:/);
+assert.match(row,/Why we recommend it/);
+assert.match(css,/content:"Rationale: "/);
 assert.match(row,/book\\.rationale/);
 assert.match(row,/ResourceCover book=\\{book\\}/);
 assert.match(row,/local \\? "\\/book-covers\\//);
