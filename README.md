@@ -21,6 +21,10 @@ The `supabase/` folder has been prepared for tracked migrations and functions. T
 - [Full-curriculum publishing/data contract](docs/curriculum-publishing-contract.md)
 - [Existing sign-in pilot and unresolved security work](docs/auth-and-public-views.md)
 
+## Product roadmaps
+
+- [Book List + connected Planning Desk — living roadmap](docs/book-list-connected-planning-roadmap.md): experience decisions, implementation checklist, acceptance tests, and progress log.
+
 ## Release targets
 
 - **February 1, 2027:** working Overview, Courses, Books, and Scheduling.
