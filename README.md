@@ -21,6 +21,11 @@ The `supabase/` folder has been prepared for tracked migrations and functions. T
 - [Full-curriculum publishing/data contract](docs/curriculum-publishing-contract.md)
 - [Existing sign-in pilot and unresolved security work](docs/auth-and-public-views.md)
 
+## Visual design and content guidance
+
+- **[Approved Alveary design system](docs/alveary-design-system.md)** — exact core and subject palettes, derived transparency rules, protection of Course List selection/highlight states, and visibility of course descriptions and book rationales.
+- [Contributor design guardrails](AGENTS.md) — short starting rules for future app/page and CSS work.
+
 ## Product roadmaps
 
 - [Book List + connected Planning Desk — living roadmap](docs/book-list-connected-planning-roadmap.md): experience decisions, implementation checklist, acceptance tests, and progress log.
