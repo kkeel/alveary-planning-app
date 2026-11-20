@@ -34,6 +34,9 @@ assert.match(row,/<p>\{book\.rationale\}<\/p>/,
  "Full rationale text must render without a truncation transform");
 assert.match(row,/publishedNotes\.notesByResourceId/);
 assert.match(row,/<p>\{publicNote\}<\/p>/);
+assert.match(row,/showSummary && !showDetails && publicNote/,
+ "Intentionally saved Expanded must still show published planning guidance");
+
 assert.match(row,/book\.memberOnly \? \[\] : book\.links/);
 assert.match(css,/\.bk-book-planning-note/);
 assert.match(css,/\.bk-book-rationale p \{ line-height:1\.7; \}/);
