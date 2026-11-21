@@ -63,6 +63,7 @@ function BookListContent() {
   const focusError=Boolean((requestedId&&!requested)||(requestedTopicId&&!validTopic));
   const focus=focusError ? undefined : validTopic??parent??topicOnly;
   const signedInScope = signedIn && desk.bookScope==="school" ? "school" : "all";
+  const plannedCount=plan.courses.filter(choice=>choice.stage==="planned").length;
 
   // One course/topic-first view, filtering each assignment in its exact
   // edition context so that shared books and Choose One groups stay clear.
