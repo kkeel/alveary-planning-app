@@ -89,3 +89,15 @@ The checked-in `catalog-resources-preview.json` remains a **public-safe developm
 - Protecting the link endpoint prevents **unauthorized discovery through the app**; a destination URL that someone legitimately opens or forwards may still be independently shareable, depending on the destination site's controls. Signed URLs or destination authorization are required for stronger per-user access restrictions.
 
 This is a presentation + calculation PR only. No source Airtable formulas, Supabase access policies, member entitlements, production release routes, or private link publication are changed.
+
+## November 21 responsive information polish
+
+After reviewing the member's current Book List screenshots and side-by-side Shared mockups:
+
+- Put **Compact / Expanded / Detailed** alongside **List / Planning** and the small **Browse all books** link. Remove the upfront count of all assigned resources, which felt overwhelming before families had started exploring.
+- On wide book rows, put safe purchase options on the **right side of the title/byline**. These are never nested inside the title's details-toggle button; narrower book rows wrap the buttons underneath. Protected member-only URLs remain omitted from the public bundle.
+- After the complete rationale, use **one book-facts area** for approved Note, Alt. Formats, Preparation, any May substitute/discount guidance, and optional ↔ Shared. On wide rows, the notes/preparation occupy the left and Shared occupies the right; on narrower book rows it naturally stacks. Missing fields do not create blank columns.
+- Keep ↔ Shared compact: **“↔ Shared · Used in N courses/topics · Show/Hide”**. Expanded locations are grouped by familiar *authored course-family labels* (Music, Picture Study, Recitation), and all exact parent/topic labels stay accessible beneath those headings. The grouping happens only after the matching edition and assignment IDs have been resolved inside the selected release; it is **never** used to establish a source relationship.
+- A resource with no library or assignment rationale (e.g., Picture Study Portfolio) gets a small scope line, **not** an otherwise empty white “Why we recommend it” card.
+- For the current draft, **Our Work: Grades 1–2** has eight release-specific use paths: Music (6), Picture Study (1), Recitation (1). The grouped display is an aid to scanning, not a reduction of the eight original uses.
+- Course List, planning assignments, source notes, Supabase security, and year-specific publication routing remain unchanged.
