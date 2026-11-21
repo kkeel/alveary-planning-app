@@ -91,6 +91,9 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
           role:assignment.role,optional:assignment.optional,
           chooseOne:assignment.chooseOne,choiceCount:assignment.resourceIds.length,
           term1:assignment.term1,term2:assignment.term2,term3:assignment.term3,
+          alternativeTitles:assignment.chooseOne ? assignment.resourceIds
+            .filter(otherId=>otherId!==resourceId)
+            .map(otherId=>resources.get(otherId)?.title).filter(Boolean):[],
           gradeLevelTag:assignment.gradeLevelTag??null,
           additionalRationale:assignment.additionalRationale??null,
           displayOrder:assignment.sort??null,termSort:assignment.termSort??null,
