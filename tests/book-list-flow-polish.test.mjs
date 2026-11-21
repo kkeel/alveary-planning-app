@@ -93,6 +93,18 @@ assert.match(hierarchy,/Any one of the books below/);
 assert.doesNotMatch(hierarchy,/alternatives\.map\(item=>item\.title\)\.join\(" or "\)/);
 assert.match(hierarchy,/memberView=\{memberView\}/);
 
+// A long shared-course list begins collapsed; preparation stays with the
+// format guidance below a published note and above the shared separator.
+assert.match(row, /<details className="bk-book-shared">/);
+assert.match(row, /Used in \{sharedPaths\.length\} course\/topic locations/);
+assert.match(row, /bk-book-formats-prep/);
+assert.match(row, /Preparation:/);
+assert.match(css, /\.bk-book-formats-prep \{ display:flex/);
+assert.match(css, /\.bk-book-shared \{ display:block/);
+assert.ok(row.indexOf('className="bk-book-planning-note"') <
+  row.indexOf('className="bk-book-formats-prep"'));
+assert.ok(row.lastIndexOf("{sharedDetails}") >
+  row.indexOf('className="bk-book-formats-prep"'));
 // Keep full rationale and previously approved note visibility intact.
 assert.match(row, /<p>\{book\.rationale\}<\/p>/);
 assert.match(row, /<p>\{publicNote\}<\/p>/);
