@@ -230,11 +230,13 @@ function BookListContent() {
           key={[signedInScope,requestedId,validTopic?.id,query,term,subject,
             desk.grades.join(","),desk.country].join("|")}
           grouped={grouped} density={density} courseByEdition={coursesByEdition}
+          memberView={signedIn}
           openCourses={signedInScope==="school"||Boolean(requestedId)||
             Boolean(query.trim())||Boolean(subject)}/>
         : <div className="bk-alphabetical-list" aria-label="Books in alphabetical order">
           {alphabeticalBooks.map(book=><BookResourceRow key={book.id} book={book}
-            density={density} courseByEdition={coursesByEdition}/>)}
+            density={density} courseByEdition={coursesByEdition}
+            memberView={signedIn}/>)}
         </div>
         : <div className="bk-notice">
           <h2>{signedInScope==="school"&&plannedCount===0&&!requestedId ?
