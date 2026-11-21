@@ -168,12 +168,16 @@ export default function BookResourceRow({
           </div>}
         {showSummary && !showDetails && !hasRationale &&
           <p className="bk-book-scope-only">Scope: {bookTermSummary(book)}</p>}
-        {showSummary && !showDetails && publicNote &&
-          <div className="bk-book-planning-note is-summary">
-            <strong>Note</strong>
-            <p>{publicNote}</p>
+        {showSummary && !showDetails && (hasSummaryPrimary||sharedDetails) &&
+          <div className={"bk-book-facts" + (sharedDetails?" has-shared":"") +
+            (hasSummaryPrimary?" has-primary":"")}>
+            {hasSummaryPrimary && <div className="bk-book-facts-primary">
+              {publicNote && <div className="bk-book-planning-note is-summary">
+                <strong>Note</strong><p>{publicNote}</p>
+              </div>}
+            </div>}
+            {sharedDetails}
           </div>}
-        {showSummary && !showDetails && sharedDetails}
         {showSummary && (mini && role || !mini && showLocation && locations.length>0) &&
           <div className="bk-book-meta">
             {mini && role && <span>{role}</span>}
@@ -198,50 +202,52 @@ export default function BookResourceRow({
           {additionalRationales.map((text,i)=><p key={i} className="bk-book-extra-rationale">{text}</p>)}
         </div>}
       {!hasRationale && <p className="bk-book-scope-only">Scope: {bookTermSummary(book)}</p>}
-      {publicNote && <div className="bk-book-planning-note">
-        <strong>Note</strong>
-        <p>{publicNote}</p>
-      </div>}
-      {(book.formats || book.save || book.print || book.maySub || book.discount ||
-        book.discountCode) && <div className="bk-book-guidance">
-        {(book.formats || book.save || book.print) &&
-          <div className="bk-book-formats-prep">
-            {book.formats && <div className="bk-book-guidance-line">
-              <strong>Alt. Formats:</strong>
-              <span className="bk-book-format-chips">{book.formats.split(",")
-                .map(format=><span key={format} className="bk-book-format">
-                  {format.trim()}</span>)}</span>
+      {(hasDetailedPrimary||sharedDetails||(!showShared&&!mini&&showLocation&&book.uses.length>0)) &&
+        <div className={"bk-book-facts" + (sharedDetails?" has-shared":"") +
+          (hasDetailedPrimary?" has-primary":"")}>
+          {hasDetailedPrimary && <div className="bk-book-facts-primary">
+            {publicNote && <div className="bk-book-planning-note">
+              <strong>Note</strong><p>{publicNote}</p>
             </div>}
-            {(book.save || book.print) && <div className="bk-book-guidance-line">
-              <strong>Preparation:</strong>
-              <span>{[book.save?"Save":"",book.print?"Print":""]
-                .filter(Boolean).join(" · ")}</span>
+            {hasGuidance && <div className="bk-book-guidance">
+              {(book.formats||book.save||book.print) && <div className="bk-book-formats-prep">
+                {book.formats && <div className="bk-book-guidance-line">
+                  <strong>Alt. Formats:</strong>
+                  <span className="bk-book-format-chips">
+                    {book.formats.split(",").map(format=>
+                      <span key={format} className="bk-book-format">{format.trim()}</span>)}
+                  </span>
+                </div>}
+                {(book.save||book.print) && <div className="bk-book-guidance-line">
+                  <strong>Preparation:</strong>
+                  <span>{[book.save?"Save":"",book.print?"Print":""]
+                    .filter(Boolean).join(" · ")}</span>
+                </div>}
+              </div>}
+              {book.maySub && <div className="bk-book-guidance-line">
+                <strong>May substitute</strong><span>{book.maySub}</span>
+              </div>}
+              {(book.discount||book.discountCode) && <div className="bk-book-guidance-line">
+                <strong>Discount</strong>
+                <span>{book.discount}{book.discountCode?" · Code: "+book.discountCode:""}</span>
+              </div>}
             </div>}
+            {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
+            {mini && visibleLinks.length>0 && <div className="bk-book-links">
+              {visibleLinks.map((link,i)=><a key={i} href={link.url}
+                target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
+            </div>}
+            {hasPublicMemberNote && <p className="bk-book-member-note">
+              Resource available to Alveary members only.
+            </p>}
           </div>}
-        {book.maySub && <div className="bk-book-guidance-line">
-          <strong>May substitute</strong><span>{book.maySub}</span>
+          {sharedDetails}
+          {!showShared&&!mini&&showLocation&&book.uses.length>0 &&
+            <div className="bk-book-usages">
+              <strong>Used with</strong><span>{locations.join(" · ")}</span>
+            </div>}
         </div>}
-        {(book.discount || book.discountCode) && <div className="bk-book-guidance-line">
-          <strong>Discount</strong>
-          <span>{book.discount}{book.discountCode
-            ? " · Code: "+book.discountCode : ""}</span>
-        </div>}
-      </div>}
-      {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
-      {sharedDetails}
-      {!showShared && !mini && showLocation && book.uses.length>0 &&
-        <div className="bk-book-usages">
-          <strong>Used with</strong>
-          <span>{locations.join(" · ")}</span>
-        </div>}
-      {mini && visibleLinks.length>0 && <div className="bk-book-links">
-        {visibleLinks.map((link,i)=><a key={i} href={link.url}
-          target="_blank" rel="noopener noreferrer">
-          <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
-      </div>}
-      {book.memberOnly && !memberView && !hasMemberAccessNote && <p className="bk-book-member-note">
-        Resource available to Alveary members only.
-      </p>}
       {/* When a field or link is absent, it takes up no space at all. */}
       </div>}
       </div>
