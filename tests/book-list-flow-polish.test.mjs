@@ -22,7 +22,8 @@ assert.equal(noteExplainsMemberAccess("Members-only resource"), true);
 assert.equal(noteExplainsMemberAccess("A different page number is needed."), false);
 assert.equal(noteExplainsMemberAccess(undefined), false);
 assert.equal(noteExplainsMemberAccess(""), false);
-assert.match(row, /book\.memberOnly && !memberView && !hasMemberAccessNote/);
+assert.match(row, /const hasPublicMemberNote=Boolean\(book\.memberOnly&&!memberView&&!hasMemberAccessNote\)/);
+assert.match(row, /hasPublicMemberNote && <p className="bk-book-member-note">/);
 assert.match(row, /Resource available to Alveary members only/);
 assert.match(row, /visibleLinks = book\.memberOnly \? \[\] : book\.links/,
   "Protected resource links must remain absent");
