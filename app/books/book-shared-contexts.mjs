@@ -41,7 +41,7 @@ export function buildBookSharedContexts(bookCatalog, courseCatalog) {
 
 /**
  * Keep the same release-scoped paths but group their visible labels by the
- * actual authored subject. This is purely presentational: assignment/edition
+ * recognizable authored course-family title. This is presentational: assignment/edition
  * IDs determine relationships; book titles and "Current/Next" formulas do not.
  */
 export function buildBookSharedGroups(bookCatalog,courseCatalog) {
@@ -63,11 +63,13 @@ export function buildBookSharedGroups(bookCatalog,courseCatalog) {
       ? [...(parentsByChild.get(edition.editionId)?.values()??[])] : [];
     const contexts=parents.length ? parents.map(parent=>({
       id:parent.editionId+"|"+edition.editionId,
-      subject:parent.subject||edition.subject||"Other",
+      // The visible family heading comes from this exact parent's authored
+      // title (Music: Intro → Music), not from a cross-year text join.
+      subject:parent.title.split(":")[0].trim()||parent.subject||"Other",
       label:parent.title+" › "+edition.title,
     })) : [{
       id:edition.editionId,
-      subject:edition.subject||"Other",
+      subject:edition.title.split(":")[0].trim()||edition.subject||"Other",
       label:edition.title,
     }];
     for(const resourceId of assignment.resourceIds) {
