@@ -64,10 +64,12 @@ export default function BookResourceRow({
   const roleNames:Record<string,string> = {
     Main:"Main Text",Supporting:"Supporting Text",Reference:"Reference Text",
   };
-  const roles = [...new Set(book.uses.map(use => use.role).filter(Boolean))];
+  const roles = [...new Set(book.uses.map(use => use.role)
+    .filter((value):value is string=>typeof value==="string" && value.length>0))];
   const role = roles.map(value=>roleNames[value]??value).join(" · ");
   const coverRole = roles.length === 1 ? role : roles.length > 1 ? "Multiple roles" : "";
-  const gradeTags = [...new Set(book.uses.map(use=>use.gradeLevelTag).filter(Boolean))];
+  const gradeTags = [...new Set(book.uses.map(use=>use.gradeLevelTag)
+    .filter((value):value is string=>typeof value==="string" && value.length>0))];
   const additionalRationales = [...new Map(book.uses.filter(use=>use.additionalRationale)
     .map(use=>[use.assignmentId,{text:use.additionalRationale,
       label:courseByEdition.get(use.editionId)?.title??"This course/topic"}])).values()];
@@ -77,7 +79,6 @@ export default function BookResourceRow({
   const choiceUses = book.uses.filter(use => use.chooseOne);
   const mixedOptional = optionalUses.length > 0 && optionalUses.length < book.uses.length;
   const mixedChoice = choiceUses.length > 0 && choiceUses.length < book.uses.length;
-  const choiceCount = Math.max(0, ...choiceUses.map(use => use.choiceCount ?? 0));
 
   return <article className={"bk-book-row" + (mini ? " is-mini" : "")}>
     {(gradeTags.length>0 || optional || chooseOne&&!groupedChoice) &&
@@ -112,7 +113,7 @@ export default function BookResourceRow({
             <span className="sr-only">Member-only resource links</span>
           </span>}
         </div>
-        {showSummary && !showDetails && (book.rationale || additionalRationales.length>0) &&
+        {showSummary && !showDetails &&
           <div className="bk-book-rationale bk-book-rationale-brief">
             <div className="bk-book-rationale-head">
               <strong>Why we recommend it</strong>
@@ -137,7 +138,7 @@ export default function BookResourceRow({
           </div>}
         {chooseOne && !groupedChoice && alternateTitles.length>0 &&
           <p className="bk-book-choices-inline">Choose this or {alternateTitles.join(" / ")}</p>}
-        {showSummary && <div className="bk-book-links-scope">
+        {showSummary && !mini && visibleLinks.length>0 && <div className="bk-book-links-scope">
           {!mini && visibleLinks.length>0 && <div className="bk-book-links">
             {visibleLinks.map((link,i) => <a key={i} href={link.url}
               target="_blank" rel="noopener noreferrer">
