@@ -88,6 +88,7 @@ function BookListContent() {
       <div className="bk-heading-top">
         <div>
           <h1>{signedIn && mode==="plan" ? "Book Planning" :
+            requestedId ? "Course Books" :
             signedIn ? signedInScope==="school" ? "My School Books" : "All Books" :
             "Explore Books"}</h1>
           {mode==="plan" && <p>Organize your school books and budget in one place.</p>}
