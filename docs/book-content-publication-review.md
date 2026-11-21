@@ -43,3 +43,18 @@ Compare a book with a **long rationale**, one with a **Planning note**, a member
 ## Next content step
 
 Review and authorize the **11 withheld** resource notes and the term-specific resource assignment fields, then publish them with their correct edition/term context. Don't make every term note a globally shared property of a canonical book.
+
+## November 20 Book List guidance and grouping follow-up
+
+The next read-only development preview uses **individual public-safe source fields** instead of parsing the two composite Airtable preview formulas.
+
+- Preserve the existing **345 resources / 447 selected assignment records**, their edition/resource IDs, 43 member-only link restrictions and 177 previously published library notes.
+- A separate vetted projection now contains published-style SAVE, PRINT, plain-text alternate-format tags, discounts/codes, May Sub instructions, exact `Resource Assignments → Grade Level Tag`, `Display Order`, `Term Sort`, and the one existing assignment-level rationale. These never introduce staff notes, internal review fields, private/member-only URLs, or member planning state.
+- **Scope is only the actual assigned T1/T2/T3 labels** (e.g. Full Term, Selections, Partial Term), rendered in the upper-right of the rationale surface. **Do not publish `Add note T1/T2/T3`**; the user explicitly does not need those note fields in the new Book List.
+- **Grade Level Tag is authored at the resource-assignment level** in Airtable and is never inferred from a broad parent-course grade range. Currently ten selected 2027–28 assignments carry a tag; untagged records are not guessed.
+- Optional and Choose One remain distinct flags and retain the familiar original badge colors. Choose One alternatives display together in By Course; alphabetical By Book and the mini desk identify other options by title instead of implying all options must be purchased.
+- **Default ordering per course/topic:** explicit Display Order wins, then ordinary Main/Supporting texts by Term Sort (T1/T2/T3), with Reference and Optional texts last regardless of term. Within ties, preserve source record order.
+- For books used in several contexts, grade tags and rationale additions remain tied to individual assignment uses; their distinct variants may appear in a consolidated By Book perspective without overwriting a canonical resource.
+- The linked member-owned library, real purchasing decisions, and budget writes remain separate, unimplemented capabilities. Source SAVE is a preparation instruction, *not* a member's personal Save action.
+
+**Editorial boundary:** The eleven previously withheld changed/new/URL-bearing library notes remain withheld, and no staff planning notes enter member-facing data. This is an authorized visual/preview step, not a declaration that every draft field is released to production.
