@@ -79,6 +79,15 @@ export default function BookResourceRow({
       (text):text is string=>typeof text==="string" && text.length>0))];
   const sharedPaths=book.sharedIn??[];
   const showShared=sharedPaths.length>1;
+  // Long cross-course lists are useful when asked for, but shouldn't expand
+  // every book row by default.
+  const sharedDetails=showShared && !mini ? <details className="bk-book-shared">
+    <summary>
+      <strong>↔ Shared</strong>
+      <span>Used in {sharedPaths.length} course/topic locations</span>
+    </summary>
+    <ul>{sharedPaths.map(path=><li key={path}>{path}</li>)}</ul>
+  </details> : null;
   const alternateTitles = [...new Set(book.uses.flatMap(use=>use.alternativeTitles??[]))]
     .filter(title=>title!==book.title);
   const optionalUses = book.uses.filter(use => use.optional);
@@ -139,10 +148,7 @@ export default function BookResourceRow({
             <strong>Note</strong>
             <p>{publicNote}</p>
           </div>}
-        {showSummary && !showDetails && showShared && !mini &&
-          <div className="bk-book-shared"><strong>↔ Shared</strong>
-            <span>{sharedPaths.join(" · ")}</span>
-          </div>}
+        {showSummary && !showDetails && sharedDetails}
         {showSummary && (mini && role || !mini && showLocation && locations.length>0) &&
           <div className="bk-book-meta">
             {mini && role && <span>{role}</span>}
@@ -180,15 +186,20 @@ export default function BookResourceRow({
       </div>}
       {(book.formats || book.save || book.print || book.maySub || book.discount ||
         book.discountCode) && <div className="bk-book-guidance">
-        {book.formats && <div className="bk-book-guidance-line">
-          <strong>Alt. Formats:</strong>
-          <span className="bk-book-format-chips">{book.formats.split(",").map(format=>
-            <span key={format} className="bk-book-format">{format.trim()}</span>)}</span>
-        </div>}
-        {(book.save || book.print) && <div className="bk-book-guidance-line">
-          <strong>Preparation</strong>
-          <span>{[book.save?"Save":"",book.print?"Print":""].filter(Boolean).join(" · ")}</span>
-        </div>}
+        {(book.formats || book.save || book.print) &&
+          <div className="bk-book-formats-prep">
+            {book.formats && <div className="bk-book-guidance-line">
+              <strong>Alt. Formats:</strong>
+              <span className="bk-book-format-chips">{book.formats.split(",")
+                .map(format=><span key={format} className="bk-book-format">
+                  {format.trim()}</span>)}</span>
+            </div>}
+            {(book.save || book.print) && <div className="bk-book-guidance-line">
+              <strong>Preparation:</strong>
+              <span>{[book.save?"Save":"",book.print?"Print":""]
+                .filter(Boolean).join(" · ")}</span>
+            </div>}
+          </div>}
         {book.maySub && <div className="bk-book-guidance-line">
           <strong>May substitute</strong><span>{book.maySub}</span>
         </div>}
@@ -199,13 +210,12 @@ export default function BookResourceRow({
         </div>}
       </div>}
       {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
-      {showShared && !mini && <div className="bk-book-shared">
-        <strong>↔ Shared</strong><span>{sharedPaths.join(" · ")}</span>
-      </div>}
-      {!showShared && !mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
-        <strong>Used with</strong>
-        <span>{locations.join(" · ")}</span>
-      </div>}
+      {sharedDetails}
+      {!showShared && !mini && showLocation && book.uses.length>0 &&
+        <div className="bk-book-usages">
+          <strong>Used with</strong>
+          <span>{locations.join(" · ")}</span>
+        </div>}
       {mini && visibleLinks.length>0 && <div className="bk-book-links">
         {visibleLinks.map((link,i)=><a key={i} href={link.url}
           target="_blank" rel="noopener noreferrer">

@@ -30,6 +30,11 @@ assert.match(state,/saved\.bookDetails === "compact" \? "compact"/,
 assert.match(state,/saved\.bookDetails === "detailed" \? "detailed"/,
  "Existing intentional detailed preferences must survive");
 assert.match(row,/const defaultDetails = density === "detailed"/);
+const page=read("app/books/page.tsx");
+assert.match(page,/const \[publicDensity,setPublicDensity\] = useState<"compact"\|"topics"\|"detailed">\("detailed"\)/,
+ "Public Explore must start in Detailed without inheriting stored member preferences");
+assert.match(page,/signedIn \? desk\.bookDetails : publicDensity/,
+ "Signed-in members keep their own saved detail preference");
 assert.match(row,/<p>\{book\.rationale\}<\/p>/,
  "Full rationale text must render without a truncation transform");
 assert.match(row,/publishedNotes\.notesByResourceId/);

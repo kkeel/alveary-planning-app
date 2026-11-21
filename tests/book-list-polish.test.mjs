@@ -35,7 +35,9 @@ assert.ok(page.includes('className="bk-mode-switch"'));
 assert.ok(!page.includes('className="cx-mode-switch"'),
   "Book List cannot rely on visiting Courses to load its toggle styles");
 assert.ok(page.includes("bk-catalog-primary"));
-assert.ok(page.includes("bk-catalog-secondary"));
+assert.ok(page.includes('className="bk-filters"'));
+assert.ok(page.includes('className="bk-display-switch"'));
+assert.ok(!page.includes("bk-catalog-secondary"),"Avoid a second tier of Book List controls");
 assert.ok(css.includes(".pd-wrapper.is-books .pd-desk .pd-body"));
 assert.ok(desk.includes('onBooks ? " is-books" : ""'));
 assert.ok(!desk.includes('> Back to Course List'),
