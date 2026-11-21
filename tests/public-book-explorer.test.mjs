@@ -89,6 +89,14 @@ const page=read("app/books/page.tsx");
 assert.match(page,/buildBookCourseGroups\(resources,courses/);
 assert.match(page,/publicDensity/);
 assert.match(page,/"detailed"\);/);
+assert.match(page,/openCourses=\{\(!signedIn&&density==="detailed"\)\|\|/,
+  "Public Detailed view must open course sections, not just individual book rows");
+assert.match(page,/!signedIn\?density:""/,
+  "Changing public density must reinitialize disclosure state");
+const hierarchy=read("app/books/BookCourseHierarchy.tsx");
+assert.match(hierarchy,/className="bk-topic-group" startOpen=\{true\}/,
+  "Topics inside expanded courses should already open with their books");
+assert.match(hierarchy,/className="bk-course-group" startOpen=\{openCourses\}/);
 assert.doesNotMatch(page,/bk-organize-switch|By Book/);
 assert.match(page,/BookCourseHierarchy/);
 assert.match(page,/All Books/);
