@@ -124,10 +124,11 @@ assert.equal(buildBookCourseGroups(fakeResources,fakeCourses,{subject:"Art",term
 const page=readFileSync(new URL("../app/books/page.tsx",import.meta.url),"utf8");
 const desk=readFileSync(new URL("../app/components/PlanningDeskContext.tsx",import.meta.url),"utf8");
 const markup=readFileSync(new URL("../app/books/BookCourseHierarchy.tsx",import.meta.url),"utf8");
-assert.match(page,/Showing books from My Plan/);
-assert.match(page,/By Course/);
-assert.match(page,/By Book/);
-assert.match(page,/booksFromCourseGroups/);
+assert.match(page,/"My School Books"/);
+assert.match(page,/Browse all books/);
+assert.doesNotMatch(page,/By Book|bk-organize-switch|booksFromCourseGroups/);
+assert.match(page,/publicDensity/);
+assert.match(page,/signedIn \? desk\.bookDetails : publicDensity/);
 assert.match(page,/BookCourseHierarchy/);
 assert.match(desk,/bookOrganize: saved\.bookOrganize === "book"/);
 assert.match(markup,/className="bk-topic-group"/);
