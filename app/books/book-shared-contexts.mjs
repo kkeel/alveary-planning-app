@@ -37,3 +37,57 @@ export function buildBookSharedContexts(bookCatalog, courseCatalog) {
     id,[...paths].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))
   ]));
 }
+
+
+/**
+ * Keep the same release-scoped paths but group their visible labels by the
+ * recognizable authored course-family title. This is presentational: assignment/edition
+ * IDs determine relationships; book titles and "Current/Next" formulas do not.
+ */
+export function buildBookSharedGroups(bookCatalog,courseCatalog) {
+  const byEdition=new Map(courseCatalog.courses.map(course=>
+    [course.editionId,course]));
+  const parentsByChild=new Map();
+  for(const link of courseCatalog.topicLinks) {
+    const parent=byEdition.get(link.parentEditionId);
+    if(!parent || !byEdition.has(link.childEditionId)) continue;
+    const parents=parentsByChild.get(link.childEditionId)??new Map();
+    parents.set(parent.editionId,parent);
+    parentsByChild.set(link.childEditionId,parents);
+  }
+  const contextsByResource=new Map();
+  for(const assignment of bookCatalog.assignments) {
+    const edition=byEdition.get(assignment.editionId);
+    if(!edition)continue;
+    const parents=edition.type==="Topic"
+      ? [...(parentsByChild.get(edition.editionId)?.values()??[])] : [];
+    const contexts=parents.length ? parents.map(parent=>({
+      id:parent.editionId+"|"+edition.editionId,
+      // The visible family heading comes from this exact parent's authored
+      // title (Music: Intro → Music), not from a cross-year text join.
+      subject:parent.title.split(":")[0].trim()||parent.subject||"Other",
+      label:parent.title+" › "+edition.title,
+    })) : [{
+      id:edition.editionId,
+      subject:edition.title.split(":")[0].trim()||edition.subject||"Other",
+      label:edition.title,
+    }];
+    for(const resourceId of assignment.resourceIds) {
+      const current=contextsByResource.get(resourceId)??new Map();
+      for(const context of contexts)current.set(context.id,context);
+      contextsByResource.set(resourceId,current);
+    }
+  }
+  return new Map([...contextsByResource].map(([resourceId,byId])=>{
+    const bySubject=new Map();
+    for(const context of byId.values()) {
+      const paths=bySubject.get(context.subject)??new Set();
+      paths.add(context.label);
+      bySubject.set(context.subject,paths);
+    }
+    const groups=[...bySubject].map(([subject,paths])=>({
+      subject,paths:[...paths].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})),
+    })).sort((a,b)=>a.subject.localeCompare(b.subject,undefined,{numeric:true}));
+    return [resourceId,groups];
+  }));
+}

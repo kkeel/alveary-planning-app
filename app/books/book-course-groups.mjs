@@ -1,6 +1,6 @@
 import { topicHasAssignedStudent } from "../components/topic-assignment.mjs";
 import { matchesCountry } from "../courses/country-filter.mjs";
-import { buildBookSharedContexts } from "./book-shared-contexts.mjs";
+import { buildBookSharedContexts,buildBookSharedGroups } from "./book-shared-contexts.mjs";
 
 /**
  * A curriculum-first PRESENTATION of existing book assignments.
@@ -20,6 +20,7 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
   const byId=new Map(courseCatalog.courses.map(course=>[course.id,course]));
   const resources=new Map(bookCatalog.resources.map(book=>[book.id,book]));
   const sharedLocations=buildBookSharedContexts(bookCatalog,courseCatalog);
+  const sharedGroups=buildBookSharedGroups(bookCatalog,courseCatalog);
   const byEditionAssignment=new Map();
   for(const assignment of bookCatalog.assignments) {
     const existing=byEditionAssignment.get(assignment.editionId)??[];
@@ -86,6 +87,7 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
         if(!entry) {
           entry={...resource,uses:[],
             sharedIn:sharedLocations.get(resourceId)??[],
+            sharedGroups:sharedGroups.get(resourceId)??[],
             _order:resourceOrder(assignment),
             _position:bookRows.size};
           bookRows.set(resourceId,entry);

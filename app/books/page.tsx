@@ -99,8 +99,8 @@ function BookListContent() {
           <ArrowLeft size={14}/> Course List
         </Link>}
       </div>
-      {signedIn && <div className="bk-toolbar" aria-label="Book List views">
-        <div className="bk-mode-switch" role="group" aria-label="Book views">
+      <div className="bk-toolbar" aria-label="Book List views">
+        {signedIn && <div className="bk-mode-switch" role="group" aria-label="Book views">
           <button type="button" className={mode==="browse"?"is-current":""}
             aria-pressed={mode==="browse"} onClick={()=>desk.setBookMode("browse")}>
             <List size={14}/> List
@@ -109,12 +109,27 @@ function BookListContent() {
             aria-pressed={mode==="plan"} onClick={()=>desk.setBookMode("plan")}>
             <NotebookPen size={14}/> Planning
           </button>
-        </div>
-        {mode==="browse" && !requestedId && <button type="button" className="bk-browse-switch"
+        </div>}
+        {signedIn && mode==="browse" && !requestedId && <button type="button"
+          className="bk-browse-switch"
           onClick={()=>desk.setBookScope(signedInScope==="school"?"all":"school")}>
           {signedInScope==="school" ? "Browse all books" : "Return to My School Books"}
         </button>}
-      </div>}
+        {mode==="browse" && <div className="bk-display-switch" role="group" aria-label="Book details">
+            <button type="button" className={density==="compact"?"is-current":""}
+              aria-pressed={density==="compact"} onClick={()=>changeDensity("compact")}>
+              <AlignJustify size={14}/> Compact
+            </button>
+            <button type="button" className={density==="topics"?"is-current":""}
+              aria-pressed={density==="topics"} onClick={()=>changeDensity("topics")}>
+              <ListTree size={14}/> Expanded
+            </button>
+            <button type="button" className={density==="detailed"?"is-current":""}
+              aria-pressed={density==="detailed"} onClick={()=>changeDensity("detailed")}>
+              <BookOpenText size={14}/> Detailed
+            </button>
+          </div>}
+      </div>
     </header>
     {mode==="plan" ? <PlanningDesk variant="full"/> : <>
       {requestedId && <section className="bk-focused" aria-label="Book List course focus">
@@ -164,27 +179,9 @@ function BookListContent() {
               {desk.country!=="all" ? " · "+(desk.country==="us"?"U.S.":"Canada") : ""} ×
             </button>}
           </div>
-          <div className="bk-display-switch" role="group" aria-label="Book details">
-            <button type="button" className={density==="compact"?"is-current":""}
-              aria-pressed={density==="compact"} onClick={()=>changeDensity("compact")}>
-              <AlignJustify size={14}/> Compact
-            </button>
-            <button type="button" className={density==="topics"?"is-current":""}
-              aria-pressed={density==="topics"} onClick={()=>changeDensity("topics")}>
-              <ListTree size={14}/> Expanded
-            </button>
-            <button type="button" className={density==="detailed"?"is-current":""}
-              aria-pressed={density==="detailed"} onClick={()=>changeDensity("detailed")}>
-              <BookOpenText size={14}/> Detailed
-            </button>
-          </div>
+
         </div>
       </div>
-      <p className="bk-results-note" role="status">
-        {grouped.distinctResources} {grouped.distinctResources===1?"book/resource":"books/resources"}
-        {requestedId ? " for this course or topic" :
-          signedInScope==="school" ? " from "+plannedCount+" planned "+(plannedCount===1?"course":"courses") : ""}
-      </p>
       {grouped.sections.length ?
         <BookCourseHierarchy
           key={[signedInScope,requestedId,validTopic?.id,query,term,subject,

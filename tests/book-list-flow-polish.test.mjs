@@ -22,7 +22,8 @@ assert.equal(noteExplainsMemberAccess("Members-only resource"), true);
 assert.equal(noteExplainsMemberAccess("A different page number is needed."), false);
 assert.equal(noteExplainsMemberAccess(undefined), false);
 assert.equal(noteExplainsMemberAccess(""), false);
-assert.match(row, /book\.memberOnly && !memberView && !hasMemberAccessNote/);
+assert.match(row, /const hasPublicMemberNote=Boolean\(book\.memberOnly&&!memberView&&!hasMemberAccessNote\)/);
+assert.match(row, /hasPublicMemberNote && <p className="bk-book-member-note">/);
 assert.match(row, /Resource available to Alveary members only/);
 assert.match(row, /visibleLinks = book\.memberOnly \? \[\] : book\.links/,
   "Protected resource links must remain absent");
@@ -61,7 +62,8 @@ assert.match(row, /className="bk-book-cover-column"/);
 assert.match(row, /className="bk-book-role"/);
 assert.match(row, /CHOOSE ONE/);
 assert.match(row, /OPTIONAL IN SOME USES/);
-assert.match(row, /className="bk-book-links-scope"/);
+assert.match(row, /className="bk-book-heading-links bk-book-links"/);
+assert.doesNotMatch(row, /className="bk-book-links-scope"/);
 assert.match(row, /gradeTags\.map\(tag=>/);
 assert.match(row, /gradeLevelTag/);
 assert.match(row, /additionalRationales/);
@@ -96,8 +98,14 @@ assert.match(hierarchy,/memberView=\{memberView\}/);
 // A long shared-course list begins collapsed; preparation stays with the
 // format guidance below a published note and above the shared separator.
 assert.match(row, /<details className="bk-book-shared">/);
-assert.match(row, /Used in \{sharedPaths\.length\} course\/topic locations/);
+assert.match(row, /Used in \{sharedPaths\.length\} courses\/topics/);
+assert.match(row, /bk-shared-groups/);
+assert.match(row, /bk-book-facts-primary/);
+assert.match(css, /\.bk-book-facts\.has-shared\.has-primary \{ display:grid/);
 assert.match(row, /bk-book-formats-prep/);
+assert.match(row, /bk-book-scope-only/);
+assert.match(row, /hasRationale && <div className="bk-book-rationale"/);
+assert.match(css, /\.bk-book-heading \.bk-book-heading-links/);
 assert.match(row, /Preparation:/);
 assert.match(css, /\.bk-book-formats-prep \{ display:flex/);
 assert.match(css, /\.bk-book-shared \{ display:block/);

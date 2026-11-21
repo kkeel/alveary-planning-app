@@ -79,14 +79,23 @@ export default function BookResourceRow({
       (text):text is string=>typeof text==="string" && text.length>0))];
   const sharedPaths=book.sharedIn??[];
   const showShared=sharedPaths.length>1;
-  // Long cross-course lists are useful when asked for, but shouldn't expand
-  // every book row by default.
+  const sharedGroups=book.sharedGroups?.length ? book.sharedGroups :
+    [{subject:"Other uses",paths:sharedPaths}];
   const sharedDetails=showShared && !mini ? <details className="bk-book-shared">
     <summary>
       <strong>↔ Shared</strong>
-      <span>Used in {sharedPaths.length} course/topic locations</span>
+      <span>Used in {sharedPaths.length} courses/topics</span>
+      <span className="bk-shared-show">Show</span>
+      <span className="bk-shared-hide">Hide</span>
     </summary>
-    <ul>{sharedPaths.map(path=><li key={path}>{path}</li>)}</ul>
+    <ul className="bk-shared-groups">
+      {sharedGroups.map(group=><li key={group.subject}>
+        <strong>{group.subject}</strong>
+        {group.paths.length>1 && <span className="bk-shared-group-count">({group.paths.length})</span>}
+        {group.paths.length>1 && <ul>{group.paths.map(path=><li key={path}>{path}</li>)}</ul>}
+        {group.paths.length===1 && group.paths[0]!==group.subject && <p>{group.paths[0]}</p>}
+      </li>)}
+    </ul>
   </details> : null;
   const alternateTitles = [...new Set(book.uses.flatMap(use=>use.alternativeTitles??[]))]
     .filter(title=>title!==book.title);
@@ -94,6 +103,13 @@ export default function BookResourceRow({
   const choiceUses = book.uses.filter(use => use.chooseOne);
   const mixedOptional = optionalUses.length > 0 && optionalUses.length < book.uses.length;
   const mixedChoice = choiceUses.length > 0 && choiceUses.length < book.uses.length;
+  const hasRationale=Boolean(book.rationale||additionalRationales.length);
+  const hasGuidance=Boolean(book.formats||book.save||book.print||book.maySub||
+    book.discount||book.discountCode);
+  const hasPublicMemberNote=Boolean(book.memberOnly&&!memberView&&!hasMemberAccessNote);
+  const hasDetailedPrimary=Boolean(publicNote||hasGuidance||hasPublicMemberNote||
+    (mini&&book.isbn)||(mini&&visibleLinks.length));
+  const hasSummaryPrimary=Boolean(publicNote);
 
   return <article className={"bk-book-row" + (mini ? " is-mini" : "")}>
 
@@ -133,8 +149,15 @@ export default function BookResourceRow({
             <LockKeyhole size={14} aria-hidden="true"/>
             <span className="sr-only">Member-only resource links</span>
           </span>}
+          {showSummary && !mini && visibleLinks.length>0 &&
+            <div className="bk-book-heading-links bk-book-links" aria-label="Resource links">
+              {visibleLinks.map((link,i)=><a key={i} href={link.url}
+                target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={12} aria-hidden="true"/>{link.label}
+              </a>)}
+            </div>}
         </div>
-        {showSummary && !showDetails &&
+        {showSummary && !showDetails && hasRationale &&
           <div className="bk-book-rationale bk-book-rationale-brief">
             <div className="bk-book-rationale-head">
               <strong>Why we recommend it</strong>
@@ -143,12 +166,18 @@ export default function BookResourceRow({
             {book.rationale && <p className="bk-book-rationale-preview">{book.rationale}</p>}
             {additionalRationales.map((text,i)=><p key={i} className="bk-book-extra-rationale">{text}</p>)}
           </div>}
-        {showSummary && !showDetails && publicNote &&
-          <div className="bk-book-planning-note is-summary">
-            <strong>Note</strong>
-            <p>{publicNote}</p>
+        {showSummary && !showDetails && !hasRationale &&
+          <p className="bk-book-scope-only">Scope: {bookTermSummary(book)}</p>}
+        {showSummary && !showDetails && (hasSummaryPrimary||sharedDetails) &&
+          <div className={"bk-book-facts" + (sharedDetails?" has-shared":"") +
+            (hasSummaryPrimary?" has-primary":"")}>
+            {hasSummaryPrimary && <div className="bk-book-facts-primary">
+              {publicNote && <div className="bk-book-planning-note is-summary">
+                <strong>Note</strong><p>{publicNote}</p>
+              </div>}
+            </div>}
+            {sharedDetails}
           </div>}
-        {showSummary && !showDetails && sharedDetails}
         {showSummary && (mini && role || !mini && showLocation && locations.length>0) &&
           <div className="bk-book-meta">
             {mini && role && <span>{role}</span>}
@@ -158,20 +187,12 @@ export default function BookResourceRow({
           </div>}
         {chooseOne && !groupedChoice && alternateTitles.length>0 &&
           <p className="bk-book-choices-inline">Choose this or {alternateTitles.join(" / ")}</p>}
-        {showSummary && !mini && visibleLinks.length>0 && <div className="bk-book-links-scope">
-          {!mini && visibleLinks.length>0 && <div className="bk-book-links">
-            {visibleLinks.map((link,i) => <a key={i} href={link.url}
-              target="_blank" rel="noopener noreferrer">
-              <ExternalLink size={12} aria-hidden="true"/>{link.label}
-            </a>)}
-          </div>}
-        </div>}
+
         {!showSummary && !mini && <p className="bk-book-compact-scope">
           Scope: {bookTermSummary(book)}
         </p>}
       {showDetails && <div className="bk-book-description">
-      {(book.rationale || additionalRationales.length>0 || !mini) &&
-        <div className="bk-book-rationale">
+      {hasRationale && <div className="bk-book-rationale">
           <div className="bk-book-rationale-head">
             {book.rationale || additionalRationales.length>0
               ? <strong>Why we recommend it</strong> : <span />}
@@ -180,50 +201,53 @@ export default function BookResourceRow({
           {book.rationale && <p>{book.rationale}</p>}
           {additionalRationales.map((text,i)=><p key={i} className="bk-book-extra-rationale">{text}</p>)}
         </div>}
-      {publicNote && <div className="bk-book-planning-note">
-        <strong>Note</strong>
-        <p>{publicNote}</p>
-      </div>}
-      {(book.formats || book.save || book.print || book.maySub || book.discount ||
-        book.discountCode) && <div className="bk-book-guidance">
-        {(book.formats || book.save || book.print) &&
-          <div className="bk-book-formats-prep">
-            {book.formats && <div className="bk-book-guidance-line">
-              <strong>Alt. Formats:</strong>
-              <span className="bk-book-format-chips">{book.formats.split(",")
-                .map(format=><span key={format} className="bk-book-format">
-                  {format.trim()}</span>)}</span>
+      {!hasRationale && <p className="bk-book-scope-only">Scope: {bookTermSummary(book)}</p>}
+      {(hasDetailedPrimary||sharedDetails||(!showShared&&!mini&&showLocation&&book.uses.length>0)) &&
+        <div className={"bk-book-facts" + (sharedDetails?" has-shared":"") +
+          (hasDetailedPrimary?" has-primary":"")}>
+          {hasDetailedPrimary && <div className="bk-book-facts-primary">
+            {publicNote && <div className="bk-book-planning-note">
+              <strong>Note</strong><p>{publicNote}</p>
             </div>}
-            {(book.save || book.print) && <div className="bk-book-guidance-line">
-              <strong>Preparation:</strong>
-              <span>{[book.save?"Save":"",book.print?"Print":""]
-                .filter(Boolean).join(" · ")}</span>
+            {hasGuidance && <div className="bk-book-guidance">
+              {(book.formats||book.save||book.print) && <div className="bk-book-formats-prep">
+                {book.formats && <div className="bk-book-guidance-line">
+                  <strong>Alt. Formats:</strong>
+                  <span className="bk-book-format-chips">
+                    {book.formats.split(",").map(format=>
+                      <span key={format} className="bk-book-format">{format.trim()}</span>)}
+                  </span>
+                </div>}
+                {(book.save||book.print) && <div className="bk-book-guidance-line">
+                  <strong>Preparation:</strong>
+                  <span>{[book.save?"Save":"",book.print?"Print":""]
+                    .filter(Boolean).join(" · ")}</span>
+                </div>}
+              </div>}
+              {book.maySub && <div className="bk-book-guidance-line">
+                <strong>May substitute</strong><span>{book.maySub}</span>
+              </div>}
+              {(book.discount||book.discountCode) && <div className="bk-book-guidance-line">
+                <strong>Discount</strong>
+                <span>{book.discount}{book.discountCode?" · Code: "+book.discountCode:""}</span>
+              </div>}
             </div>}
+            {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
+            {mini && visibleLinks.length>0 && <div className="bk-book-links">
+              {visibleLinks.map((link,i)=><a key={i} href={link.url}
+                target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
+            </div>}
+            {hasPublicMemberNote && <p className="bk-book-member-note">
+              Resource available to Alveary members only.
+            </p>}
           </div>}
-        {book.maySub && <div className="bk-book-guidance-line">
-          <strong>May substitute</strong><span>{book.maySub}</span>
+          {sharedDetails}
+          {!showShared&&!mini&&showLocation&&book.uses.length>0 &&
+            <div className="bk-book-usages">
+              <strong>Used with</strong><span>{locations.join(" · ")}</span>
+            </div>}
         </div>}
-        {(book.discount || book.discountCode) && <div className="bk-book-guidance-line">
-          <strong>Discount</strong>
-          <span>{book.discount}{book.discountCode
-            ? " · Code: "+book.discountCode : ""}</span>
-        </div>}
-      </div>}
-      {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
-      {sharedDetails}
-      {!showShared && !mini && showLocation && book.uses.length>0 &&
-        <div className="bk-book-usages">
-          <strong>Used with</strong>
-          <span>{locations.join(" · ")}</span>
-        </div>}
-      {mini && visibleLinks.length>0 && <div className="bk-book-links">
-        {visibleLinks.map((link,i)=><a key={i} href={link.url}
-          target="_blank" rel="noopener noreferrer">
-          <ExternalLink size={12} aria-hidden="true"/>{link.label}</a>)}
-      </div>}
-      {book.memberOnly && !memberView && !hasMemberAccessNote && <p className="bk-book-member-note">
-        Resource available to Alveary members only.
-      </p>}
       {/* When a field or link is absent, it takes up no space at all. */}
       </div>}
       </div>

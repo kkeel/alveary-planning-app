@@ -6,7 +6,7 @@ import { BookOpen, ChevronRight, GraduationCap, PanelRightClose, PanelRightOpen,
 import courses from "../courses/catalog-preview.json";
 import resources from "./catalog-resources-preview.json";
 import { booksForMyPlan, bookNeededInTerm } from "./book-relationships.mjs";
-import { buildBookSharedContexts } from "./book-shared-contexts.mjs";
+import { buildBookSharedContexts,buildBookSharedGroups } from "./book-shared-contexts.mjs";
 import BookResourceRow from "./BookResourceRow";
 import { useDemoPlan } from "../components/DemoPlanContext";
 import { usePlanningDesk } from "../components/PlanningDeskContext";
@@ -15,6 +15,7 @@ import { usePlannerAuth } from "../components/PlannerAuthProvider";
 const courseById = new Map(courses.courses.map(course => [course.id,course]));
 const courseByEdition = new Map(courses.courses.map(course => [course.editionId,course]));
 const sharedLocations=buildBookSharedContexts(resources,courses);
+const sharedGroups=buildBookSharedGroups(resources,courses);
 
 /** Shared mini/full book view: same member course decisions, not fake purchase data. */
 export default function BookPlanningContent({ variant = "portable" }: {
@@ -28,7 +29,8 @@ export default function BookPlanningContent({ variant = "portable" }: {
     .flatMap(saved=>{const c=courseById.get(saved.courseId);return c?[c]:[];});
   const allSchoolBooks=useMemo(() =>
     booksForMyPlan(resources,courses,plan.courses,plan.students)
-      .map(book=>({...book,sharedIn:sharedLocations.get(book.id)??[]})),
+      .map(book=>({...book,sharedIn:sharedLocations.get(book.id)??[],
+        sharedGroups:sharedGroups.get(book.id)??[]})),
     [plan.courses,plan.students]);
   const schoolBooks=allSchoolBooks.filter(book=>bookNeededInTerm(book,desk.bookTerm));
   const groupMap=new Map<string,typeof schoolBooks>();
