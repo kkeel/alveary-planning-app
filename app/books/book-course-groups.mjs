@@ -55,12 +55,24 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
     (a.presentationSort??a.sort??"").localeCompare(b.presentationSort??b.sort??"") ||
     a.title.localeCompare(b.title);
   const sections=new Map();
+  // An explicit Display Order is deliberate editorial placement. Otherwise
+  // Main/Supporting resources follow Term Sort, with Optional and Reference
+  // recommendations last regardless of when they are used.
+  const resourceOrder = (assignment) => {
+    if (assignment.sort != null) return [0, assignment.sort];
+    if (assignment.optional || assignment.role === "Reference")
+      return [2, assignment.termSort ?? 4];
+    return [1, assignment.termSort ?? 4];
+  };
+  const compareAssignmentOrder=(a,b)=>{
+    const left=resourceOrder(a),right=resourceOrder(b);
+    return left[0]-right[0] || left[1]-right[1];
+  };
   const directFor=(editionId,contextMatches)=>{
     const bookRows=new Map();
     const candidates=(byEditionAssignment.get(editionId)??[])
       .filter(a=>term==="all"||Boolean(a["term"+term]))
-      .sort((a,b)=>(a.sort??Number.MAX_SAFE_INTEGER)-
-        (b.sort??Number.MAX_SAFE_INTEGER));
+      .sort(compareAssignmentOrder);
     for(const assignment of candidates) {
       for(const resourceId of assignment.resourceIds) {
         const resource=resources.get(resourceId);
@@ -70,7 +82,8 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
         if(search&&!contextMatches&&!resourceMatches)continue;
         let entry=bookRows.get(resourceId);
         if(!entry) {
-          entry={...resource,uses:[],_sort:assignment.sort??Number.MAX_SAFE_INTEGER};
+          entry={...resource,uses:[],_order:resourceOrder(assignment),
+            _position:bookRows.size};
           bookRows.set(resourceId,entry);
         }
         entry.uses.push({
@@ -78,12 +91,16 @@ export function buildBookCourseGroups(bookCatalog,courseCatalog,options={}) {
           role:assignment.role,optional:assignment.optional,
           chooseOne:assignment.chooseOne,choiceCount:assignment.resourceIds.length,
           term1:assignment.term1,term2:assignment.term2,term3:assignment.term3,
+          gradeLevelTag:assignment.gradeLevelTag??null,
+          additionalRationale:assignment.additionalRationale??null,
+          displayOrder:assignment.sort??null,termSort:assignment.termSort??null,
         });
       }
     }
-    return [...bookRows.values()].sort((a,b)=>a._sort-b._sort ||
-      a.title.localeCompare(b.title,undefined,{numeric:true}))
-      .map(({_sort,...book})=>book);
+    return [...bookRows.values()].sort((a,b)=>
+      a._order[0]-b._order[0] || a._order[1]-b._order[1] ||
+      a._position-b._position)
+      .map(({_order,_position,...book})=>book);
   };
 
   let appearances=0;
