@@ -163,7 +163,6 @@ export default function BookResourceRow({
         {!showSummary && !mini && <p className="bk-book-compact-scope">
           Scope: {bookTermSummary(book)}
         </p>}
-      </div>
       {showDetails && <div className="bk-book-description">
       {(book.rationale || additionalRationales.length>0 || !mini) &&
         <div className="bk-book-rationale">
