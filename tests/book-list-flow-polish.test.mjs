@@ -68,7 +68,7 @@ assert.match(row, /additionalRationales/);
 assert.match(row, /bk-book-rationale-head/);
 assert.match(row, /May substitute/);
 assert.match(row, /Discount/);
-assert.match(row, /Alternate formats/);
+assert.match(row, /Alt\\. Formats:/);
 assert.match(row, /Preparation/);
 assert.match(hierarchy, /bk-choice-group/);
 assert.match(hierarchy, /Choose one book from these alternatives/);
