@@ -58,3 +58,34 @@ The next read-only development preview uses **individual public-safe source fiel
 - The linked member-owned library, real purchasing decisions, and budget writes remain separate, unimplemented capabilities. Source SAVE is a preparation instruction, *not* a member's personal Save action.
 
 **Editorial boundary:** The eleven previously withheld changed/new/URL-bearing library notes remain withheld, and no staff planning notes enter member-facing data. This is an authorized visual/preview step, not a declaration that every draft field is released to production.
+
+## November 20 follow-up: Book List row density and ↔ Shared by year
+
+### Presentation adjustments
+- Assignment-specific rationale is appended as ordinary prose after the library rationale in **Why we recommend it**, with no redundant edition title or extra label.
+- Optional, grade-only and ungrouped Choose One badges sit **after the book title**; the familiar light text on the olive Optional badge is retained. True Choose One groups retain a single group heading without listing every book in an “or / or / or” sentence.
+- Full detail content is rendered **within the text column**, not below a full-height book-cover grid row. This removes misleading empty space when a source book has no links and keeps covers at their present size. Empty link, May sub, discount, format, note and other optional fields are **not rendered**, never reserved as placeholders.
+- Library format metadata uses the familiar **Alt. Formats:** label. A book assigned to multiple distinct course/topic paths in this release gains a compact **↔ Shared** line; one-off books have no shared line.
+
+### Release-safe Shared derivation
+`app/books/book-shared-contexts.mjs` derives the complete list of display paths using only:
+1. **Release-scoped** resource assignment rows (`release_id`, `source_assignment_id`, `source_edition_id`).
+2. That release's canonical resource assignment items (`source_resource_id`).
+3. That release's course/topic edition lookup and shared-topic parent links (`catalog_edition_topics`).
+
+For a given resource and **selected release**, find every assigned edition. When an edition is a shared topic, expand it into every *parent course edition* linked **in that same release**. Deduplicate display paths; show **↔ Shared** only when at least two distinct contexts exist. The visual labels use course and topic names *after* identity is determined by IDs, never title-matching to decide relationships.
+
+**Never use Airtable's dynamic Current/Next Publication formulas as the serving-time Shared source.** At publishing time, select a complete staged snapshot for a specific `school_year` and edition year roles. The active `catalog_release_routes` row for **(school_year, surface, audience)** resolves the approved `release_id`. All queries for assignments, items, edition topics, and display labels are constrained to that identical `release_id`. Moving 2027–28 from “next” to “current” changes the appropriate routing/authoring status, **not** already published 2026–27 historical relationships. When editors revise the next year's source, publish a *new complete release* and atomically switch only its approved route after validation.
+
+Example: a book shared between “Picture Study” and a separately linked course in 2027–28 should show the locations for 2027–28, even if those lesson-topic links differ from its 2026–27 associations. The member's My Library remains deduplicated by canonical resource identity; the curriculum use path is release-specific.
+
+### Public vs member resource links
+The checked-in `catalog-resources-preview.json` remains a **public-safe development snapshot**, with external link URLs fully absent on all 43 protected resource records. Neither a React badge, a hidden element nor a client-side signed-in flag constitutes authorization.
+
+- Public readers see eligible general links only; protected resources retain title/rationale but no protected URL.
+- The **cosmetic** member view suppresses the public lock badge and public-only access-warning text, but does not unlock or invent links; until a separately authorized retrieval route is built, a protected resource has no link buttons even for signed-in members.
+- For real member-link delivery, implement a *separate* Supabase Edge Function or equivalently trusted endpoint, which verifies the presented OIDC identity **and current school-year Memberstack entitlement on every request**, resolves the correct approved `catalog_release_routes`, and returns only vetted, explicitly member-eligible URLs for that release. The current `memberstack-plan-access` proof of eligibility is not a blanket permission to expose draft tables.
+- Keep Supabase private draft catalog tables behind their existing deny-by-default RLS and revoked `anon`/`authenticated` grants. Do not make a public JSON file of protected links, grant broad `authenticated` read, or put a secret/service key in browser code. Test as public, signed-in-without-entitlement, entitled member, and expired/revoked member before launch.
+- Protecting the link endpoint prevents **unauthorized discovery through the app**; a destination URL that someone legitimately opens or forwards may still be independently shareable, depending on the destination site's controls. Signed URLs or destination authorization are required for stronger per-user access restrictions.
+
+This is a presentation + calculation PR only. No source Airtable formulas, Supabase access policies, member entitlements, production release routes, or private link publication are changed.

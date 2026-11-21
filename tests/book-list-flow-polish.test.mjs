@@ -22,7 +22,7 @@ assert.equal(noteExplainsMemberAccess("Members-only resource"), true);
 assert.equal(noteExplainsMemberAccess("A different page number is needed."), false);
 assert.equal(noteExplainsMemberAccess(undefined), false);
 assert.equal(noteExplainsMemberAccess(""), false);
-assert.match(row, /book\.memberOnly && !hasMemberAccessNote/);
+assert.match(row, /book\.memberOnly && !memberView && !hasMemberAccessNote/);
 assert.match(row, /Resource available to Alveary members only/);
 assert.match(row, /visibleLinks = book\.memberOnly \? \[\] : book\.links/,
   "Protected resource links must remain absent");
@@ -60,7 +60,7 @@ assert.doesNotMatch(css, /\.bk-tree-chevron/);
 assert.match(row, /className="bk-book-cover-column"/);
 assert.match(row, /className="bk-book-role"/);
 assert.match(row, /CHOOSE ONE/);
-assert.match(row, /OPTIONAL FOR SOME USES/);
+assert.match(row, /OPTIONAL IN SOME USES/);
 assert.match(row, /className="bk-book-links-scope"/);
 assert.match(row, /gradeTags\.map\(tag=>/);
 assert.match(row, /gradeLevelTag/);
@@ -68,7 +68,7 @@ assert.match(row, /additionalRationales/);
 assert.match(row, /bk-book-rationale-head/);
 assert.match(row, /May substitute/);
 assert.match(row, /Discount/);
-assert.match(row, /Alternate formats/);
+assert.match(row, /Alt. Formats:/);
 assert.match(row, /Preparation/);
 assert.match(hierarchy, /bk-choice-group/);
 assert.match(hierarchy, /Choose one book from these alternatives/);
@@ -78,6 +78,20 @@ assert.match(css, /\.bk-cover img \{[^}]*object-fit:cover/);
 assert.match(css, /\.bk-topic-group:last-child \.bk-topic-books > \.bk-book-row:last-child/);
 assert.equal(bookTermSummary({uses:[{term1:"Full Term",term2:"Partial Term",term3:"Selections"}]}),
   "Term 1 (Full Term) · Term 2 (Partial Term) · Term 3 (Selections)");
+
+// Empty fields do not leave visible placeholders or reserve link space.
+assert.doesNotMatch(row,/No public resource link listed/);
+assert.match(row,/visibleLinks\.length>0/);
+assert.match(row,/bk-book-title-line/);
+assert.match(css,/\.bk-book-flag\.is-optional \{ color:#fbfbf9; \}/);
+assert.match(css,/\.bk-book-main>\.bk-book-description \{ margin:8px 0 10px/);
+assert.match(row,/additionalRationales\.map\(\(text,i\)/);
+assert.doesNotMatch(row,/item\.label/);
+assert.match(row, /Alt. Formats:/);
+assert.match(row,/↔ Shared/);
+assert.match(hierarchy,/Any one of the books below/);
+assert.doesNotMatch(hierarchy,/alternatives\.map\(item=>item\.title\)\.join\(" or "\)/);
+assert.match(hierarchy,/memberView=\{memberView\}/);
 
 // Keep full rationale and previously approved note visibility intact.
 assert.match(row, /<p>\{book\.rationale\}<\/p>/);

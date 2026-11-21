@@ -25,12 +25,13 @@ function Disclosure({
 /** Subject headings remain visible. Courses reveal their topic assignments,
  * with no redundant Topic layer for a Single-Topic Course. */
 export default function BookCourseHierarchy({
-  grouped,density,courseByEdition,openCourses=false,
+  grouped,density,courseByEdition,openCourses=false,memberView=false,
 }:{
   grouped:GroupedBookCourses;
   density:Density;
   courseByEdition:Map<string,CourseContext>;
   openCourses?:boolean;
+  memberView?:boolean;
 }) {
   const renderBooks=(books:ResourceBook[])=>{
     const placed=new Set<string>();
@@ -48,19 +49,20 @@ export default function BookCourseHierarchy({
             <span className="bk-book-flag is-choice">CHOOSE ONE</span>
             <div>
               <strong>Choose one book from these alternatives</strong>
-              <p>{alternatives.map(item=>item.title).join(" or ")}</p>
+              <p>Any one of the books below can meet this recommendation.</p>
             </div>
           </div>
           <div className="bk-choice-books">
             {alternatives.map(item=><BookResourceRow key={item.id}
               book={item} density={density} courseByEdition={courseByEdition}
-              showLocation={false} groupedChoice/>)}
+              showLocation={false} groupedChoice memberView={memberView}/>)}
           </div>
         </div>];
       }
       placed.add(book.id);
       return [<BookResourceRow key={book.id} book={book} density={density}
-        courseByEdition={courseByEdition} showLocation={false}/>];
+        courseByEdition={courseByEdition} showLocation={false}
+        memberView={memberView}/>];
     });
   };
   return <div className="bk-book-sections bk-course-hierarchy" aria-label="Books by subject, course and topic">
