@@ -205,7 +205,7 @@ export default function BookResourceRow({
       {!showShared && !mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
         <strong>Used with</strong>
         <span>{locations.join(" · ")}</span>
-      </div>
+      </div>}
       {mini && visibleLinks.length>0 && <div className="bk-book-links">
         {visibleLinks.map((link,i)=><a key={i} href={link.url}
           target="_blank" rel="noopener noreferrer">
