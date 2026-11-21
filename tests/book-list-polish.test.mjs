@@ -25,7 +25,7 @@ const publisher=read("tools/sync-book-covers-from-airtable.mjs");
 assert.ok(row.includes("book-cover-map.json"));
 assert.ok(row.includes("book.memberOnly ? [] : book.links"));
 assert.ok(row.includes("Why we recommend it"));
-assert.ok(css.includes('content:"Rationale: "'));
+assert.ok(css.includes(".bk-book-rationale-head"));
 assert.ok(row.includes("book.rationale"));
 assert.ok(row.includes("ResourceCover book={book}"));
 assert.ok(row.includes('local ? "/book-covers/"'));

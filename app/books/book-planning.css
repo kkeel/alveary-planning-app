@@ -135,7 +135,7 @@
 .bk-book-rationale-preview { margin:7px 0;
   font-size:12px; line-height:1.65; color:#505650; white-space:pre-line;
   display:block; overflow:visible; }
-.bk-book-rationale-preview::before { content:"Rationale: "; font-weight:600; color:#505650; }
+/* Full rationale is headed explicitly in both Detailed and Expanded modes. */
 .bk-book-meta { display:flex; align-items:center; flex-wrap:wrap;
   gap:3px 12px; margin:7px 0 0; font-size:11px; line-height:1.55;
   color:var(--bk-muted); }
@@ -373,4 +373,52 @@
   .bk-course-direct { margin-left:1px; }
   .bk-tree-count { font-size:10px; }
   .bk-scope-context { padding:10px; }
+}
+
+/* Resource guidance: the same familiar, distinct colors used on the old list. */
+.bk-book-flags { margin:10px 0 0 2px; gap:5px; }
+.bk-book-flags + .bk-book-line { padding-top:7px; }
+.bk-book-flag { color:#fbfbf9; background:#596e5e; border-color:#596e5e;
+  font-size:10px; font-weight:650; line-height:1.4; padding:3px 8px; }
+.bk-book-flag.is-grade { background:#262b26; border-color:#262b26; }
+.bk-book-flag.is-optional { background:#adb58f; border-color:#adb58f; color:#262b26; }
+.bk-book-flag.is-choice { background:#596e5e; border-color:#596e5e; color:#fbfbf9; }
+.bk-book-compact-scope { margin:7px 0 0; color:var(--bk-muted);
+  font-size:10px; line-height:1.4; }
+.bk-book-choices-inline { margin:8px 0 0; color:var(--bk-sage);
+  font-size:11px; line-height:1.5; }
+.bk-book-rationale-head { display:flex; flex-wrap:wrap; align-items:baseline;
+  justify-content:space-between; column-gap:14px; row-gap:4px; margin-bottom:7px; }
+.bk-book-rationale-head strong { margin-bottom:0; }
+.bk-book-rationale-head .bk-book-scope { flex:0 1 auto; margin-left:auto;
+  text-align:right; font-size:10px; }
+.bk-book-rationale-brief { margin:11px 0 4px; }
+.bk-book-rationale .bk-book-rationale-preview { margin:0 0 7px; }
+.bk-book-extra-rationale { margin:8px 0 0; }
+.bk-book-extra-rationale strong { font-size:inherit; color:var(--bk-ink);
+  font-weight:650; display:inline; }
+.bk-book-guidance { margin:10px 0 0; padding:10px 14px;
+  border-top:1px solid var(--bk-line); max-width:78ch; }
+.bk-book-guidance-line { display:flex; flex-wrap:wrap; align-items:baseline;
+  column-gap:12px; row-gap:4px; margin:4px 0; font-size:11px; line-height:1.6; }
+.bk-book-guidance-line>strong { color:var(--bk-sage); font-weight:650; min-width:105px; }
+.bk-book-format-chips { display:flex; flex-wrap:wrap; gap:5px; }
+.bk-book-format { border:1px solid #bdc5bf; border-radius:12px;
+  padding:1px 7px; background:#fbfbf9; color:#596e5e; font-weight:600; }
+.bk-choice-group { margin:9px 0 14px; padding:9px 10px 0 12px;
+  border-left:3px solid #596e5e; border-radius:2px;
+  background:color-mix(in srgb, #dee1d2 22%, transparent); }
+.bk-choice-heading { display:flex; align-items:flex-start; gap:10px;
+  flex-wrap:wrap; margin:0 0 5px; }
+.bk-choice-heading strong { display:block; font-size:12px;
+  line-height:1.45; font-weight:650; color:var(--bk-ink); }
+.bk-choice-heading p { margin:2px 0 0; font-size:11px;
+  line-height:1.55; color:var(--bk-muted); }
+.bk-choice-books>.bk-book-row:last-child { border-bottom:0; }
+.bp-mini-content .bk-book-flags { margin-top:5px; }
+.bp-mini-content .bk-book-rationale-head .bk-book-scope { text-align:left; margin-left:0; }
+@media (max-width:820px) {
+  .bk-book-rationale-head .bk-book-scope { text-align:left; margin-left:0; }
+  .bk-book-guidance-line>strong { min-width:0; width:100%; }
+  .bk-choice-group { padding-right:5px; padding-left:8px; }
 }

@@ -1,11 +1,16 @@
 export type ResourceUse = {
   assignmentId: string; editionId: string; role: string | null;
   optional: boolean; chooseOne: boolean; choiceCount: number;
+  alternativeTitles?: string[];
   term1: string | null; term2: string | null; term3: string | null;
+  gradeLevelTag?: string | null; additionalRationale?: string | null;
+  displayOrder?: number | null; termSort?: number | null;
 };
 export type ResourceBook = {
   id: string; title: string; author: string | null; isbn: string | null;
   type: string | null; rationale: string | null; memberOnly: boolean;
+  formats?: string | null; save?: boolean; print?: boolean;
+  discount?: string | null; discountCode?: string | null; maySub?: string | null;
   links: {label: string; url: string}[]; uses: ResourceUse[];
   coursePaths?: string[];
 };

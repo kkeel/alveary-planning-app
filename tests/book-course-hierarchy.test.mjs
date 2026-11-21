@@ -133,3 +133,64 @@ assert.match(desk,/bookOrganize: saved\.bookOrganize === "book"/);
 assert.match(markup,/className="bk-topic-group"/);
 assert.match(markup,/showLocation=\{false\}/);
 console.log("Book course/topic hierarchy: exact use/term filters, shared contexts, and unique By Book verified.");
+
+/* Book List order and guidance: explicit display override, then term order,
+   while optional/reference resources default to the bottom regardless of term. */
+const sortedCatalog={
+  resources:["explicit","main-t2","main-t1","support-t3","optional-t1","reference-t1"]
+    .map(makeBook),
+  assignments:[
+    {id:"g1",editionId:"es1",resourceIds:["optional-t1"],
+      role:"Main",optional:true,chooseOne:false,term1:"Full Term",term2:null,term3:null,
+      termSort:1,sort:null},
+    {id:"g2",editionId:"es1",resourceIds:["reference-t1"],
+      role:"Reference",optional:false,chooseOne:false,term1:"Full Term",term2:null,term3:null,
+      termSort:1,sort:null},
+    {id:"g3",editionId:"es1",resourceIds:["main-t2"],
+      role:"Main",optional:false,chooseOne:false,term1:null,term2:"Selections",term3:null,
+      termSort:2,sort:null},
+    {id:"g4",editionId:"es1",resourceIds:["main-t1"],
+      role:"Main",optional:false,chooseOne:false,term1:"Full Term",term2:null,term3:null,
+      termSort:1,sort:null,gradeLevelTag:"Grades 9-12 ONLY"},
+    {id:"g5",editionId:"es1",resourceIds:["support-t3"],
+      role:"Supporting",optional:false,chooseOne:false,term1:null,term2:null,term3:"Selections",
+      termSort:3,sort:null},
+    {id:"g6",editionId:"es1",resourceIds:["explicit"],
+      role:"Reference",optional:true,chooseOne:false,term1:null,term2:null,term3:"Full Term",
+      termSort:3,sort:1}
+  ],
+};
+const sortedResult=buildBookCourseGroups(sortedCatalog,fakeCourses);
+const sortedBooks=sortedResult.sections[0].courses[0].directBooks;
+assert.deepEqual(sortedBooks.map(b=>b.id),
+  ["explicit","main-t1","main-t2","support-t3","optional-t1","reference-t1"]);
+assert.equal(sortedBooks.find(b=>b.id==="main-t1").uses[0].gradeLevelTag,
+  "Grades 9-12 ONLY");
+const choiceCatalog={resources:["chosen-a","chosen-b","regular"].map(makeBook),
+  assignments:[
+    {id:"choice-group",editionId:"es1",resourceIds:["chosen-a","chosen-b"],
+      role:"Main",optional:false,chooseOne:true,term1:"Full Term",
+      term2:null,term3:null,termSort:1,sort:null},
+    {id:"normal",editionId:"es1",resourceIds:["regular"],
+      role:"Main",optional:false,chooseOne:false,term1:null,
+      term2:"Full Term",term3:null,termSort:2,sort:null},
+  ]};
+const choiceResults=buildBookCourseGroups(choiceCatalog,fakeCourses);
+const choiceBooks=choiceResults.sections[0].courses[0].directBooks;
+assert.deepEqual(choiceBooks.map(b=>b.id),["chosen-a","chosen-b","regular"]);
+assert.deepEqual(choiceBooks[0].uses[0].alternativeTitles,["chosen-b"]);
+assert.deepEqual(choiceBooks[1].uses[0].alternativeTitles,["chosen-a"]);
+
+// Source projection: only reviewed, public-safe fields, not T1/T2/T3 notes.
+assert.equal(bookCatalog.assignments.filter(a=>a.gradeLevelTag).length,10);
+assert.equal(bookCatalog.assignments.filter(a=>a.additionalRationale).length,1);
+assert.ok(bookCatalog.assignments.filter(a=>a.termSort!=null).length>=445);
+assert.ok(bookCatalog.resources.some(b=>b.formats));
+assert.ok(bookCatalog.resources.some(b=>b.print));
+assert.ok(bookCatalog.resources.some(b=>b.save));
+assert.ok(bookCatalog.resources.some(b=>b.discountCode));
+for(const assignment of bookCatalog.assignments) {
+  for(const key of ["staffPlanningNotes","termNotes","addNoteT1","addNoteT2","addNoteT3"])
+    assert.ok(!Object.hasOwn(assignment,key),"Unpublished guidance must stay private: "+key);
+}
+console.log("Book List source guidance, explicit editor sort, and choice grouping passed.");

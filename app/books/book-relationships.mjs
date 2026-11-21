@@ -21,7 +21,15 @@ export function booksForEditions(bookCatalog, editionIds) {
         term1: assignment.term1,
         term2: assignment.term2,
         term3: assignment.term3,
+        gradeLevelTag: assignment.gradeLevelTag ?? null,
+        additionalRationale: assignment.additionalRationale ?? null,
+        displayOrder: assignment.sort ?? null,
+        termSort: assignment.termSort ?? null,
         choiceCount: assignment.resourceIds.length,
+        alternativeTitles: assignment.chooseOne ? assignment.resourceIds
+          .filter(otherId => otherId !== id)
+          .map(otherId => resources.get(otherId)?.title)
+          .filter(Boolean) : [],
       });
     }
   }

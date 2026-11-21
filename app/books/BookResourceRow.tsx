@@ -28,13 +28,14 @@ function ResourceCover({ book, mini }: { book:ResourceBook; mini:boolean }) {
 /** Cover-led book list: familiar title, author, rationale and purchase options,
  * with the same expand-on-click behavior as the Course List. */
 export default function BookResourceRow({
-  book, density, courseByEdition, mini = false, showLocation = true,
+  book, density, courseByEdition, mini = false, showLocation = true, groupedChoice = false,
 }: {
   book: ResourceBook;
   density: Density;
   courseByEdition: Map<string,CourseLabel>;
   mini?: boolean;
   showLocation?: boolean;
+  groupedChoice?: boolean;
 }) {
   const [opened,setOpened] = useState<boolean | null>(null);
   useEffect(() => setOpened(null),[density]);
@@ -60,16 +61,37 @@ export default function BookResourceRow({
   // even if a link-level flag was accidentally overlooked.
   const visibleLinks = book.memberOnly ? [] : book.links.filter(link =>
     /^https:\/\//.test(link.url));
-  const roles = [...new Set(book.uses.map(use => use.role).filter(Boolean))];
-  const role = roles.join(" · ");
-  const coverRole = roles.length === 1 ? roles[0] : roles.length > 1 ? "Multiple roles" : "";
+  const roleNames:Record<string,string> = {
+    Main:"Main Text",Supporting:"Supporting Text",Reference:"Reference Text",
+  };
+  const roles = [...new Set(book.uses.map(use => use.role)
+    .filter((value):value is string=>typeof value==="string" && value.length>0))];
+  const role = roles.map(value=>roleNames[value]??value).join(" · ");
+  const coverRole = roles.length === 1 ? role : roles.length > 1 ? "Multiple roles" : "";
+  const gradeTags = [...new Set(book.uses.map(use=>use.gradeLevelTag)
+    .filter((value):value is string=>typeof value==="string" && value.length>0))];
+  const additionalRationales = [...new Map(book.uses.filter(use=>use.additionalRationale)
+    .map(use=>[use.assignmentId,{text:use.additionalRationale,
+      label:courseByEdition.get(use.editionId)?.title??"This course/topic"}])).values()];
+  const alternateTitles = [...new Set(book.uses.flatMap(use=>use.alternativeTitles??[]))]
+    .filter(title=>title!==book.title);
   const optionalUses = book.uses.filter(use => use.optional);
   const choiceUses = book.uses.filter(use => use.chooseOne);
   const mixedOptional = optionalUses.length > 0 && optionalUses.length < book.uses.length;
   const mixedChoice = choiceUses.length > 0 && choiceUses.length < book.uses.length;
-  const choiceCount = Math.max(0, ...choiceUses.map(use => use.choiceCount ?? 0));
 
   return <article className={"bk-book-row" + (mini ? " is-mini" : "")}>
+    {(gradeTags.length>0 || optional || chooseOne&&!groupedChoice) &&
+      <div className="bk-book-flags" aria-label="Resource recommendations and restrictions">
+        {gradeTags.map(tag=><span key={tag} className="bk-book-flag is-grade">{tag}</span>)}
+        {optional && <span className="bk-book-flag is-optional"
+          title={mixedOptional ? "Optional for some course/topic uses" : "This resource is optional"}>
+          {mixedOptional ? "OPTIONAL FOR SOME USES" : "OPTIONAL"}
+        </span>}
+        {chooseOne && !groupedChoice && <span className="bk-book-flag is-choice">
+          {mixedChoice ? "CHOOSE ONE IN SOME USES" : "CHOOSE ONE"}
+        </span>}
+      </div>}
     <div className="bk-book-line">
       <div className="bk-book-cover-column">
         <ResourceCover book={book} mini={mini}/>
@@ -91,21 +113,17 @@ export default function BookResourceRow({
             <span className="sr-only">Member-only resource links</span>
           </span>}
         </div>
-        {(optional || chooseOne) && <div className="bk-book-flags" aria-label="Resource selection guidance">
-          {optional && <span className="bk-book-flag is-optional"
-            title={mixedOptional ? "Optional for some course or topic uses" : "This recommendation is optional"}>
-            {mixedOptional ? "Optional for some uses" : "Optional"}
-          </span>}
-          {chooseOne && <span className="bk-book-flag is-choice"
-            title={mixedChoice
-              ? "An alternative in some course or topic uses; not every listed option is required"
-              : "Choose one alternative from this resource assignment; more than one may be used if desired"}>
-            {mixedChoice ? "Choice in some uses" :
-              choiceCount > 1 ? `Choose one of ${choiceCount}` : "Choose one"}
-          </span>}
-        </div>}
-        {showSummary && !showDetails && book.rationale &&
-          <p className="bk-book-rationale-preview">{book.rationale}</p>}
+        {showSummary && !showDetails &&
+          <div className="bk-book-rationale bk-book-rationale-brief">
+            <div className="bk-book-rationale-head">
+              <strong>Why we recommend it</strong>
+              <span className="bk-book-scope">Scope: {bookTermSummary(book)}</span>
+            </div>
+            {book.rationale && <p className="bk-book-rationale-preview">{book.rationale}</p>}
+            {additionalRationales.map((item,i)=><p key={i} className="bk-book-extra-rationale">
+              <strong>{item.label}:</strong> {item.text}
+            </p>)}
+          </div>}
         {showSummary && !showDetails && publicNote &&
           <div className="bk-book-planning-note is-summary">
             <strong>Note</strong>
@@ -118,25 +136,57 @@ export default function BookResourceRow({
               <span className="bk-book-course-tag">{locations[0]}
                 {locations.length>1 ? " · shared in "+locations.length+" uses" : ""}</span>}
           </div>}
-        {showSummary && <div className="bk-book-links-scope">
+        {chooseOne && !groupedChoice && alternateTitles.length>0 &&
+          <p className="bk-book-choices-inline">Choose this or {alternateTitles.join(" / ")}</p>}
+        {showSummary && !mini && visibleLinks.length>0 && <div className="bk-book-links-scope">
           {!mini && visibleLinks.length>0 && <div className="bk-book-links">
             {visibleLinks.map((link,i) => <a key={i} href={link.url}
               target="_blank" rel="noopener noreferrer">
               <ExternalLink size={12} aria-hidden="true"/>{link.label}
             </a>)}
           </div>}
-          <span className="bk-book-scope">Scope: {bookTermSummary(book)}</span>
         </div>}
+        {!showSummary && !mini && <p className="bk-book-compact-scope">
+          Scope: {bookTermSummary(book)}
+        </p>}
       </div>
     </div>
     {showDetails && <div className="bk-book-description">
-      {book.rationale && <div className="bk-book-rationale">
-        <strong>Why we recommend it</strong>
-        <p>{book.rationale}</p>
-      </div>}
+      {(book.rationale || additionalRationales.length>0 || !mini) &&
+        <div className="bk-book-rationale">
+          <div className="bk-book-rationale-head">
+            {book.rationale || additionalRationales.length>0
+              ? <strong>Why we recommend it</strong> : <span />}
+            <span className="bk-book-scope">Scope: {bookTermSummary(book)}</span>
+          </div>
+          {book.rationale && <p>{book.rationale}</p>}
+          {additionalRationales.map((item,i)=><p key={i} className="bk-book-extra-rationale">
+            <strong>{item.label}:</strong> {item.text}
+          </p>)}
+        </div>}
       {publicNote && <div className="bk-book-planning-note">
         <strong>Note</strong>
         <p>{publicNote}</p>
+      </div>}
+      {(book.formats || book.save || book.print || book.maySub || book.discount ||
+        book.discountCode) && <div className="bk-book-guidance">
+        {book.formats && <div className="bk-book-guidance-line">
+          <strong>Alternate formats</strong>
+          <span className="bk-book-format-chips">{book.formats.split(",").map(format=>
+            <span key={format} className="bk-book-format">{format.trim()}</span>)}</span>
+        </div>}
+        {(book.save || book.print) && <div className="bk-book-guidance-line">
+          <strong>Preparation</strong>
+          <span>{[book.save?"Save":"",book.print?"Print":""].filter(Boolean).join(" · ")}</span>
+        </div>}
+        {book.maySub && <div className="bk-book-guidance-line">
+          <strong>May substitute</strong><span>{book.maySub}</span>
+        </div>}
+        {(book.discount || book.discountCode) && <div className="bk-book-guidance-line">
+          <strong>Discount</strong>
+          <span>{book.discount}{book.discountCode
+            ? " · Code: "+book.discountCode : ""}</span>
+        </div>}
       </div>}
       {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
       {!mini && showLocation && book.uses.length>0 && <div className="bk-book-usages">
