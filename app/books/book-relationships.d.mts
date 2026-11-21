@@ -1,6 +1,7 @@
 export type ResourceUse = {
   assignmentId: string; editionId: string; role: string | null;
   optional: boolean; chooseOne: boolean; choiceCount: number;
+  alternativeTitles?: string[];
   term1: string | null; term2: string | null; term3: string | null;
   gradeLevelTag?: string | null; additionalRationale?: string | null;
   displayOrder?: number | null; termSort?: number | null;
