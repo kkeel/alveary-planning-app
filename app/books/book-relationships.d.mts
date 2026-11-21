@@ -12,7 +12,7 @@ export type ResourceBook = {
   formats?: string | null; save?: boolean; print?: boolean;
   discount?: string | null; discountCode?: string | null; maySub?: string | null;
   links: {label: string; url: string}[]; uses: ResourceUse[];
-  coursePaths?: string[];
+  coursePaths?: string[]; sharedIn?: string[];
 };
 export declare function booksForEditions(bookCatalog: any, editionIds: string[]): ResourceBook[];
 export declare function allBooks(bookCatalog: any): ResourceBook[];
