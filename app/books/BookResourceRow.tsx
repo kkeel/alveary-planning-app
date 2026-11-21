@@ -83,17 +83,22 @@ export default function BookResourceRow({
     [{subject:"Other uses",paths:sharedPaths}];
   const sharedDetails=showShared && !mini ? <details className="bk-book-shared">
     <summary>
-      <strong>↔ Shared</strong>
-      <span>Used in {sharedPaths.length} courses/topics</span>
-      <span className="bk-shared-show">Show</span>
-      <span className="bk-shared-hide">Hide</span>
+      <span className="bk-shared-heading">
+        <strong>↔ Shared</strong>
+        <span className="bk-shared-show">Show</span>
+        <span className="bk-shared-hide">Hide</span>
+      </span>
+      <span className="bk-shared-subtitle">
+        Used in {sharedPaths.length} courses/topics
+      </span>
     </summary>
     <ul className="bk-shared-groups">
       {sharedGroups.map(group=><li key={group.subject}>
-        <strong>{group.subject}</strong>
-        {group.paths.length>1 && <span className="bk-shared-group-count">({group.paths.length})</span>}
-        {group.paths.length>1 && <ul>{group.paths.map(path=><li key={path}>{path}</li>)}</ul>}
-        {group.paths.length===1 && group.paths[0]!==group.subject && <p>{group.paths[0]}</p>}
+        {group.paths.length>1 ? <>
+          <strong>{group.subject}</strong>
+          <span className="bk-shared-group-count">({group.paths.length})</span>
+          <ul>{group.paths.map(path=><li key={path}>{path}</li>)}</ul>
+        </> : <span className="bk-shared-single-path">{group.paths[0]}</span>}
       </li>)}
     </ul>
   </details> : null;
@@ -224,13 +229,17 @@ export default function BookResourceRow({
                     .filter(Boolean).join(" · ")}</span>
                 </div>}
               </div>}
-              {book.maySub && <div className="bk-book-guidance-line">
-                <strong>May substitute</strong><span>{book.maySub}</span>
+              {book.maySub && <div className="bk-book-guidance-line bk-book-may-sub">
+                <strong>➜ May sub</strong><span>{book.maySub}</span>
               </div>}
-              {(book.discount||book.discountCode) && <div className="bk-book-guidance-line">
-                <strong>Discount</strong>
-                <span>{book.discount}{book.discountCode?" · Code: "+book.discountCode:""}</span>
-              </div>}
+              {(book.discount||book.discountCode) &&
+                <div className="bk-book-guidance-line bk-book-discount">
+                  <strong>Discount:</strong>
+                  {book.discount && <span>{book.discount}</span>}
+                  {book.discountCode && <span>
+                    <strong>Code:</strong> {book.discountCode}
+                  </span>}
+                </div>}
             </div>}
             {mini && book.isbn && <p className="bk-book-isbn">ISBN/ASIN: {book.isbn}</p>}
             {mini && visibleLinks.length>0 && <div className="bk-book-links">

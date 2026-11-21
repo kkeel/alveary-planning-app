@@ -17,6 +17,8 @@ assert.deepEqual(displayGroups.get(ourWork.id).map(group=>
   [["Music",6],["Picture Study",1],["Recitation",1]]);
 assert.equal(displayGroups.get(ourWork.id)
   .reduce((count,group)=>count+group.paths.length,0),8);
+assert.deepEqual(displayGroups.get(ourWork.id).filter(g=>g.paths.length===1)
+  .map(g=>g.paths[0]),["Picture Study","Recitation: Grades 1-2"]);
 
 // A shared child topic must enumerate its *actual* parent course locations.
 const shared={courses:[
