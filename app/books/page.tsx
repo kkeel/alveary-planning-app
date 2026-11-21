@@ -185,10 +185,11 @@ function BookListContent() {
       {grouped.sections.length ?
         <BookCourseHierarchy
           key={[signedInScope,requestedId,validTopic?.id,query,term,subject,
-            desk.grades.join(","),desk.country].join("|")}
+            desk.grades.join(","),desk.country,!signedIn?density:""].join("|")}
           grouped={grouped} density={density} courseByEdition={coursesByEdition}
           memberView={signedIn}
-          openCourses={signedInScope==="school"||Boolean(requestedId)||
+          openCourses={(!signedIn&&density==="detailed")||
+            signedInScope==="school"||Boolean(requestedId)||
             Boolean(query.trim())||Boolean(subject)}/>
         : <div className="bk-notice">
           <h2>{signedInScope==="school"&&plannedCount===0&&!requestedId ?
