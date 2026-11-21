@@ -422,3 +422,38 @@
   .bk-book-guidance-line>strong { min-width:0; width:100%; }
   .bk-choice-group { padding-right:5px; padding-left:8px; }
 }
+
+/* November book polish: optional/grade badges sit with the title, not above
+   the cover. The detail region belongs inside the text column, so books
+   without purchase links do not reserve empty cover-height whitespace. */
+.bk-book-title-line { display:flex; flex-wrap:wrap; align-items:center;
+  column-gap:8px; row-gap:4px; width:100%; }
+.bk-book-heading-text>.bk-book-title-line {
+  color:var(--bk-ink); font-size:inherit; line-height:inherit; }
+.bk-book-title-line>.bk-book-flags { display:inline-flex; align-items:center;
+  flex-wrap:wrap; gap:5px; margin:0; min-width:0; }
+.bk-book-title-line .bk-book-flag { padding:2px 7px; font-size:9px;
+  letter-spacing:.02em; line-height:1.45; }
+.bk-book-flag.is-optional { color:#fbfbf9; }
+.bk-book-heading-text>.bk-book-byline { color:var(--bk-muted);
+  font-size:11px; line-height:1.4; }
+.bk-book-main>.bk-book-description { margin:8px 0 10px; padding:0;
+  border:0; background:transparent; }
+.bk-book-line { padding-bottom:8px; }
+.bk-book-rationale-brief { margin-top:10px; }
+.bk-book-rationale .bk-book-extra-rationale { margin-top:8px; }
+.bk-book-shared { display:flex; flex-wrap:wrap; align-items:baseline;
+  gap:4px 9px; max-width:78ch; padding:6px 14px;
+  margin:6px 0 0; font-size:11px; line-height:1.6;
+  color:var(--bk-muted); }
+.bk-book-shared strong { color:var(--bk-sage); font-weight:650;
+  flex-shrink:0; }
+.bk-book-shared span { min-width:0; overflow-wrap:anywhere; }
+.bk-book-guidance-line>strong { min-width:100px; }
+.bp-mini-content .bk-book-main>.bk-book-description { margin:7px 0 9px;
+  padding:7px 8px; }
+.bp-mini-content .bk-book-title-line .bk-book-flag { font-size:9px; }
+@media (max-width:580px) {
+  .bk-book-main>.bk-book-description { margin-top:8px; }
+  .bk-book-shared { padding-inline:8px; }
+}
